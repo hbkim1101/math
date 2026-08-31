@@ -172,6 +172,18 @@ def korean_label(text: str, font_size: int = 22, color: ManimColor = WHITE) -> T
 
 
 def caption_bar(text: str) -> Text:
-    from src.renderer.layout import caption_bar as _caption
+    from src.renderer.lecture_board import caption_bar as _cap
 
-    return _caption(text)
+    return _cap(text)
+
+
+def place_equation(mob: Mobject, *, max_width: float = 5.5) -> Mobject:
+    from src.renderer.lecture_board import MATH
+
+    return MATH.place(mob)
+
+
+def place_graph_group(group: Mobject) -> Mobject:
+    from src.renderer.lecture_board import GRAPH
+
+    return GRAPH.place(group)
