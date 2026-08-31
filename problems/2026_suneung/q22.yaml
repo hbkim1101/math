@@ -8,29 +8,87 @@ problems:
     topic: "지수·로그함수"
     points: 4
     question_latex: 'y=2^x+\frac{k}{2},\quad y=\frac{k}{2^x}+k-2\;(k>1)'
-    question_note: "두 곡선의 교점 A, 곡선 y=2^{x-2}-3 위의 점 B."
+    question_note: "두 곡선의 교점을 A, 곡선 y=2^{x-2}-3 위의 점을 B라 할 때,"
     question_latex_2: '\triangle AOB\ \text{의 넓이가}\ 16'
-    question_note_2: '일 때, k+\log_2 k=\dfrac{q}{p} (p,q 서로소) → p+q=?'
+    question_note_2: '일 때, k+\log_2 k=\dfrac{q}{p}\ (p,q\ \text{서로소}) \Rightarrow p+q=?'
     choices: []
     answer: "38"
     answer_value: 38
-    visual:
-      template: custom
-      x_range: [-1, 6]
-      y_range: [-2, 12]
     steps:
-      - narration: "교점 A에서 t=2^x로 치환합니다. t+k/2 = k/t + k−2에서 t=k/2."
-        latex: '2t^2+(4-k)t-2k=0 \;\Rightarrow\; t=\frac{k}{2}'
-        caption: "교점 A: t=2^x=k/2"
-      - narration: "따라서 A의 좌표는 (log₂k−1, k)입니다."
-        latex: 'A=\left(\log_2 k-1,\,k\right)'
-        caption: "A=(log₂k−1, k)"
-      - narration: "A를 지나 기울기 −1인 직선 위 점 B. x가 3 증가, y가 3 감소."
-        latex: 'x+y=k+\log_2 k-1,\quad B=(\log_2 k+2,\,k-3)'
-        caption: "직선 x+y=k+log₂k−1"
-      - narration: "AB=3√2. △AOB 넓이 16에서 원점-직선 거리 h를 구합니다."
+      - narration: >
+          먼저 문제를 정리합시다. 두 지수함수 y는 2의 x제곱 더하기 k나 2, 와
+          y는 k나 2의 x제곱 더하기 k 빼기 2 의 교점을 A라고 합니다.
+          또 y는 2의 x빼기 2제곱 빼기 3 위의 점 B, 그리고 삼각형 AOB의 넓이가 16입니다.
+          구하는 것은 k 더하기 log k 제곱을 p분의 q 꼴로 나타낼 때, p 더하기 q 입니다.
+        latex: 'y=2^x+\frac{k}{2},\; y=\frac{k}{2^x}+k-2'
+        caption: "문제 정리 — 교점 A, 점 B, △AOB 넓이 16"
+
+      - narration: >
+          교점 A를 찾을 때, 지수를 한 번에 다루기 위해 t는 2의 x제곱으로 치환합니다.
+          t는 0보다 크죠. 첫 번째 식에서 y는 t 더하기 k나 2, 두 번째 식에서 y는 k나 t 더하기 k 빼기 2 입니다.
+          교점이니 두 y가 같습니다. t 더하기 k나 2는 k나 t 더하기 k 빼기 2.
+        latex: 't=2^x\;(t>0),\quad t+\frac{k}{2}=\frac{k}{t}+k-2'
+        caption: "t=2^x 치환 → 교점 조건"
+
+      - narration: >
+          분수를 없애기 위해 양변에 2t를 곱합니다.
+          왼쪽은 2t제곱 더하기 kt, 오른쪽은 2k 더하기 kt 빼기 2t, 정리하면
+          2t제곱 더하기 4 빼기 k 곱하기 t 빼기 2k는 0이 됩니다.
+        latex: '2t^2+kt=2k+kt-2t'
+        caption: "양변에 2t 곱하기"
+
+      - narration: >
+          이 식을 인수분해합니다. 2t 빼기 k 와 t 더하기 2 의 곱은 0입니다.
+          t는 양수이므로 t는 마이너스 2는 버리고, t는 k나 2만 남습니다.
+          즉 2의 x제곱은 k나 2, x는 log k 제곱 빼기 1입니다.
+        latex: '(2t-k)(t+2)=0 \;\Rightarrow\; t=\frac{k}{2}'
+        caption: "인수분해 → t=k/2"
+
+      - narration: >
+          y좌표는 첫 번째 식에 대입하면 t 더하기 k나 2, 즉 k나 2 더하기 k나 2 해서 k입니다.
+          따라서 교점 A의 좌표는 log k 제곱 빼기 1 콤마 k 입니다.
+        latex: 'A=\left(\log_2 k-1,\; k\right)'
+        caption: "A=(log₂k−1, k) 확정"
+
+      - narration: >
+          이제 점 B입니다. A를 지나고 기울기가 마이너스 1인 직선을 그립니다.
+          점 기울기 형태로 쓰면 y 빼기 k는 마이너스 x 빼기 괄호 log k 제곱 빼기 1 괄호 닫기.
+          정리하면 x 더하기 y는 k 더하기 log k 제곱 빼기 1, 이 직선 위에 B가 있습니다.
+        latex: 'y-k=-\bigl(x-(\log_2 k-1)\bigr) \;\Rightarrow\; x+y=k+\log_2 k-1'
+        caption: "기울기 −1 직선"
+
+      - narration: >
+          B는 이 직선과 y는 2의 x빼기 2제곱 빼기 3 의 교점입니다.
+          A에서 x가 3 증가하고 y가 3 감소하면 기울기 마이너스 1을 유지합니다.
+          d는 3일 때 양변 모두 k 빼기 3이 되어 성립하고, 증가·감소 그래프 관계상 교점은 유일합니다.
+          B는 log k 제곱 더하기 2 콤마 k 빼기 3 입니다.
+        latex: 'B=\left(\log_2 k+2,\; k-3\right)'
+        caption: "B=(log₂k+2, k−3), 이동량 d=3"
+
+      - narration: >
+          A에서 B까지 거리를 구합니다. x는 3, y는 마이너스 3 변했으니
+          AB는 루트 3제곱 더하기 마이너스 3제곱, 즉 3루트 2 입니다.
+        latex: 'AB=\sqrt{3^2+(-3)^2}=3\sqrt{2}'
+        caption: "AB = 3√2"
+
+      - narration: >
+          삼각형 AOB의 넓이가 16입니다. 밑변을 AB로 잡으면,
+          높이 h는 원점 O에서 직선 AB까지의 거리입니다.
+          넓이 공식 2분의 1 곱하기 3루트 2 곱하기 h는 16, 따라서 h는 3루트 2분의 32,
+          즉 3분의 16루트 2 입니다.
         latex: '16=\frac{1}{2}\cdot3\sqrt{2}\cdot h \;\Rightarrow\; h=\frac{16\sqrt{2}}{3}'
-        caption: "넓이 → 원점-직선 거리"
-      - narration: "거리 공식으로 k+log₂k−1=32/3. 따라서 k+log₂k=35/3, p+q=38."
-        latex: 'k+\log_2 k=\frac{35}{3} \;\Rightarrow\; p+q=38'
-        caption: "정답 p+q=38"
+        caption: "넓이 → 원점-직선 거리 h"
+
+      - narration: >
+          직선 AB를 x 더하기 y 빼기 괄호 k 더하기 log k 제곱 빼기 1 괄호 닫기는 0 꼴로 씁니다.
+          원점에서 이 직선까지의 거리는 루트 2분의 k 더하기 log k 제곱 빼기 1 입니다.
+          k가 1보다 크므로 절댓값은 그대로 벗깁니다.
+        latex: 'h=\frac{k+\log_2 k-1}{\sqrt{2}}'
+        caption: "점-직선 거리 공식"
+
+      - narration: >
+          아까 구한 h와 같다고 놓으면, k 더하기 log k 제곱 빼기 1은 3분의 32입니다.
+          양변에 1을 더하면 k 더하기 log k 제곱은 3분의 35.
+          p는 3, q는 35이고 서로소이므로, 정답 p 더하기 q는 38입니다.
+        latex: 'k+\log_2 k=\frac{35}{3} \;\Rightarrow\; p+q=3+35=38'
+        caption: "정답 p+q = 38"
