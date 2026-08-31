@@ -1,3 +1,4 @@
 manim>=0.18.0
 pydantic>=2.0
 pyyaml>=6.0
+edge-tts>=6.1.0

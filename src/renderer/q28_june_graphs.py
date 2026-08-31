@@ -56,3 +56,31 @@ def june28_b() -> float:
 
 def june28_c() -> float:
     return -2.0
+
+
+def g_outer(y: float) -> float:
+    """g(y) = y^5 + y^3"""
+    return y**5 + y**3
+
+
+def plot_g_outer(axes: Axes, x_range: tuple[float, float] = (-1.4, 1.4), color=PURPLE) -> ParametricFunction:
+    return axes.plot(g_outer, x_range=[x_range[0], x_range[1]], color=color, stroke_width=3)
+
+
+def tangent_at_c(c: float) -> tuple[float, float]:
+    """Tangent y=ax+b to ln(Q(x)) at inflection x=c."""
+    a = (2 * c + 1) / Q(c)
+    b = ln_Q(c) - a * c
+    return a, b
+
+
+def plot_tangent_at_c(
+    axes: Axes,
+    c: float,
+    x_range: tuple[float, float] = (-3.2, 2.8),
+    color=YELLOW,
+) -> tuple[ParametricFunction, float, float]:
+    a, b = tangent_at_c(c)
+    line = plot_tangent_line(axes, a, b, x_range=x_range, color=color)
+    return line, a, b
+
