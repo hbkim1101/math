@@ -13,7 +13,18 @@
 
 자세한 설계: [docs/GRAMMAR.md](docs/GRAMMAR.md)
 
-## 강의 영상 만들기 (권장)
+## 모바일 Studio (수동 제작)
+
+스마트폰 PWA — beat 편집 · 칠판 재생 · 영상 녹화
+
+→ [apps/mobile-studio/README.md](apps/mobile-studio/README.md)
+
+```bash
+cd apps/mobile-studio && python3 -m http.server 8765
+# 폰에서 http://<PC-IP>:8765
+```
+
+## 강의 영상 만들기 (PC Manim)
 
 ```bash
 # 15번 예시 — 사용자 손풀이 문법 그대로

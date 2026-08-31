@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1a3d32"/>
+  <rect x="40" y="40" width="432" height="432" rx="28" fill="none" stroke="#6a8a78" stroke-width="8"/>
+  <text x="256" y="240" text-anchor="middle" fill="#f5e6a8" font-size="120" font-family="sans-serif">Ò</text>
+  <text x="256" y="360" text-anchor="middle" fill="#ece8dc" font-size="56" font-family="sans-serif">\ Studio</text>
+</svg>

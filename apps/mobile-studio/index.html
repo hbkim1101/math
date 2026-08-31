@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#1a3d32" />
+  <title>한수 Studio — 칠판 강의 제작</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.svg" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="top-bar">
+      <div>
+        <p class="brand">수학 한수 Studio</p>
+        <h1 id="project-title">새 강의</h1>
+      </div>
+      <button type="button" class="icon-btn" id="btn-settings" aria-label="설정">⚙</button>
+    </header>
+
+    <!-- 칠판 미리보기 -->
+    <section class="board-wrap">
+      <canvas id="board" width="720" height="960" aria-label="칠판"></canvas>
+      <div id="play-overlay" class="play-overlay hidden">
+        <span id="play-status">재생 중…</span>
+      </div>
+    </section>
+
+    <!-- 탭 패널 -->
+    <main class="panel" id="panel-edit">
+      <div class="beat-toolbar">
+        <button type="button" class="chip active" data-add="say">⇒ 말하기</button>
+        <button type="button" class="chip" data-add="math">수식</button>
+        <button type="button" class="chip" data-add="graph">그래프</button>
+        <button type="button" class="chip" data-add="dot">점</button>
+        <button type="button" class="chip" data-add="wait">쉬기</button>
+      </div>
+
+      <ul id="beat-list" class="beat-list"></ul>
+
+      <form id="beat-form" class="beat-form hidden">
+        <h2 id="form-title">Beat 편집</h2>
+        <input type="hidden" id="edit-index" value="-1" />
+
+        <label class="field" id="field-link">
+          <span>화살표</span>
+          <select id="inp-link">
+            <option value="therefore">⇒ 이므로</option>
+            <option value="when">→ 만약</option>
+            <option value="none">없음</option>
+          </select>
+        </label>
+
+        <label class="field" id="field-text">
+          <span>한 줄 설명</span>
+          <textarea id="inp-text" rows="2" placeholder="예: f'(x) 그래프부터 그립니다"></textarea>
+        </label>
+
+        <label class="field hidden" id="field-math">
+          <span>수식 (LaTeX)</span>
+          <textarea id="inp-math" rows="2" placeholder="f'(x)=-6(x+1)(x-1)"></textarea>
+          <div id="math-preview" class="math-preview"></div>
+        </label>
+
+        <label class="field hidden" id="field-graph">
+          <span>그래프 종류</span>
+          <select id="inp-graph-type">
+            <option value="f_prime">f'(x) — 이차</option>
+            <option value="parabola">y = x²</option>
+            <option value="cubic">삼차 개형</option>
+            <option value="custom">직접 그리기</option>
+          </select>
+        </label>
+
+        <label class="field hidden" id="field-dot">
+          <span>점 좌표 (그래프 기준)</span>
+          <div class="row-2">
+            <input type="number" id="inp-dot-x" step="0.1" value="0" placeholder="x" />
+            <input type="number" id="inp-dot-y" step="0.1" value="0" placeholder="y" />
+          </div>
+          <input type="text" id="inp-dot-label" placeholder="라벨 (선택)" />
+        </label>
+
+        <label class="field hidden" id="field-wait">
+          <span>대기 시간 (초)</span>
+          <input type="number" id="inp-wait" min="0.3" max="5" step="0.1" value="1" />
+        </label>
+
+        <div class="form-actions">
+          <button type="button" class="btn ghost" id="btn-cancel">취소</button>
+          <button type="submit" class="btn primary">저장</button>
+        </div>
+      </form>
+    </main>
+
+    <main class="panel hidden" id="panel-record">
+      <p class="hint">미리보기를 재생하면서 칠판을 녹화합니다. Chrome·Safari(iOS 17+)에서 동작합니다.</p>
+      <div class="record-stats">
+        <span id="rec-status">대기</span>
+        <span id="rec-time">0:00</span>
+      </div>
+      <button type="button" class="btn primary full" id="btn-record">▶ 녹화 시작</button>
+      <button type="button" class="btn ghost full hidden" id="btn-stop">■ 녹화 중지</button>
+      <a id="download-link" class="btn accent full hidden" download="lecture.webm">⬇ 영상 저장</a>
+    </main>
+
+    <main class="panel hidden" id="panel-export">
+      <p class="hint">프로젝트를 JSON/YAML로 내보내면 PC에서 Manim으로 고화질 렌더할 수 있습니다.</p>
+      <label class="field">
+        <span>문항 제목</span>
+        <input type="text" id="exp-title" value="15번 · 미분" />
+      </label>
+      <label class="field">
+        <span>정답</span>
+        <input type="text" id="exp-answer" value="① 15/4" />
+      </label>
+      <button type="button" class="btn primary full" id="btn-export-json">JSON 복사</button>
+      <button type="button" class="btn ghost full" id="btn-export-yaml">YAML 복사</button>
+      <button type="button" class="btn ghost full" id="btn-import">JSON 불러오기</button>
+      <input type="file" id="import-file" accept="application/json" hidden />
+    </main>
+
+    <nav class="bottom-nav">
+      <button type="button" class="nav-item active" data-tab="edit">
+        <span>✎</span><small>편집</small>
+      </button>
+      <button type="button" class="nav-item" data-tab="play">
+        <span>▶</span><small>재생</small>
+      </button>
+      <button type="button" class="nav-item" data-tab="record">
+        <span>⏺</span><small>녹화</small>
+      </button>
+      <button type="button" class="nav-item" data-tab="export">
+        <span>↗</span><small>내보내기</small>
+      </button>
+    </nav>
+  </div>
+
+  <dialog id="settings-dialog">
+    <form method="dialog">
+      <h2>프로젝트 설정</h2>
+      <label class="field">
+        <span>제목</span>
+        <input type="text" id="set-title" />
+      </label>
+      <label class="field">
+        <span>브랜드</span>
+        <input type="text" id="set-brand" value="수학 한수" />
+      </label>
+      <menu>
+        <button type="button" class="btn ghost" id="btn-new-project">새 프로젝트</button>
+        <button value="cancel" class="btn ghost">닫기</button>
+        <button value="default" class="btn primary">저장</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
