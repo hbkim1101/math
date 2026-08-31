@@ -47,6 +47,14 @@ class TangentSpec(BaseModel):
 class NarrateStep(BaseModel):
     type: Literal["narrate"] = "narrate"
     text: str
+    speech: str | None = None
+
+
+class TtsConfig(BaseModel):
+    voice: str = "ko-KR-SunHiNeural"
+    rate: str = "-14%"
+    pitch: str = "-2Hz"
+    pause_ms: int = 420
 
 
 class SectionStep(BaseModel):
@@ -157,7 +165,8 @@ LectureStep = Annotated[
 
 class LectureSpec(BaseModel):
     slug: str
-    voice: str = "ko-KR-InJoonNeural"
+    voice: str = "ko-KR-SunHiNeural"
+    tts: TtsConfig = Field(default_factory=TtsConfig)
     background: str = "#0f0f1a"
     header: LectureHeader
     steps: list[LectureStep]
@@ -203,5 +212,11 @@ def get_lecture_problem(exam: LectureExam, problem_id: int) -> LectureProblem:
     raise ValueError(f"Lecture problem {problem_id} not found in {exam.exam}")
 
 
-def iter_narrations(problem: LectureProblem) -> list[str]:
-    return [s.text for s in problem.lecture.steps if isinstance(s, NarrateStep)]
+def iter_narrations(problem: LectureProblem) -> list[tuple[str, str]]:
+    """(subtitle, speech) pairs for narrate steps."""
+    out: list[tuple[str, str]] = []
+    for s in problem.lecture.steps:
+        if isinstance(s, NarrateStep):
+            speech = s.speech or s.text
+            out.append((s.text, speech))
+    return out
