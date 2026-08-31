@@ -1,0 +1,642 @@
+exam: 2026학년도 대학수학능력시험
+section: 수학 공통
+source: 한국교육과정평가원 (홀수형·짝수형 동일)
+brand: 수학 한수
+problems:
+- id: 1
+  topic: 지수법칙
+  points: 2
+  question_latex: 9^{\frac{1}{4}} \times 3^{-\frac{1}{2}}
+  question_latex_2: null
+  question_note: null
+  question_note_2: null
+  choices:
+  - ① 1
+  - ② √3
+  - ③ 3
+  - ④ 3√3
+  - ⑤ 9
+  answer: ① 1
+  answer_value: 1
+  steps:
+  - narration: 9를 밑이 3인 거듭제곱으로 바꿉니다.
+    latex: 9 = 3^2
+    caption: 9를 밑이 3인 거듭제곱으로 바꿉니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: 9를 밑이 3인 거듭제곱으로 바꿉니다.
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: show_equation
+      expr: null
+      color: HIGHLIGHT
+      x_range: null
+      x: null
+      y: null
+      label: 9 = 3^2
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  - narration: 지수법칙을 적용합니다.
+    latex: 9^{\frac{1}{4}} = (3^2)^{\frac{1}{4}} = 3^{\frac{1}{2}}
+    caption: 지수법칙을 적용합니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: 지수법칙을 적용합니다.
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: show_equation
+      expr: null
+      color: HIGHLIGHT
+      x_range: null
+      x: null
+      y: null
+      label: 9^{\frac{1}{4}} = (3^2)^{\frac{1}{4}} = 3^{\frac{1}{2}}
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  - narration: 같은 밑끼리 곱하면 지수를 더합니다.
+    latex: 3^{\frac{1}{2}} \times 3^{-\frac{1}{2}} = 3^0 = 1
+    caption: 같은 밑끼리 곱하면 지수를 더합니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: 같은 밑끼리 곱하면 지수를 더합니다.
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: show_equation
+      expr: null
+      color: HIGHLIGHT
+      x_range: null
+      x: null
+      y: null
+      label: 3^{\frac{1}{2}} \times 3^{-\frac{1}{2}} = 3^0 = 1
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  - narration: 따라서 정답은 ① 1입니다.
+    latex: = 1
+    caption: 따라서 정답은 ① 1입니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: 따라서 정답은 ① 1입니다.
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: show_equation
+      expr: null
+      color: ANSWER
+      x_range: null
+      x: null
+      y: null
+      label: = 1
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  visual:
+    template: equation_flow
+    expr: null
+    expr_right: null
+    breakpoint: 1.0
+    param_name: a
+    param_from: 0.0
+    param_to: 3.0
+    tangent_at: null
+    x_range:
+    - -2.0
+    - 2.0
+    y_range:
+    - -2.0
+    - 2.0
+    actions: []
+- id: 2
+  topic: 미분계수
+  points: 2
+  question_latex: f(x) = 3x^3 + 7x + 1
+  question_latex_2: \lim_{h \to 0} \frac{f(1+h) - f(1)}{h}
+  question_note: 에 대하여 다음 극한의 값은?
+  question_note_2: null
+  choices:
+  - ① 7
+  - ② 9
+  - ③ 11
+  - ④ 16
+  - ⑤ 18
+  answer: ④ 16
+  answer_value: 16
+  steps:
+  - narration: 이 극한은 x=1에서의 미분계수 f'(1)입니다.
+    latex: \lim_{h \to 0} \frac{f(1+h) - f(1)}{h} = f'(1)
+    caption: 이 극한은 x=1에서의 미분계수 f'(1)입니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: f'(x) = x에서 접선 기울기
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: plot
+      expr: 3*x**3 + 7*x + 1
+      color: BLUE
+      x_range:
+      - -1.5
+      - 1.5
+      x: null
+      y: null
+      label: null
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  - narration: f(x)를 미분합니다.
+    latex: f'(x) = 9x^2 + 7
+    caption: f(x)를 미분합니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: 미분하면 기울기 함수가 나옵니다
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: show_equation
+      expr: null
+      color: HIGHLIGHT
+      x_range: null
+      x: null
+      y: null
+      label: f'(x)=9x^2+7
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  - narration: x=1을 대입합니다.
+    latex: f'(1) = 9 \times 1 + 7 = 16
+    caption: x=1을 대입합니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: x=1에서 접선 기울기
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: tangent_at
+      expr: 3*x**3 + 7*x + 1
+      color: YELLOW
+      x_range: null
+      x: 1.0
+      y: null
+      label: null
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: show_equation
+      expr: null
+      color: ANSWER
+      x_range: null
+      x: null
+      y: null
+      label: f'(1)=16
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  - narration: 따라서 정답은 ④ 16입니다.
+    latex: f'(1) = 16
+    caption: 따라서 정답은 ④ 16입니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: 정답 확인
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: show_equation
+      expr: null
+      color: ANSWER
+      x_range: null
+      x: null
+      y: null
+      label: f'(1)=16
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  visual:
+    template: derivative_tangent
+    expr: 3*x**3 + 7*x + 1
+    expr_right: null
+    breakpoint: 1.0
+    param_name: a
+    param_from: 0.0
+    param_to: 3.0
+    tangent_at: 1.0
+    x_range:
+    - -1.5
+    - 1.5
+    y_range:
+    - -5.0
+    - 15.0
+    actions: []
+- id: 3
+  topic: 시그마 (수열의 합)
+  points: 3
+  question_latex: \sum_{k=1}^{7}(2a_k - k) = 0
+  question_latex_2: \sum_{k=1}^{7} a_k
+  question_note: 일 때, 다음의 값은?
+  question_note_2: null
+  choices:
+  - ① 1
+  - ② √3
+  - ③ 3
+  - ④ 3√3
+  - ⑤ 14
+  answer: ⑤ 14
+  answer_value: 14
+  steps:
+  - narration: 시그마의 성질로 식을 전개합니다.
+    latex: 2\sum_{k=1}^{7} a_k - \sum_{k=1}^{7} k = 0
+    caption: 시그마의 성질로 식을 전개합니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: 시그마의 성질로 식을 전개합니다.
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: show_equation
+      expr: null
+      color: HIGHLIGHT
+      x_range: null
+      x: null
+      y: null
+      label: 2\sum_{k=1}^{7} a_k - \sum_{k=1}^{7} k = 0
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  - narration: 1부터 7까지의 합은 28입니다.
+    latex: \sum_{k=1}^{7} k = \frac{7 \times 8}{2} = 28
+    caption: 1부터 7까지의 합은 28입니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: 1부터 7까지의 합은 28입니다.
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: show_equation
+      expr: null
+      color: HIGHLIGHT
+      x_range: null
+      x: null
+      y: null
+      label: \sum_{k=1}^{7} k = \frac{7 \times 8}{2} = 28
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  - narration: a_k의 합을 구합니다.
+    latex: 2\sum a_k = 28 \quad \Rightarrow \quad \sum_{k=1}^{7} a_k = 14
+    caption: a_k의 합을 구합니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: a_k의 합을 구합니다.
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: show_equation
+      expr: null
+      color: HIGHLIGHT
+      x_range: null
+      x: null
+      y: null
+      label: 2\sum a_k = 28 \quad \Rightarrow \quad \sum_{k=1}^{7} a_k = 14
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  - narration: 따라서 정답은 ⑤ 14입니다.
+    latex: \sum_{k=1}^{7} a_k = 14
+    caption: 따라서 정답은 ⑤ 14입니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: 따라서 정답은 ⑤ 14입니다.
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: show_equation
+      expr: null
+      color: ANSWER
+      x_range: null
+      x: null
+      y: null
+      label: \sum_{k=1}^{7} a_k = 14
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  visual:
+    template: equation_flow
+    expr: null
+    expr_right: null
+    breakpoint: 1.0
+    param_name: a
+    param_from: 0.0
+    param_to: 3.0
+    tangent_at: null
+    x_range:
+    - -2.0
+    - 2.0
+    y_range:
+    - -2.0
+    - 2.0
+    actions: []
+- id: 4
+  topic: 함수의 연속
+  points: 3
+  question_latex: f(x) = \begin{cases} x^2 - 3x + a & (x < 1) \\ 3x - 2 & (x \geq
+    1) \end{cases}
+  question_latex_2: null
+  question_note: 가 실수 전체의 집합에서 연속일 때, 상수 a의 값은?
+  question_note_2: null
+  choices:
+  - ① 1
+  - ② 2
+  - ③ 3
+  - ④ 4
+  - ⑤ 5
+  answer: ③ 3
+  answer_value: 3
+  steps:
+  - narration: x=1에서 연속이려면 좌극한 = 우극한 = 함수값이어야 합니다.
+    latex: \lim_{x \to 1^-} f(x) = \lim_{x \to 1^+} f(x) = f(1)
+    caption: x=1에서 연속이려면 좌극한 = 우극한 = 함수값이어야 합니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: x=1에서 좌·우극한 = 함수값
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: plot_piecewise
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: null
+      param: a
+      from: 0.0
+      to: 0.0
+      pieces: null
+      dashed: false
+      wait: 0.0
+  - narration: x=1에서의 좌극한을 구합니다.
+    latex: \lim_{x \to 1^-}(x^2 - 3x + a) = 1 - 3 + a = a - 2
+    caption: x=1에서의 좌극한을 구합니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: 좌극한 계산
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: show_equation
+      expr: null
+      color: HIGHLIGHT
+      x_range: null
+      x: null
+      y: null
+      label: \lim_{x\to 1^-} f(x)=a-2
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  - narration: 우극한과 함수값 f(1)을 구합니다.
+    latex: \lim_{x \to 1^+}(3x - 2) = f(1) = 1
+    caption: 우극한과 함수값 f(1)을 구합니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: 우극한 = f(1)
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: show_equation
+      expr: null
+      color: HIGHLIGHT
+      x_range: null
+      x: null
+      y: null
+      label: f(1)=1
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  - narration: a - 2 = 1이므로 a = 3. 정답은 ③ 3입니다.
+    latex: a - 2 = 1 \quad \Rightarrow \quad a = 3
+    caption: a - 2 = 1이므로 a = 3. 정답은 ③ 3입니다.
+    visual:
+    - action: caption
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: a=3이면 x=1에서 연속!
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: plot_piecewise
+      expr: null
+      color: BLUE
+      x_range: null
+      x: null
+      y: null
+      label: null
+      param: a
+      from: 0.0
+      to: 3.0
+      pieces: null
+      dashed: false
+      wait: 0.0
+    - action: show_equation
+      expr: null
+      color: ANSWER
+      x_range: null
+      x: null
+      y: null
+      label: a=3
+      param: null
+      from: null
+      to: null
+      pieces: null
+      dashed: false
+      wait: 0.0
+  visual:
+    template: piecewise_continuity
+    expr: x**2 - 3*x + a
+    expr_right: 3*x - 2
+    breakpoint: 1.0
+    param_name: a
+    param_from: 0.0
+    param_to: 3.0
+    tangent_at: null
+    x_range:
+    - -0.5
+    - 2.5
+    y_range:
+    - -3.0
+    - 5.0
+    actions: []

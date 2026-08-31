@@ -1,14 +1,20 @@
 [project]
 name = "math-viz"
-version = "0.1.0"
-description = "수능 수학 자동 시각화 해설"
+version = "0.2.0"
+description = "수학 한수 스타일 수능 수학 자동 해설 영상 생성"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "manim>=0.18.0",
     "pydantic>=2.0",
     "pyyaml>=6.0",
+    "sympy>=1.12",
+    "numpy>=1.26",
+    "edge-tts>=6.1",
 ]
+
+[project.optional-dependencies]
+llm = ["openai>=1.0"]
 
 [tool.manim]
 quality = "medium_quality"

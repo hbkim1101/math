@@ -1,3 +1,9 @@
 manim>=0.18.0
 pydantic>=2.0
 pyyaml>=6.0
+sympy>=1.12
+numpy>=1.26
+edge-tts>=6.1
+
+# Optional: LLM solution generation
+# openai>=1.0
