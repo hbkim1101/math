@@ -19,6 +19,7 @@ SCENES = [
     ("src/scenes/q04_viz.py", "Q04ContinuityVizScene", "q04_continuity"),
     ("src/scenes/calc_q30.py", "Q30CalculusScene", "q30_calculus"),
     ("src/scenes/calc_q28.py", "Q28SeptMockScene", "q28_calculus"),
+    ("src/scenes/calc_q21.py", "Q21CubicInequalityScene", "q21_cubic"),
 ]
 
 
