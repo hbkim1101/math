@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate natural TTS from Lecture DSL narrate steps (SSML + pacing)."""
+"""Generate natural TTS from Lecture DSL narrate steps."""
 
 from __future__ import annotations
 
@@ -7,10 +7,8 @@ import argparse
 import asyncio
 from pathlib import Path
 
-import edge_tts
-
 from src.dsl.lecture_models import get_lecture_problem, iter_narrations, load_lecture_exam
-from src.renderer.tts_utils import build_ssml
+from src.renderer.tts_providers import synthesize_batch
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -21,25 +19,15 @@ async def generate(problem_id: int, yaml_path: Path, force: bool = False) -> Pat
     spec = problem.lecture
     tts_cfg = spec.tts
     voice = tts_cfg.voice or spec.voice
+    tts_cfg = tts_cfg.model_copy(update={"voice": voice})
     out = ROOT / "assets" / "narration" / spec.slug
-    out.mkdir(parents=True, exist_ok=True)
-
     pairs = iter_narrations(problem)
-    for i, (subtitle, speech) in enumerate(pairs):
-        path = out / f"{i:02d}.mp3"
-        if path.exists() and not force:
-            continue
-        ssml = build_ssml(
-            speech,
-            voice,
-            rate=tts_cfg.rate,
-            pitch=tts_cfg.pitch,
-            pause_ms=tts_cfg.pause_ms,
-        )
-        print(f"  TTS [{i:02d}] {subtitle[:50]}…")
-        comm = edge_tts.Communicate(ssml, voice)
-        await comm.save(str(path))
-    print(f"TTS ready: {out} ({len(pairs)} files, voice={voice}, rate={tts_cfg.rate})")
+    written = await synthesize_batch(pairs, out, tts_cfg, force=force)
+    provider = tts_cfg.provider
+    print(
+        f"TTS ready: {out} ({len(pairs)} clips, provider={provider}, "
+        f"written={written}, voice={tts_cfg.voice})"
+    )
     return out
 
 

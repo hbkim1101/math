@@ -51,10 +51,16 @@ class NarrateStep(BaseModel):
 
 
 class TtsConfig(BaseModel):
+    provider: Literal["edge", "elevenlabs"] = "edge"
     voice: str = "ko-KR-SunHiNeural"
     rate: str = "-14%"
     pitch: str = "-2Hz"
     pause_ms: int = 420
+    # ElevenLabs (provider=elevenlabs)
+    elevenlabs_voice_id: str = ""
+    elevenlabs_model: str = "eleven_multilingual_v2"
+    elevenlabs_stability: float = 0.45
+    elevenlabs_similarity: float = 0.75
 
 
 class SectionStep(BaseModel):
