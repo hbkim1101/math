@@ -94,18 +94,15 @@ def _derivative_step_actions(index: int, config: VisualConfig) -> list[VisualAct
     elif index == 1:
         actions = [
             VisualAction(action="caption", label="미분하면 기울기 함수가 나옵니다"),
-            VisualAction(action="show_equation", label=r"f'(x)=9x^2+7", color="HIGHLIGHT"),
         ]
     elif index == 2:
         actions = [
             VisualAction(action="caption", label=f"x={x0:g}에서 접선 기울기"),
             VisualAction(action="tangent_at", expr=expr, x=x0, color="YELLOW"),
-            VisualAction(action="show_equation", label=rf"f'({x0:g})=16", color="ANSWER"),
         ]
     else:
         actions = [
             VisualAction(action="caption", label="정답 확인"),
-            VisualAction(action="show_equation", label=rf"f'({x0:g})=16", color="ANSWER"),
         ]
     return actions
 
@@ -125,12 +122,10 @@ def _continuity_step_actions(index: int, config: VisualConfig) -> list[VisualAct
     if index == 1:
         return [
             VisualAction(action="caption", label="좌극한 계산"),
-            VisualAction(action="show_equation", label=rf"\lim_{{x\to {bp:g}^-}} f(x)=a-2", color="HIGHLIGHT"),
         ]
     if index == 2:
         return [
             VisualAction(action="caption", label="우극한 = f(1)"),
-            VisualAction(action="show_equation", label=rf"f({bp:g})=1", color="HIGHLIGHT"),
         ]
     if index == 3:
         return [
@@ -141,16 +136,12 @@ def _continuity_step_actions(index: int, config: VisualConfig) -> list[VisualAct
                 from_value=config.param_from,
                 to_value=config.param_to,
             ),
-            VisualAction(action="show_equation", label=r"a=3", color="ANSWER"),
         ]
     return [VisualAction(action="caption", label="정답")]
 
 
 def _equation_step_actions(index: int, step: Step) -> list[VisualAction]:
-    return [
-        VisualAction(action="caption", label=step.caption or step.narration),
-        VisualAction(action="show_equation", label=step.latex, color="HIGHLIGHT" if index < 3 else "ANSWER"),
-    ]
+    return [VisualAction(action="caption", label=step.caption or step.narration)]
 
 
 def _extract_polynomial(text: str) -> str | None:

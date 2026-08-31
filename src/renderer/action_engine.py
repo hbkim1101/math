@@ -7,7 +7,8 @@ from manim import *
 from src.config import ANSWER_COLOR, HIGHLIGHT_COLOR, KOREAN_FONT
 from src.dsl.visual import VisualAction, VisualConfig
 from src.renderer.expression import derivative_at, eval_expr, make_function, make_parametric_function
-from src.renderer.graph_helpers import caption_bar, make_graph_axes
+from src.renderer.graph_helpers import make_graph_axes
+from src.renderer.layout import caption_bar, place_equation, place_graph_group
 
 if TYPE_CHECKING:
     from src.scenes.hansu_scene import HansuSceneContext
@@ -34,22 +35,33 @@ class ActionEngine:
         self.ctx = ctx
         self.scene = ctx.scene
         self.axes: Axes | None = None
+        self.graph_group = VGroup()
         self.layer = VGroup()
         self.caption: Text | None = None
 
     def _color(self, name: str) -> ManimColor:
         return COLOR_MAP.get(name.upper(), BLUE)
 
+    def clear_step_visuals(self) -> None:
+        """이전 step 그래프·라벨 제거 (겹침 방지)."""
+        if len(self.layer) > 0:
+            self.scene.play(FadeOut(self.layer), run_time=0.3)
+        self.layer = VGroup()
+        self.graph_group = VGroup()
+        self.axes = None
+
     def ensure_axes(self, config: VisualConfig) -> Axes:
         if self.axes is None:
             xr = config.x_range
             yr = config.y_range
-            self.axes = make_graph_axes(
+            axes = make_graph_axes(
                 x_range=(xr[0], xr[1], max(1, (xr[1] - xr[0]) / 4)),
                 y_range=(yr[0], yr[1], max(1, (yr[1] - yr[0]) / 4)),
-            ).shift(DOWN * 0.15)
+            )
+            self.graph_group = place_graph_group(VGroup(axes))
+            self.axes = self.graph_group[0]
             self.scene.play(Create(self.axes), run_time=0.7)
-            self.layer.add(self.axes)
+            self.layer.add(self.graph_group)
         return self.axes
 
     def set_caption(self, text: str) -> None:
@@ -79,17 +91,8 @@ class ActionEngine:
         fn = make_function(action.expr)
         x0, x1 = (action.x_range or config.x_range)[:2]
         graph = axes.plot(fn, x_range=[x0, x1], color=self._color(action.color), stroke_width=3)
-        label = None
-        if action.label:
-            label = MathTex(action.label, font_size=24, color=self._color(action.color)).next_to(
-                axes, UP, buff=0.12
-            )
-        if label:
-            self.scene.play(Create(graph), Write(label), run_time=1.0)
-            self.layer.add(graph, label)
-        else:
-            self.scene.play(Create(graph), run_time=1.0)
-            self.layer.add(graph)
+        self.scene.play(Create(graph), run_time=1.0)
+        self.layer.add(graph)
 
     def _action_tangent_at(self, action: VisualAction, config: VisualConfig) -> None:
         axes = self.ensure_axes(config)
@@ -104,10 +107,9 @@ class ActionEngine:
             color=self._color(action.color or "YELLOW"),
             stroke_width=2.5,
         )
-        point = Dot(axes.coords_to_point(x0, y0), color=YELLOW, radius=0.09)
-        coord = MathTex(rf"({x0},\,{y0:.0f})", font_size=24, color=YELLOW).next_to(point, UR, buff=0.08)
-        self.scene.play(FadeIn(point), Create(tangent), Write(coord), run_time=0.9)
-        self.layer.add(point, tangent, coord)
+        point = Dot(axes.coords_to_point(x0, y0), color=YELLOW, radius=0.08)
+        self.scene.play(FadeIn(point), Create(tangent), run_time=0.9)
+        self.layer.add(point, tangent)
 
     def _action_highlight_point(self, action: VisualAction, config: VisualConfig) -> None:
         axes = self.ensure_axes(config)
@@ -119,17 +121,9 @@ class ActionEngine:
             y0 = eval_expr(action.expr, x0)
         else:
             y0 = 0.0
-        dot = Dot(axes.coords_to_point(x0, y0), color=RED, radius=0.09)
-        label = None
-        if action.label:
-            label = MathTex(action.label, font_size=22, color=RED).next_to(dot, UR, buff=0.08)
-        anims: list[Any] = [GrowFromCenter(dot)]
-        if label:
-            anims.append(Write(label))
-        self.scene.play(*anims, run_time=0.6)
+        dot = Dot(axes.coords_to_point(x0, y0), color=RED, radius=0.08)
+        self.scene.play(GrowFromCenter(dot), run_time=0.5)
         self.layer.add(dot)
-        if label:
-            self.layer.add(label)
 
     def _action_vertical_line(self, action: VisualAction, config: VisualConfig) -> None:
         axes = self.ensure_axes(config)
@@ -141,17 +135,9 @@ class ActionEngine:
             axes.coords_to_point(x0, yr[1]),
             color=GRAY,
             stroke_width=1.5,
-        ) if action.dashed else Line(
-            axes.coords_to_point(x0, yr[0]),
-            axes.coords_to_point(x0, yr[1]),
-            color=GRAY,
-            stroke_width=1.5,
         )
-        label = MathTex(action.label or rf"x={x0:g}", font_size=24).next_to(
-            axes.coords_to_point(x0, yr[0]), DOWN, buff=0.12
-        )
-        self.scene.play(Create(line), Write(label), run_time=0.6)
-        self.layer.add(line, label)
+        self.scene.play(Create(line), run_time=0.5)
+        self.layer.add(line)
 
     def _action_plot_piecewise(self, action: VisualAction, config: VisualConfig) -> None:
         axes = self.ensure_axes(config)
@@ -165,7 +151,7 @@ class ActionEngine:
         if action.param and action.from_value is not None and action.to_value is not None:
             tracker = ValueTracker(action.from_value)
 
-            def left_graph() -> ParametricFunction | VMobject:
+            def left_graph() -> VMobject:
                 fn = make_parametric_function(config.expr, action.param, tracker.get_value())
                 return axes.plot(fn, x_range=[config.x_range[0], bp - 0.001], color=TEAL, stroke_width=3)
 
@@ -184,26 +170,19 @@ class ActionEngine:
         )
 
     def _action_animate_param(self, action: VisualAction, config: VisualConfig) -> None:
-        pass  # handled inside plot_piecewise
+        pass
 
     def _action_show_equation(self, action: VisualAction, config: VisualConfig) -> None:
         assert action.label is not None
-        eq = MathTex(action.label, font_size=36, color=self._color(action.color or "WHITE"))
-        if eq.width > 5.5:
-            eq.scale(5.5 / eq.width)
-        eq.to_edge(RIGHT, buff=0.45).shift(DOWN * 0.3)
-        box = SurroundingRectangle(eq, color=self._color(action.color or "HIGHLIGHT"), buff=0.12)
-        self.scene.play(Write(eq), Create(box), run_time=0.8)
-        self.layer.add(eq, box)
+        eq = place_equation(MathTex(action.label, font_size=30, color=self._color(action.color or "WHITE")))
+        self.scene.play(Write(eq), run_time=0.7)
+        self.layer.add(eq)
 
     def _action_fade_out(self, action: VisualAction, config: VisualConfig) -> None:
-        if len(self.layer) > 0:
-            self.scene.play(FadeOut(self.layer), run_time=0.45)
-            self.layer = VGroup()
-            self.axes = None
+        self.clear_step_visuals()
 
     def _action_clear(self, action: VisualAction, config: VisualConfig) -> None:
-        self._action_fade_out(action, config)
+        self.clear_step_visuals()
 
     def _action_brace_y(self, action: VisualAction, config: VisualConfig) -> None:
         axes = self.ensure_axes(config)

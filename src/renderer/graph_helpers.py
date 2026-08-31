@@ -172,6 +172,6 @@ def korean_label(text: str, font_size: int = 22, color: ManimColor = WHITE) -> T
 
 
 def caption_bar(text: str) -> Text:
-    bar = Text(text, font=KOREAN_FONT, font_size=22, color=WHITE)
-    bar.to_edge(DOWN, buff=0.35)
-    return bar
+    from src.renderer.layout import caption_bar as _caption
+
+    return _caption(text)

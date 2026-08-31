@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from manim import *
 
-from src.config import ANSWER_COLOR, HIGHLIGHT_COLOR, KOREAN_FONT, TITLE_COLOR
+from src.config import ANSWER_COLOR, KOREAN_FONT, TITLE_COLOR
 from src.dsl.models import ExamSet, Problem, get_problem, load_exam
 from src.pipeline.planner import (
     enrich_problem,
@@ -18,7 +17,7 @@ from src.pipeline.planner import (
     step_duration,
 )
 from src.renderer.action_engine import ActionEngine
-from src.renderer.graph_helpers import caption_bar
+from src.renderer.layout import caption_bar, place_equation
 
 
 @dataclass
@@ -27,6 +26,11 @@ class HansuSceneContext:
     problem: Problem
     exam: ExamSet
     manifest: dict = field(default_factory=dict)
+
+
+GRAPH_ACTIONS = frozenset({
+    "plot", "tangent_at", "plot_piecewise", "highlight_point", "vertical_line", "brace_y",
+})
 
 
 class HansuAutoScene(Scene):
@@ -61,28 +65,34 @@ class HansuAutoScene(Scene):
         config = problem.visual
 
         header = VGroup(
-            Text(exam.brand, font=KOREAN_FONT, font_size=22, color=GRAY_B),
+            Text(exam.brand, font=KOREAN_FONT, font_size=20, color=GRAY_B),
             Text(
                 f"{exam.section} · {problem.id}번 · {problem.topic}",
                 font=KOREAN_FONT,
-                font_size=28,
+                font_size=26,
                 color=TITLE_COLOR,
             ),
-        ).arrange(DOWN, buff=0.08).to_edge(UP, buff=0.28)
+        ).arrange(DOWN, buff=0.06).to_edge(UP, buff=0.22)
         self.play(FadeIn(header, shift=DOWN * 0.1), run_time=0.45)
 
         engine = ActionEngine(ctx)
-        eq_panel = VGroup()
+        eq_mob: Mobject | None = None
 
         for i, step in enumerate(problem.steps):
             dur = step_duration(ctx.manifest, i)
             cap_text = step.caption or step.narration
+
+            # 이전 step 요소 제거 (그래프·수식 겹침 방지)
+            if i > 0:
+                engine.clear_step_visuals()
+            if eq_mob is not None:
+                self.play(FadeOut(eq_mob), run_time=0.2)
+                eq_mob = None
+
             engine.set_caption(cap_text)
 
-            has_graph_action = any(
-                a.action in ("plot", "tangent_at", "plot_piecewise", "highlight_point", "vertical_line")
-                for a in step.visual
-            )
+            has_graph = any(a.action in GRAPH_ACTIONS for a in step.visual)
+            has_eq_action = any(a.action == "show_equation" for a in step.visual)
 
             if step.visual and config:
                 for action in step.visual:
@@ -90,22 +100,24 @@ class HansuAutoScene(Scene):
                         continue
                     engine.execute(action, config)
 
-            latex = MathTex(step.latex, font_size=32 if has_graph_action else 34, color=WHITE)
-            max_w = 5.0 if has_graph_action else 11.0
-            if latex.width > max_w:
-                latex.scale(max_w / latex.width)
-            if has_graph_action:
-                latex.to_edge(RIGHT, buff=0.4).shift(UP * 0.2)
-            else:
-                latex.move_to(ORIGIN).shift(DOWN * 0.3)
+            if not has_eq_action and step.latex.strip():
+                latex = place_equation(MathTex(step.latex, font_size=30 if has_graph else 34, color=WHITE))
+                eq_mob = latex
+                self.play(Write(latex), run_time=min(0.85, dur * 0.35))
+            elif not has_graph and step.latex.strip():
+                latex = place_equation(MathTex(step.latex, font_size=34, color=WHITE))
+                latex.move_to(ORIGIN).shift(DOWN * 0.2)
+                eq_mob = latex
+                self.play(Write(latex), run_time=min(0.85, dur * 0.35))
 
-            if eq_panel:
-                self.play(FadeOut(eq_panel), run_time=0.25)
-            eq_panel = VGroup(latex)
-            self.play(Write(latex), run_time=min(0.9, dur * 0.35))
             self.wait(max(dur - 1.0, 0.6))
 
-        self.play(FadeOut(eq_panel), run_time=0.25)
+        if eq_mob is not None:
+            self.play(FadeOut(eq_mob), run_time=0.2)
+        engine.clear_step_visuals()
+        if engine.caption:
+            self.play(FadeOut(engine.caption), run_time=0.2)
+
         self._show_answer(problem)
         self.wait(1.2)
 
