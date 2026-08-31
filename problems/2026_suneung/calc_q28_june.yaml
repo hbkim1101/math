@@ -1,0 +1,205 @@
+exam: "2026학년도 6월 모의평가"
+section: "미적분 (선택)"
+source: "한국교육과정평가원"
+
+problems:
+  - id: 28
+    topic: "합성함수 · 변곡점 접선"
+    points: 4
+    question_latex: '(f(x))^5+(f(x))^3+ax+b=\ln\left(x^2+x+\frac{5}{2}\right)'
+    question_note: 'f(-3)f(3)<0,\quad f''(2)>0'
+    answer: "① $-3e^{-4/3}$"
+    lecture:
+      slug: "2026_june_q28"
+      voice: "ko-KR-SunHiNeural"
+      tts:
+        voice: "ko-KR-SunHiNeural"
+        rate: "-16%"
+        pitch: "-3Hz"
+        pause_ms: 480
+      background: "#0f0f1a"
+      header:
+        title: "2026학년도 6월 모평 · 미적분 28번"
+        subtitle: "자동 강의 엔진"
+      steps:
+        - type: narrate
+          text: "6월 28번 — f를 직접 구하지 않는 게 핵심입니다."
+          speech: >
+            6월 모평 미적분 28번입니다.
+            식이 무섭게 길어 보이지만, 사실 f를 정면으로 풀 필요는 없어요.
+            겉함수와 안쪽 함수, 이 합성 구조를 먼저 잡는 게 관건입니다.
+
+        - type: problem
+        - type: fade_out
+          target: board
+
+        - type: narrate
+          text: "조건 (가)을 이항하면 g(f(x)) = h(x) 항등식."
+          speech: >
+            조건 가를 정리해 볼게요.
+            오른쪽에 있는 a x 더하기 b를 넘기면,
+            g(f(x))는 h(x)와 같다는 한 줄짜리 항등식이 됩니다.
+            여기서 g(y)는 y 다섯제곱 더하기 y 세제곱이고,
+            h(x)는 로그 x제곱 더하기 x 더하기 이분의 오, 빼기 a x, 빼기 b 입니다.
+
+        - type: latex_block
+          items:
+            - 'g(y)=y^5+y^3'
+            - 'g(f(x))=h(x)'
+            - 'h(x)=\ln\left(x^2+x+\frac{5}{2}\right)-ax-b'
+          colors: ["purple", "yellow", "white"]
+        - type: clear
+
+        - type: narrate
+          text: "g(y) 그래프 — 영점에서만 삼차처럼 닿음."
+          speech: >
+            먼저 겉함수 g(y)를 그려 봅시다.
+            y 다섯제곱 더하기 y 세제곱은 원점에서만 영이고,
+            그 밖에서는 기울기가 항상 양수예요.
+            즉, y가 영일 때만 g도 영. 이게 나중에 f(c)=0과 연결됩니다.
+
+        - type: graph
+          axes: { x_range: [-1.6, 1.6, 0.5], y_range: [-1.2, 1.2, 0.5], x_len: 7, y_len: 4.5 }
+          curves:
+            - preset: g_y5_y3
+              x_plot: [-1.4, 1.4]
+              color: purple
+              label_latex: 'y=g(t)=t^5+t^3'
+          dots:
+            - { x: 0, y: 0, color: yellow }
+        - type: clear
+
+        - type: narrate
+          text: "f(-3)f(3)<0 → (−3,3) 안에 f(c)=0."
+          speech: >
+            조건 나를 보면 f(-3)과 f(3)의 부호가 반대죠.
+            f는 연속이니까 사잇값 정리에 의해,
+            열린구간 마이너스 삼에서 삼 사이 어딘가에 f(c)=0인 c가 반드시 있습니다.
+
+        - type: number_line
+          x_range: [-3.5, 3.5, 1]
+          markers:
+            - { x: -3, label_latex: 'f(-3)<0', color: red }
+            - { x: 3, label_latex: 'f(3)>0', color: blue }
+            - { x: -2, label_latex: 'c', color: yellow }
+        - type: clear
+
+        - type: narrate
+          text: "f(c)=0 → g(f(c))=0 → h(c)=0."
+          speech: >
+            f(c)가 영이면 g(f(c))도 g(영)이니까 영이에요.
+            항등식 g(f(x))=h(x)에 대입하면 h(c)=0.
+            로그 곡선 y=ln(x제곱+x+5/2)와 직선 y=a x+b가 x=c에서 만난다는 뜻입니다.
+
+        - type: latex
+          content: 'g(0)=0 \Rightarrow h(c)=0'
+          font_size: 34
+          color: yellow
+        - type: clear
+
+        - type: narrate
+          text: "이계도함수 → h(c)=h'(c)=h''(c)=0 (변곡점 접선)."
+          speech: >
+            f가 이계도함수라면, c 근처에서 h(x)는 단순히 영을 지나면 안 됩니다.
+            g(y)가 y=영에서 삼차처럼 닿기 때문에,
+            h(c), h 프라임 c, h 더블 프라임 c 가 모두 영이 되어야 해요.
+            기하적으로는, 로그 그래프의 변곡점에서 직선 y=a x+b가 접해야 합니다.
+
+        - type: latex
+          content: 'h(c)=h''(c)=h''(c)=0'
+          font_size: 32
+          color: highlight
+        - type: clear
+
+        - type: narrate
+          text: "h''(c)=0 → c=−2 또는 c=1."
+          speech: >
+            h(x)를 두 번 미분하면 h 더블 프라임 x는
+            Q(x) 제곱으로 나눈 마이너스 이 곱하기 (x+2)(x-1) 형태예요.
+            h 더블 프라임 c=0에서 c는 마이너스 이, 또는 일.
+            둘 다 로그 함수의 변곡점입니다.
+
+        - type: latex_block
+          items:
+            - 'h''(x)=\frac{-2(x+2)(x-1)}{Q(x)^2}'
+            - 'c=-2 \quad \text{or} \quad c=1'
+          colors: ["white", "yellow"]
+        - type: clear
+
+        - type: narrate
+          text: "ln 그래프 + 변곡점 표시."
+          speech: >
+            y=ln(x제곱+x+5/2) 그래프를 그려 볼게요.
+            x=마이너스 이와 x=일에서 오목과 볼록이 바뀝니다.
+            이 두 점에서만, 변곡점 접선 후보가 생깁니다.
+
+        - type: graph
+          axes: { x_range: [-3.5, 3.0, 1], y_range: [-1.5, 3.0, 1], x_len: 8, y_len: 4.2 }
+          curves:
+            - preset: june28_ln
+              x_plot: [-3.0, 2.5]
+              color: blue
+              label_latex: 'y=\ln\left(x^2+x+\frac{5}{2}\right)'
+          dots:
+            - { x: -2, preset_y: june28_ln, color: red, label_latex: 'x=-2' }
+            - { x: 1, preset_y: june28_ln, color: red, label_latex: 'x=1' }
+        - type: clear
+
+        - type: narrate
+          text: "변곡점 접선 두 후보 — 왼쪽 a<0, 오른쪽 a>0."
+          speech: >
+            변곡점에서 그은 접선이 두 개 후보입니다.
+            x=마이너스 이 쪽은 기울기 a가 음수,
+            x=일 쪽은 a가 양수예요.
+
+        - type: graph
+          axes: { x_range: [-3.5, 3.0, 1], y_range: [-1.5, 3.0, 1], x_len: 8, y_len: 4.2 }
+          shift: [0, 0]
+          curves:
+            - preset: june28_ln
+              x_plot: [-3.0, 2.5]
+              color: blue
+          tangents:
+            - { at_x: -2, color: yellow }
+            - { at_x: 1, color: orange }
+        - type: clear
+
+        - type: narrate
+          text: "f'(2)>0 → h가 x=2에서 증가 → c=−2."
+          speech: >
+            아직 안 쓴 조건, f 프라임 2가 영보다 크다.
+            h 프라임 x는 H 프라임 f(x) 곱하기 f 프라임 x 꼴인데,
+            H 프라임은 항상 영 이상이에요.
+            그러면 x=2에서 h가 증가하려면 h 프라임 2도 양수여야 합니다.
+            x=일 후보는 h 프라임 2가 음수라 탈락.
+            따라서 c=마이너스 이, a=마이너스 이분의 삼.
+
+        - type: latex
+          content: 'c=-2,\quad a=-\frac{2}{3}'
+          font_size: 30
+          color: yellow
+        - type: clear
+
+        - type: narrate
+          text: "h(−2)=0 → b=ln(9/2)−4/3."
+          speech: >
+            c=마이너스 이를 h(c)=0에 넣으면,
+            b는 로그 이분의 구 빼기 삼분의 사가 됩니다.
+
+        - type: latex_block
+          items:
+            - 'a=-\frac{2}{3}'
+            - 'b=\ln\frac{9}{2}-\frac{4}{3}'
+          colors: ["yellow", "white"]
+        - type: clear
+
+        - type: narrate
+          text: "a×e^b = −3e^{−4/3} → 정답 ①"
+          speech: >
+            구하는 값 a 곱하기 e의 b제곱.
+            계산하면 마이너스 삼 곱하기 e의 마이너스 삼분의 사제곱.
+            정답은 1번입니다.
+
+        - type: answer
+          latex: 'a\times e^b=-3e^{-\frac{4}{3}}'
+          label: "정답  ①"
