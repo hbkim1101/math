@@ -43,7 +43,14 @@ scripts/render_lecture.py      # YAML → MP4
 problems/2026_suneung/calc_q28_june.yaml
 ```
 
-## 레거시 (문항별 손작업 Scene)
+## TTS 품질
+
+- 기본: **edge-tts** + SSML (느린 속도, 문장 간 pause)
+- YAML `narrate.speech`: 화면 자막(`text`)과 별도로 **자연스러운 내레이션** 작성
+- `lecture.tts`: voice, rate, pitch, pause_ms 조절
+
+수학한수급 목소리는 **사람 녹음** 또는 ElevenLabs 등 고품질 TTS API 연동이 필요합니다.
+edge-tts는 무료 대안으로 “로봇 느낌” 한계가 있습니다.
 
 `calc_q21.py`, `calc_q28_june_v2.py` 등은 **프로토타입**. 새 문항은 YAML 우선.
 
