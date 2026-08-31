@@ -72,6 +72,25 @@ flow:
     visual:
       type: graph
       graph: f_prime
+      annotate:
+        - action: dot
+          at: [-1, 0]
+          color: YELLOW
+          say: "먼저, x는 마이너스 1에서 f 프라임이 0입니다."
+        - action: dot
+          at: [1, 0]
+          color: YELLOW
+          say: "x는 1에서도 0이에요."
+        - action: pulse_dot
+          at: [0, 6]
+          color: RED
+          label: "(0,6)"
+          say: "f 프라임 0은 6, 꼭짓점입니다."
+        - action: arrow
+          from: [1.8, 2]
+          to: [2.2, -1]
+          color: ORANGE
+          say: "바깥 구간에서는 f 프라임이 음수, 즉 f는 감소합니다."
 
   # ── f(x) ──
   - link: therefore
@@ -84,6 +103,20 @@ flow:
     visual:
       type: graph
       graph: f_cubic
+      annotate:
+        - action: vline
+          x: 1
+          color: GRAY
+          say: "x=1에서 f(1)을 확인합니다."
+        - action: hline
+          y: -5
+          color: RED
+          label: 'y=-\frac{k}{2}'
+          say: "f(1)는 이 높이, 마이너스 k 나 2입니다."
+        - action: dot
+          at: [1, -5]
+          color: RED
+          say: "점 (1, −k/2)에 주목!"
 
   # ── g(x), (나) ──
   - link: therefore
@@ -96,8 +129,24 @@ flow:
     visual:
       type: graph
       graph: g_piecewise
-      params:
-        t_max: "13"
+      annotate:
+        - action: hline
+          y: 13
+          color: RED
+          label: "t=13"
+          say: "조건 (나), 수평선 y=13이 접합니다."
+        - action: brace_y
+          x: -0.2
+          y0: 5
+          y1: 13
+          color: ORANGE
+          label: "8"
+          say: "극값 차이, 즉 높이 8이에요."
+        - action: label
+          at: [-1.6, 9]
+          label: '\frac{k}{2}=5'
+          color: GREEN
+          say: "그래서 k 나 2는 5, k는 10!"
 
   - link: therefore
     say: k 나 2는 5이므로 k는 10입니다.

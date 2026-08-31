@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""풀이 문법 강의 — 짧은 TTS + 시각 beat 동기화."""
+"""풀이 문법 강의 — 짧은 TTS + 그래프 주석 beat."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from src.grammar.models import FlowNode, SolutionScript, load_solution  # noqa: E402
+from src.grammar.models import AnnotateAction, FlowNode, SolutionScript, load_solution  # noqa: E402
 from src.pipeline.assembler import concat_audio, merge_audio_video, write_srt  # noqa: E402
 from src.tts.synthesizer import synthesize_narrations_sync  # noqa: E402
 
@@ -22,19 +22,29 @@ def _short_say(node: FlowNode) -> str:
     return (node.caption or node.say[:40]).strip()
 
 
+def _anns(node: FlowNode) -> list[AnnotateAction]:
+    a = list(node.annotate)
+    if node.visual:
+        a.extend(node.visual.annotate)
+    return a
+
+
 def collect_beats(script: SolutionScript) -> list[tuple[str, str]]:
-    """(tts_text, link) — 시각 beat마다 짧은 멘트."""
-    beats: list[tuple[str, str]] = [("문제를 확인합니다.", "therefore")]
+    beats: list[tuple[str, str]] = [("문제 그래프를 그리기 전, 조건부터 봅니다.", "therefore")]
 
     def walk(nodes: list[FlowNode]) -> None:
         for node in nodes:
             beats.append((_short_say(node), node.link))
+            for ann in _anns(node):
+                if ann.say:
+                    beats.append((ann.say.strip(), "therefore"))
             if node.link == "when" and node.cases:
                 for case in node.cases:
-                    beats.append((f"{case.name}의 경우", "when"))
+                    beats.append((f"만약, {case.name}", "when"))
                     walk(case.flow)
+
     walk(script.flow)
-    beats.append((f"정답은 {script.answer}입니다.", "therefore"))
+    beats.append((f"정답, {script.answer}", "therefore"))
     return beats
 
 
@@ -88,7 +98,7 @@ def main() -> None:
     docs = ROOT / "docs" / "videos" / f"{slug}.mp4"
     import shutil
     shutil.copy(final, docs)
-    print(f"✓ {final}\n  {docs}")
+    print(f"✓ {final}\n  {docs}  ({t:.0f}s)")
 
 
 if __name__ == "__main__":

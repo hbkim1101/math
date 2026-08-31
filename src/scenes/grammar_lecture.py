@@ -9,7 +9,8 @@ from manim import *
 
 from src.config import ANSWER_COLOR, KOREAN_FONT
 from src.grammar.graphs_q15 import GRAPH_BUILDERS
-from src.grammar.models import FlowNode, SolutionScript, load_solution
+from src.grammar.models import AnnotateAction, FlowNode, SolutionScript, load_solution
+from src.renderer.graph_annotator import GraphAnnotator
 from src.renderer.lecture_board import LectureBoard, split_math_lines
 
 
@@ -50,19 +51,34 @@ class GrammarLectureScene(Scene):
             if lines:
                 board.write_math_progressive(lines)
 
-            if node.visual and node.visual.type == "graph" and node.visual.graph:
+            annotations = _all_annotations(node)
+            has_graph = bool(node.visual and node.visual.type == "graph" and node.visual.graph)
+
+            if has_graph:
                 builder = GRAPH_BUILDERS.get(node.visual.graph)
                 if builder:
                     board.set_graph(builder())
 
-            board.wait_lesson(seg_dur(), anim_done=1.2 if lines else 0.8)
+            board.wait_lesson(seg_dur(), anim_done=1.0 if has_graph else 0.6)
+
+            if has_graph and annotations and board.graph_mob:
+                ann = GraphAnnotator(self, board.graph_mob)
+                for act in annotations:
+                    if act.say:
+                        board.set_caption(act.say)
+                    t = ann._play_one(act)
+                    if act.say:
+                        board.wait_lesson(seg_dur(), anim_done=t)
+                    else:
+                        self.wait(0.25)
+
             board.hide_badge()
 
             if node.link == "when" and node.cases:
                 for case in node.cases:
                     board.set_case_tag(case.name)
                     board.set_caption(f"→ {case.name}")
-                    board.wait_lesson(min(seg_dur(), 1.2), 0.3)
+                    board.wait_lesson(seg_dur(), 0.2)
                     for sub in case.flow:
                         teach(sub)
                     board.set_case_tag(None)
@@ -108,3 +124,10 @@ class GrammarLectureScene(Scene):
 def _short(text: str, n: int = 36) -> str:
     t = re.sub(r"\s+", " ", text.strip())
     return t if len(t) <= n else t[: n - 1] + "…"
+
+
+def _all_annotations(node: FlowNode) -> list[AnnotateAction]:
+    items = list(node.annotate)
+    if node.visual:
+        items.extend(node.visual.annotate)
+    return items
