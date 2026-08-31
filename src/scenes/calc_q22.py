@@ -181,6 +181,3 @@ class Q22LectureScene(LectureMixin, Scene):
         cap = self.show_caption(cap, f"정답 {problem.answer}")
         self.show_answer_box(problem.answer)
         self.wait_segment("outro", anim_time=0.7)
-
-
-DEFAULT_EXAM = Path(__file__).resolve().parents[2] / "problems" / "2026_suneung" / "q22.yaml"
