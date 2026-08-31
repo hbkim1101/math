@@ -20,6 +20,7 @@ SCENES = [
     ("src/scenes/calc_q30.py", "Q30CalculusScene", "q30_calculus"),
     ("src/scenes/calc_q28.py", "Q28SeptMockScene", "q28_calculus"),
     ("src/scenes/calc_q21.py", "Q21CubicInequalityScene", "q21_cubic"),
+    ("src/scenes/calc_q28_june.py", "Q28JuneMockScene", "q28_june"),
 ]
 
 

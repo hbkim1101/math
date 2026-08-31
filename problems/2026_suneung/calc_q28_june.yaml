@@ -1,0 +1,31 @@
+exam: "2026학년도 6월 모의평가"
+section: "미적분 (선택)"
+source: "한국교육과정평가원"
+
+problems:
+  - id: 28
+    topic: "합성함수 · 변곡점 접선"
+    points: 4
+    question_latex: '(f(x))^5+(f(x))^3+ax+b=\ln\left(x^2+x+\frac{5}{2}\right)'
+    question_note: "이계도함수 f, f(-3)f(3)<0, f'(2)>0"
+    choices:
+      - "① $-3e^{-4/3}$"
+      - "② $-2e^{-4/3}$"
+      - "③ $-e^{-4/3}$"
+      - "④ $-3e^{-2/3}$"
+      - "⑤ $-2e^{-2/3}$"
+    answer: "① $-3e^{-4/3}$"
+    answer_value: -3
+    steps:
+      - narration: "H(y)=y⁵+y³, r(x)=ln(x²+x+5/2)−ax−b로 두면 H(f(x))=r(x)."
+        latex: 'H(f(x))=r(x),\quad H''(y)=5y^4+3y^2\ge0'
+      - narration: "f(-3)f(3)<0 → 사잇값정리로 (−3,3) 안에 f(c)=0인 c 존재."
+        latex: '\exists c\in(-3,3),\ f(c)=0'
+      - narration: "f(c)=0이면 H(0)=0이므로 r(c)=0. H'(0)=H''(0)=0 → r'(c)=r''(c)=0."
+        latex: 'r(c)=r''(c)=r''(c)=0'
+      - narration: "r''(x)=−2(x+2)(x−1)/Q² → c=−2 또는 c=1."
+        latex: 'r''(c)=0 \Rightarrow c=-2 \text{ or } c=1'
+      - narration: "f'(2)>0 → r'(2)>0. c=1 탈락, c=−2, a=−2/3."
+        latex: 'a=\frac{2c+1}{c^2+c+\frac{5}{2}},\ a=-\frac{2}{3}'
+      - narration: "r(−2)=0에서 b=ln(9/2)−4/3, ae^b=−3e^{−4/3}."
+        latex: 'a\times e^b=-3e^{-\frac{4}{3}}'
