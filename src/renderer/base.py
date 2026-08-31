@@ -78,14 +78,25 @@ class SuneungBaseScene(Scene):
             self._fit_width(note, NARRATION_MAX_WIDTH)
             parts.append(note)
 
-        choices = Text(
-            "   ".join(self.problem.choices),
-            font=KOREAN_FONT,
-            font_size=20,
-            color=GRAY_B,
-        )
-        self._fit_width(choices, NARRATION_MAX_WIDTH)
-        parts.append(choices)
+        if getattr(self.problem, "question_note_2", None):
+            note2 = Text(
+                self.problem.question_note_2,
+                font=KOREAN_FONT,
+                font_size=24,
+                color=GRAY_A,
+            )
+            self._fit_width(note2, NARRATION_MAX_WIDTH)
+            parts.append(note2)
+
+        if self.problem.choices:
+            choices = Text(
+                "   ".join(self.problem.choices),
+                font=KOREAN_FONT,
+                font_size=20,
+                color=GRAY_B,
+            )
+            self._fit_width(choices, NARRATION_MAX_WIDTH)
+            parts.append(choices)
 
         group = VGroup(*parts).arrange(DOWN, buff=0.28)
         group.move_to(self._content_anchor())
@@ -98,7 +109,7 @@ class SuneungBaseScene(Scene):
         self.wait(0.7)
         return group
 
-    def show_step(self, step_index: int, narration: str, latex: str) -> VGroup:
+    def show_step(self, step_index: int, narration: str, latex: str, eq_size: int = 38) -> VGroup:
         step_num = Text(
             f"Step {step_index + 1}",
             font=KOREAN_FONT,
@@ -107,7 +118,7 @@ class SuneungBaseScene(Scene):
         )
         narr = Text(narration, font=KOREAN_FONT, font_size=24, color=STEP_COLOR)
         self._fit_width(narr, NARRATION_MAX_WIDTH)
-        eq = self._fit_width(MathTex(latex, font_size=38))
+        eq = self._fit_width(MathTex(latex, font_size=eq_size))
         group = VGroup(step_num, narr, eq).arrange(DOWN, buff=0.25)
         group.move_to(self._content_anchor())
         self.play(FadeIn(step_num, shift=RIGHT * 0.15), run_time=0.25)

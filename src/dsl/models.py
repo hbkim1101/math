@@ -34,7 +34,8 @@ class Problem(BaseModel):
     question_latex: str
     question_latex_2: str | None = None
     question_note: str | None = None
-    choices: list[str]
+    question_note_2: str | None = None
+    choices: list[str] = Field(default_factory=list)
     answer: str
     answer_value: int | float
     steps: list[Step]

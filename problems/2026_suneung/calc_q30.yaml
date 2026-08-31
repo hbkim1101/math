@@ -1,0 +1,29 @@
+exam: "2026학년도 대학수학능력시험"
+section: "미적분 (선택)"
+source: "한국교육과정평가원"
+
+problems:
+  - id: 30
+    topic: "역함수 · 교점의 개수"
+    points: 4
+    question_latex: 'h(x)=f^{-1}(x)'
+    choices: []
+    answer: "11"
+    answer_value: 11
+    steps:
+      - narration: "f가 증가하므로 역함수 h=f⁻¹도 전 구간에서 증가합니다."
+        latex: 'f \uparrow \;\Rightarrow\; h=f^{-1} \uparrow'
+      - narration: "(가) 양변에 제곱근 → ±를 붙이고, (나) 절댓값을 풉니다."
+        latex: '2h=\pm x(x^2-5), \quad h=\pm\left(e^{|x|-1}+1\right)'
+      - narration: "증가하는 가지만 남기면 h(x)가 구간별로 정해집니다."
+        latex: 'h(x)=\begin{cases}-e^{-x-1}-1 & (x<-1)\\ -\frac12 x(x^2-5) & (-1\le x\le1)\\ e^{x-1}+1 & (x>1)\end{cases}'
+      - narration: "g(m)은 h 기준으로: 기울기 1/m, 점 (0,1) 지나는 직선과 h의 교점 수입니다."
+        latex: 'g(m)=\#\left\{x \;\middle|\; h(x)=\frac{x}{m}+1\right\}'
+      - narration: "x=±1에서 h′(x)=1. x<-1에서 접할 때 아래식이 성립합니다."
+        latex: 'h''(1)=h''(-1)=1, \quad (-t-1)e^{-t-1}=2 \;(t<-1)'
+      - narration: "g(m) 그래프 분석 → 불연속점 a=0, b=1/e^{−t−1}."
+        latex: 'a=0, \quad b=e^{t+1} \;\text{ where } (-t-1)e^{-t-1}=2'
+      - narration: "각 값: g(0)=1, lim_{m→0+}g(m)=3, g(b)=2, (ln b/b)²=4."
+        latex: 'g(0)=1,\;\lim_{m\to0+}g(m)=3,\;g(b)=2,\;\left(\frac{\ln b}{b}\right)^2=4'
+      - narration: "따라서 정답은 1×3 + 2×4 = 11입니다."
+        latex: '1\times3+2\times4=11'
