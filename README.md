@@ -17,7 +17,14 @@
 [텍스트/LLM 생성]  (OPENAI_API_KEY 설정 시)
 ```
 
-## 빠른 시작
+# 강의형 영상 (TTS + 풀 풀이) — **권장**
+
+```bash
+PYTHONPATH=. python scripts/render_lecture.py problems/2026_suneung/q22.yaml --id 22 -q l
+# → output/lectures/q22_lecture/q22_lecture_final.mp4 (약 4분, TTS 포함)
+```
+
+## 빠른 시작 (자동 파이프라인)
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate

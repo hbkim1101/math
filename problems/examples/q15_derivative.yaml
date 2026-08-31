@@ -1,0 +1,116 @@
+# 2026 수능 15번 — 사용자 손풀이 문법 그대로
+# → : 만약 / 예를 들어    ⇒ : ~~이므로
+
+id: 15
+exam: "2026학년도 대학수학능력시험"
+section: "수학 공통"
+topic: "미분·조각함수"
+brand: "수학 한수"
+answer: "① 15/4"
+
+intro: >
+  15번입니다. 삼차함수 f와 조각함수 g가 나옵니다.
+  조건 (가)는 우미분계수, (나)는 g(x)=t의 실근 개수입니다.
+  k 더하기 f(1/2)를 구합시다.
+
+question_lines:
+  - 'f''(0)=6'
+  - 'g(x)=\begin{cases}f(x)+k&(|x|>1)\\-f(x)&(|x|\le1)\end{cases}'
+  - '\lim_{x\to a^+}\frac{g(x)-g(a)}{x-a}\le0,\quad t_{\max}=13'
+
+flow:
+  # ── (가)에서 연속성 ──
+  - link: therefore
+    say: >
+      조건 (가)에서 x가 a에 오른쪽으로 갈 때 우미분계수가 실수이려면,
+      우극한에서 g(x) 빼기 g(a)의 극한값이 0이어야 합니다.
+    math: '\lim_{x\to a^+}\frac{g(x)-g(a)}{x-a}\in\mathbb{R}'
+    caption: "(가) ⇒ 우극한에서 g(x)−g(a)→0"
+
+  - link: therefore
+    say: g(x)가 x=a에서 오른쪽 연속이므로, 우극한 g(x)는 g(a)와 같습니다.
+    math: '\lim_{x\to a^+}g(x)=g(a)'
+    caption: "⇒ x=a에서 우연속"
+
+  - link: when
+    say: x는 a입니다. a가 1이 아닌 경우와 a가 1인 경우로 나눕니다.
+    caption: "→ a≠1 / a=1"
+    cases:
+      - name: "a ≠ 1"
+        flow:
+          - link: therefore
+            say: a가 1이 아니면, a 주변에서 g는 f 더하기 k 또는 마이너스 f로 정의되어 미분가능합니다.
+            math: '\lim_{x\to a^+}g(x)=g(a)'
+            caption: "a≠1 ⇒ 자동으로 우연속"
+
+      - name: "a = 1"
+        flow:
+          - link: therefore
+            say: >
+              a가 1이면, x가 1보다 크게 갈 때 g(x)는 f(1) 더하기 k이고,
+              g(1)은 마이너스 f(1)입니다. 두 값이 같아야 하므로 f(1)은 마이너스 k 나 2입니다.
+            math: 'f(1)+k=-f(1)\;\Rightarrow\;f(1)=-\frac{k}{2}'
+            caption: "a=1 ⇒ f(1)=−k/2"
+
+  # ── g'(x) 부호 ──
+  - link: therefore
+    say: >
+      (가)에서 모든 a에 대해 우미분계수가 0 이하입니다.
+      x의 절댓값이 1보다 크면 g 프라임은 f 프라임이고,
+      절댓값이 1 이하면 g 프라임은 마이너스 f 프라임입니다.
+    math: 'g''(x)=\begin{cases}f''(x)&(|x|>1)\\-f''(x)&(|x|<1)\end{cases}\;\Rightarrow\;g''(a^+)\le0'
+    caption: "⇒ f'(x)≤0 (|x|>1), f'(x)≥0 (|x|<1)"
+
+  # ── f'(x) 그래프 ──
+  - link: therefore
+    say: >
+      f 프라임 x는 x=±1에서 0이고, f 프라임 0은 6입니다.
+      |x|<1에서 f 프라임≥0, |x|>1에서 f 프라임≤0이므로
+      f 프라임 x는 아래로 볼록한 이차함수, f 프라임 x = 마이너스 6 곱하기 x+1 곱하기 x−1입니다.
+    math: 'f''(x)=-6(x+1)(x-1)'
+    caption: "⇒ f'(x)=−6(x+1)(x−1)"
+    visual:
+      type: graph
+      graph: f_prime
+
+  # ── f(x) ──
+  - link: therefore
+    say: >
+      적분하면 f x는 마이너스 2 곱하기 x+2 곱하기 x−1 제곱 더하기 상수입니다.
+      f(1)은 마이너스 k 나 2 조건에 f(1)=−2(3)(0)−k/2이므로
+      f x = 마이너스 2(x+2)(x−1)² − k/2 입니다.
+    math: 'f(x)=-2(x+2)(x-1)^2-\frac{k}{2}'
+    caption: "⇒ f(x)=−2(x+2)(x−1)²−k/2"
+    visual:
+      type: graph
+      graph: f_cubic
+
+  # ── g(x), (나) ──
+  - link: therefore
+    say: >
+      (나)에서 g(x)=t가 서로 다른 두 실근을 갖는 t의 최댓값이 13입니다.
+      g 그래프에서 수평선 y=13이 접할 때의 높이 차이를 보면,
+      x=−1과 x=1 사이 변화량 6/6 곱하기 2 세제곱은 8입니다.
+    math: '\frac{6}{6}\{1-(-1)\}^3=8'
+    caption: "(나) ⇒ y=13, 높이차 8"
+    visual:
+      type: graph
+      graph: g_piecewise
+      params:
+        t_max: "13"
+
+  - link: therefore
+    say: k 나 2는 5이므로 k는 10입니다.
+    math: '\frac{k}{2}=5\;\Rightarrow\;k=10'
+    caption: "⇒ k=10"
+
+  - link: therefore
+    say: >
+      k=10을 대입하고 x=1/2를 넣으면 f(1/2)는 마이너스 15/4입니다.
+      따라서 k 더하기 f(1/2)는 10 빼기 15/4, 즉 15/4입니다.
+    math: 'k+f\!\left(\frac{1}{2}\right)=10-\frac{15}{4}=\frac{15}{4}'
+    caption: "⇒ 정답 ① 15/4"
+
+outro: >
+  정리합니다. (가)로 f(1)=−k/2, f 프라임 그래프로 f를 복원하고,
+  (나)로 k=10을 구해 k+f(1/2)=15/4, 정답 ①입니다.
