@@ -14,9 +14,8 @@ class Q01ExponentScene(SuneungBaseScene):
 
     def construct(self) -> None:
         header = self.show_header()
-        self.show_question()
-        self.wait(0.5)
-        self.run_solution(header)
+        question = self.show_question()
+        self.run_solution(header, question)
 
 
 class Q02DerivativeScene(SuneungBaseScene):
@@ -24,9 +23,8 @@ class Q02DerivativeScene(SuneungBaseScene):
 
     def construct(self) -> None:
         header = self.show_header()
-        self.show_question()
-        self.wait(0.5)
-        self.run_solution(header)
+        question = self.show_question()
+        self.run_solution(header, question)
 
 
 class Q03SigmaScene(SuneungBaseScene):
@@ -34,9 +32,8 @@ class Q03SigmaScene(SuneungBaseScene):
 
     def construct(self) -> None:
         header = self.show_header()
-        self.show_question()
-        self.wait(0.5)
-        self.run_solution(header)
+        question = self.show_question()
+        self.run_solution(header, question)
 
 
 class Q04ContinuityScene(SuneungBaseScene):
@@ -44,6 +41,5 @@ class Q04ContinuityScene(SuneungBaseScene):
 
     def construct(self) -> None:
         header = self.show_header()
-        self.show_question()
-        self.wait(0.5)
-        self.run_solution(header)
+        question = self.show_question()
+        self.run_solution(header, question)

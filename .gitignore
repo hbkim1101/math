@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 media/
 .pytest_cache/
+
+# docs/videos/ 는 GitHub Pages 모바일 미리보기용으로 포함

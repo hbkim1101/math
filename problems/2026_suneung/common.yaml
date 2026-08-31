@@ -6,72 +6,72 @@ problems:
   - id: 1
     topic: "지수법칙"
     points: 2
-    question_latex: r"9^{\frac{1}{4}} \times 3^{-\frac{1}{2}}"
+    question_latex: '9^{\frac{1}{4}} \times 3^{-\frac{1}{2}}'
     choices: ["① 1", "② √3", "③ 3", "④ 3√3", "⑤ 9"]
     answer: "① 1"
     answer_value: 1
     steps:
       - narration: "9를 밑이 3인 거듭제곱으로 바꿉니다."
-        latex: r"9 = 3^2"
+        latex: '9 = 3^2'
       - narration: "지수법칙을 적용합니다."
-        latex: r"9^{\frac{1}{4}} = (3^2)^{\frac{1}{4}} = 3^{\frac{1}{2}}"
+        latex: '9^{\frac{1}{4}} = (3^2)^{\frac{1}{4}} = 3^{\frac{1}{2}}'
       - narration: "같은 밑끼리 곱하면 지수를 더합니다."
-        latex: r"3^{\frac{1}{2}} \times 3^{-\frac{1}{2}} = 3^0 = 1"
+        latex: '3^{\frac{1}{2}} \times 3^{-\frac{1}{2}} = 3^0 = 1'
       - narration: "따라서 정답은 ① 1입니다."
-        latex: r"= 1"
+        latex: '= 1'
 
   - id: 2
     topic: "미분계수"
     points: 2
-    question_latex: r"f(x) = 3x^3 + 7x + 1"
+    question_latex: 'f(x) = 3x^3 + 7x + 1'
     question_note: "에 대하여 다음 극한의 값은?"
-    question_latex_2: r"\lim_{h \to 0} \frac{f(1+h) - f(1)}{h}"
+    question_latex_2: '\lim_{h \to 0} \frac{f(1+h) - f(1)}{h}'
     choices: ["① 7", "② 9", "③ 11", "④ 16", "⑤ 18"]
     answer: "④ 16"
     answer_value: 16
     steps:
       - narration: "이 극한은 x=1에서의 미분계수 f'(1)입니다."
-        latex: r"\lim_{h \to 0} \frac{f(1+h) - f(1)}{h} = f'(1)"
+        latex: '\lim_{h \to 0} \frac{f(1+h) - f(1)}{h} = f''(1)'
       - narration: "f(x)를 미분합니다."
-        latex: r"f'(x) = 9x^2 + 7"
+        latex: 'f''(x) = 9x^2 + 7'
       - narration: "x=1을 대입합니다."
-        latex: r"f'(1) = 9 \times 1 + 7 = 16"
+        latex: 'f''(1) = 9 \times 1 + 7 = 16'
       - narration: "따라서 정답은 ④ 16입니다."
-        latex: r"f'(1) = 16"
+        latex: 'f''(1) = 16'
 
   - id: 3
     topic: "시그마 (수열의 합)"
     points: 3
-    question_latex: r"\sum_{k=1}^{7}(2a_k - k) = 0"
+    question_latex: '\sum_{k=1}^{7}(2a_k - k) = 0'
     question_note: "일 때, 다음의 값은?"
-    question_latex_2: r"\sum_{k=1}^{7} a_k"
+    question_latex_2: '\sum_{k=1}^{7} a_k'
     choices: ["① 1", "② √3", "③ 3", "④ 3√3", "⑤ 14"]
     answer: "⑤ 14"
     answer_value: 14
     steps:
       - narration: "시그마의 성질로 식을 전개합니다."
-        latex: r"2\sum_{k=1}^{7} a_k - \sum_{k=1}^{7} k = 0"
+        latex: '2\sum_{k=1}^{7} a_k - \sum_{k=1}^{7} k = 0'
       - narration: "1부터 7까지의 합은 28입니다."
-        latex: r"\sum_{k=1}^{7} k = \frac{7 \times 8}{2} = 28"
+        latex: '\sum_{k=1}^{7} k = \frac{7 \times 8}{2} = 28'
       - narration: "a_k의 합을 구합니다."
-        latex: r"2\sum a_k = 28 \quad \Rightarrow \quad \sum_{k=1}^{7} a_k = 14"
+        latex: '2\sum a_k = 28 \quad \Rightarrow \quad \sum_{k=1}^{7} a_k = 14'
       - narration: "따라서 정답은 ⑤ 14입니다."
-        latex: r"\sum_{k=1}^{7} a_k = 14"
+        latex: '\sum_{k=1}^{7} a_k = 14'
 
   - id: 4
     topic: "함수의 연속"
     points: 3
-    question_latex: r"f(x) = \begin{cases} x^2 - 3x + a & (x < 1) \\ 3x - 2 & (x \geq 1) \end{cases}"
+    question_latex: 'f(x) = \begin{cases} x^2 - 3x + a & (x < 1) \\ 3x - 2 & (x \geq 1) \end{cases}'
     question_note: "가 실수 전체의 집합에서 연속일 때, 상수 a의 값은?"
     choices: ["① 1", "② 2", "③ 3", "④ 4", "⑤ 5"]
     answer: "③ 3"
     answer_value: 3
     steps:
       - narration: "x=1에서 연속이려면 좌극한 = 우극한 = 함수값이어야 합니다."
-        latex: r"\lim_{x \to 1^-} f(x) = \lim_{x \to 1^+} f(x) = f(1)"
+        latex: '\lim_{x \to 1^-} f(x) = \lim_{x \to 1^+} f(x) = f(1)'
       - narration: "x=1에서의 좌극한을 구합니다."
-        latex: r"\lim_{x \to 1^-}(x^2 - 3x + a) = 1 - 3 + a = a - 2"
+        latex: '\lim_{x \to 1^-}(x^2 - 3x + a) = 1 - 3 + a = a - 2'
       - narration: "우극한과 함수값 f(1)을 구합니다."
-        latex: r"\lim_{x \to 1^+}(3x - 2) = f(1) = 1"
+        latex: '\lim_{x \to 1^+}(3x - 2) = f(1) = 1'
       - narration: "a - 2 = 1이므로 a = 3. 정답은 ③ 3입니다."
-        latex: r"a - 2 = 1 \quad \Rightarrow \quad a = 3"
+        latex: 'a - 2 = 1 \quad \Rightarrow \quad a = 3'
