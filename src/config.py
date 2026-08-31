@@ -12,6 +12,14 @@ CAPTION_COLOR = "#E8E8E8"
 GRAPH_BG = "#0f0f1a"
 PROBLEM_BG = "#1a1a2e"
 
+# Chalkboard palette
+CHALK_BG = "#1a3d32"          # dark green board
+CHALK_WHITE = "#ece8dc"       # chalk white
+CHALK_YELLOW = "#f5e6a8"
+CHALK_PINK = "#f0b8c8"
+CHALK_CYAN = "#a8dce8"
+CHALK_FAINT = "#6a8a78"       # faded previous lines
+
 # Layout
 CAPTION_BUFF = 0.35
 HEADER_BUFF = 0.28
