@@ -14,8 +14,21 @@
 |------|------------|------|
 | 2번 | f(x) 곡선 + x=1 접선 기울기 | ④ 16 |
 | 4번 | 조각함수 + a 변화 → x=1 연속 | ③ 3 |
+| 21번 | 2ax+b 두 곡선 사이 → f'(10) | 296 |
+| 28번 | h(t)=t−tan t 합성, g 개형 소거 | ② −6 |
 | 30번 | h(x) 그래프, 교점 애니메이션, g(m) 계단 | 11 |
 | 1,3번 | (텍스트) → 그래프화 예정 | 1, 14 |
+
+### 모바일에서 영상 보기
+
+`main` 브랜치에 올려두었습니다. private 저장소라 GitHub Pages는 별도 설정이 필요합니다.
+
+- **뷰어 페이지**: https://github.com/hbkim1101/math/blob/main/docs/index.html
+- **21번 영상 직접**: https://github.com/hbkim1101/math/raw/main/docs/videos/q21_cubic.mp4
+- **28번 영상 직접**: https://github.com/hbkim1101/math/raw/main/docs/videos/q28_calculus.mp4
+- **30번 영상 직접**: https://github.com/hbkim1101/math/raw/main/docs/videos/q30_calculus.mp4
+
+GitHub 앱에서 raw 링크를 열면 바로 재생됩니다.
 
 ### 실행
 
