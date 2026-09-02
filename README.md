@@ -35,11 +35,30 @@ chmod +x scripts/render.sh
 ./scripts/render.sh high         # 1080p
 ```
 
+## 레이아웃 (강의형)
+
+```
+┌─────────────────┬──────────────────────────┐
+│  문제 이미지      │  STEP N · 해설            │
+│  (고정)          │  (단계별로 바뀜)            │
+│                 │                          │
+│  assets/        │  수식 · 풀이 · 강조         │
+│  problem_*.png  │                          │
+└─────────────────┴──────────────────────────┘
+```
+
+- **왼쪽**: 시험지 문제 이미지 (`assets/problem_270630.png`)
+- **오른쪽**: 단계별 해설 (문제판은 계속 유지)
+
+실제 시험지 PDF에서 잘라낸 이미지로 교체하려면 `assets/problem_270630.png` 를 덮어쓰면 됩니다.
+
 ## 프로젝트 구조
 
 ```
+assets/
+  problem_270630.png  # 문제 이미지 (시험지 스캔/PDF crop 가능)
 scenes/
-  common.py           # 한글 Text, step 라벨 등 공통 유틸
+  common.py           # LectureScene (2분할 레이아웃)
   problem_270630.py   # 2027.6 모의평가 미적분 30번
 scripts/
   render.sh
