@@ -5,10 +5,8 @@ from layout_config import (
     make_chalkboard_background,
     make_chalkboard_bg_texts,
     make_region_guides,
-    place_in_problem,
-    place_in_explain_right,
-    place_in_explain_bottom,
 )
+from suneung_problems import build_suneung_2_problem, build_suneung_2_explanation
 
 # 렌더 (이미지):
 #   manim -ql -s problem_explanation.py LayoutStaticScene
@@ -17,30 +15,12 @@ from layout_config import (
 
 
 def _build_layout_content():
-    """레이아웃 데모에 들어갈 배경·가이드·placeholder 묶음."""
+    """레이아웃 데모: 2025 수능 2번 + 해설."""
     bg = make_chalkboard_bg_texts()
-
     guides = make_region_guides(show_labels=True)
 
-    problem_text = VGroup(
-        Text("문제 영역", font_size=24, color=WHITE, weight=BOLD),
-        MathTex(r"\frac{f(x)-f(1)}{x-1} = f'(g(x))", color=WHITE).scale(0.9),
-        Text("(x ≠ 1)", font_size=20, color=GREY_B),
-    ).arrange(DOWN, buff=0.25)
-    place_in_problem(problem_text)
-
-    explain_right = VGroup(
-        Text("해설 영역 (우측)", font_size=22, color=WHITE, weight=BOLD),
-        Text("그래프 · 도형 · 애니메이션", font_size=18, color=GREY_B),
-        Text("여기에 시각 자료를 배치", font_size=18, color=GREY_B),
-    ).arrange(DOWN, buff=0.2)
-    place_in_explain_right(explain_right)
-
-    explain_bottom = VGroup(
-        Text("해설 영역 (좌하단)", font_size=20, color=WHITE, weight=BOLD),
-        Text("추가 설명 · 수식 · 단계", font_size=16, color=GREY_B),
-    ).arrange(DOWN, buff=0.15)
-    place_in_explain_bottom(explain_bottom)
+    problem_text = build_suneung_2_problem()
+    explain_right, explain_bottom = build_suneung_2_explanation()
 
     return VGroup(bg, guides, problem_text, explain_right, explain_bottom)
 

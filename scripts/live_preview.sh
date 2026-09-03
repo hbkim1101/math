@@ -93,7 +93,7 @@ if ! pgrep -f "python.*http.server.*$PORT" > /dev/null 2>&1; then
   echo ""
 fi
 
-WATCH_FILES=("$SCENE_FILE" "layout_config.py" "calculus_visualization.py")
+WATCH_FILES=("$SCENE_FILE" "layout_config.py" "suneung_problems.py" "calculus_visualization.py")
 echo "  감시 중: ${WATCH_FILES[*]}"
 echo "  Ctrl+C 로 종료"
 echo ""
