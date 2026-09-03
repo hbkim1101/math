@@ -65,7 +65,7 @@ echo ""
 echo "  ▶ 재생 버튼: http://localhost:$PORT"
 echo ""
 
-WATCH_FILES=("$SCENE_FILE" "layout_config.py" "suneung_problems.py" "calculus_visualization.py")
+WATCH_FILES=("$SCENE_FILE" "layout_config.py" "suneung_problems.py" "calculus_visualization.py" "manim_kit/graph.py" "manim_kit/substitution.py" "manim_kit/latex.py")
 echo "  감시 중: ${WATCH_FILES[*]}"
 echo "  Ctrl+C 로 종료"
 echo ""

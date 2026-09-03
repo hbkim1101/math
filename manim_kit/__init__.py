@@ -12,6 +12,13 @@ from manim_kit.substitution import (
     build_and_animate_substitution,
 )
 from manim_kit.latex import tex, tex_block
+from manim_kit.input_parser import (
+    parse_dsl,
+    dsl_to_latex,
+    substitution_spec_from_dsl,
+    ParsedProblem,
+    SUNEUNG_2_DSL,
+)
 
 __all__ = [
     "GraphSpec",
@@ -24,4 +31,9 @@ __all__ = [
     "build_and_animate_substitution",
     "tex",
     "tex_block",
+    "parse_dsl",
+    "dsl_to_latex",
+    "substitution_spec_from_dsl",
+    "ParsedProblem",
+    "SUNEUNG_2_DSL",
 ]

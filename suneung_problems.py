@@ -1,17 +1,20 @@
-"""수능 문제 데이터 — manim_kit 사용 예시."""
+"""수능 문제 데이터 — manim_kit + DSL 입력 사용 예시."""
 
 from manim import *
 from layout_config import LayoutRegions, place_in_problem
 from manim_kit import (
     GraphSpec,
-    SubstitutionSpec,
     build_graph_parts,
     animate_graph,
+    graph_group,
     build_substitution_steps,
     animate_substitution,
-    graph_group,
     tex,
-    tex_block,
+)
+from manim_kit.input_parser import (
+    parse_dsl,
+    substitution_spec_from_dsl,
+    SUNEUNG_2_DSL,
 )
 
 A = 2
@@ -35,10 +38,11 @@ def _explain_bottom_anchor():
 
 
 def build_suneung_2_problem():
+    parsed = parse_dsl(SUNEUNG_2_DSL)
     problem = VGroup(
         Text("2025 수능 2번", font_size=20, color=TEAL_A, weight=BOLD),
         tex(r"f(x) = x^3 - 8x + 7", scale=0.78),
-        tex(r"\lim_{h \to 0} \frac{f(2+h) - f(2)}{h}", scale=0.72),
+        tex(parsed.problem_latex, scale=0.72),
         Text("의 값을 구하시오.  [2점]", font_size=15, color=GREY_B),
     ).arrange(DOWN, buff=0.16, aligned_edge=LEFT)
     place_in_problem(problem)
@@ -46,7 +50,6 @@ def build_suneung_2_problem():
 
 
 def suneung_2_graph_spec() -> GraphSpec:
-    fa = suneung2_f(A)
     return GraphSpec(
         f=suneung2_f,
         x_range=(-2, 3.5, 1),
@@ -62,17 +65,10 @@ def suneung_2_graph_spec() -> GraphSpec:
     )
 
 
-def suneung_2_substitution_spec() -> SubstitutionSpec:
-    return SubstitutionSpec(
-        steps=[
-            r"f'(x) = 3x^2 - 8",
-            r"f'(2) = 3 \cdot 2^2 - 8",
-            r"f'(2) = 12 - 8",
-            r"f'(2) = 4",
-        ],
-        anchor=_explain_bottom_anchor() + DOWN * 0.15,
-        highlight="x",
-        key_map={"x": "2"},
+def suneung_2_substitution_spec():
+    return substitution_spec_from_dsl(
+        SUNEUNG_2_DSL,
+        _explain_bottom_anchor() + DOWN * 0.15,
     )
 
 
@@ -85,10 +81,11 @@ def build_suneung_2_tangent_graph():
 
 
 def build_suneung_2_explain_header():
+    parsed = parse_dsl(SUNEUNG_2_DSL)
     anchor = _explain_bottom_anchor()
     header = VGroup(
         Text("해설", font_size=18, color=WHITE, weight=BOLD),
-        tex(r"\lim_{h \to 0} \frac{f(2+h) - f(2)}{h} = f'(2)", scale=0.58),
+        tex(parsed.problem_latex, scale=0.58),
     ).arrange(DOWN, buff=0.1, aligned_edge=LEFT)
     header.move_to(anchor + UP * 1.05)
     header.set_max_width(LayoutRegions.PROBLEM_W - 0.9)
@@ -115,8 +112,10 @@ def build_suneung_2_deriv_substitution_steps():
 
 
 def build_suneung_2_explain_bottom():
+    parsed = parse_dsl(SUNEUNG_2_DSL)
     header = build_suneung_2_explain_header()
-    final = tex(r"f'(x)=3x^2-8 \;\Rightarrow\; f'(2)=4", scale=0.55, color=YELLOW_E)
+    final_step = parsed.substitution_steps[-1] if parsed.substitution_steps else "f'(2)=4"
+    final = tex(final_step, scale=0.55, color=YELLOW_E)
     final.move_to(_explain_bottom_anchor() + DOWN * 0.15)
     return VGroup(header, final, build_suneung_2_explain_definition())
 
