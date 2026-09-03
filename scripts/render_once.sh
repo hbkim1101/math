@@ -22,7 +22,8 @@ manim -ql -s --format png --media_dir preview/media "$SCENE_FILE" "$SCENE_NAME"
 LATEST=$(find preview/media/images -name "${SCENE_NAME}*.png" -printf '%T@ %p\n' \
   | sort -rn | head -1 | cut -d' ' -f2-)
 cp -f "$LATEST" preview/latest.png
+date +%s > preview/version.txt
 
 echo ""
 echo "  이미지: preview/latest.png"
-echo "  미리보기: http://localhost:$PORT (./scripts/live_preview.sh 실행 중일 때)"
+echo "  미리보기: http://localhost:$PORT"

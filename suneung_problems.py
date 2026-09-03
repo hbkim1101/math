@@ -44,31 +44,31 @@ def build_suneung_2_tangent_graph():
     slope = suneung2_df(A)
 
     axes = Axes(
-        x_range=[-0.5, 3, 1],
-        y_range=[-3, 5, 2],
-        x_length=box["width"] - 1.2,
-        y_length=box["height"] - 1.6,
+        x_range=[-2, 3.5, 1],
+        y_range=[-6, 14, 4],
+        x_length=box["width"] - 1.8,
+        y_length=box["height"] - 2.4,
         tips=False,
         axis_config={"color": GREY_B, "stroke_width": 1.5},
     )
-    axes.move_to(box["center"] + DOWN * 0.25)
+    axes.move_to(box["center"] + DOWN * 0.15)
 
     graph = axes.plot(
         suneung2_f,
-        x_range=[-0.3, 2.85],
+        x_range=[-1.8, 3.2],
         color=RED_C,
-        stroke_width=3,
+        stroke_width=2.5,
     )
 
     # 접선: y - f(2) = f'(2)(x - 2)
     tangent = axes.plot(
         lambda x: fa + slope * (x - A),
-        x_range=[0.3, 2.85],
+        x_range=[-0.5, 3.0],
         color=GREEN_C,
-        stroke_width=3,
+        stroke_width=2.5,
     )
 
-    point = Dot(axes.c2p(A, fa), radius=0.07, color=YELLOW)
+    point = Dot(axes.c2p(A, fa), radius=0.055, color=YELLOW)
     x_dash = DashedLine(
         axes.c2p(A, 0),
         axes.c2p(A, fa),
@@ -88,13 +88,9 @@ def build_suneung_2_tangent_graph():
         Text("접선 기울기", font_size=14, color=GREEN_C),
         MathTex(r"f'(2)=4", color=GREEN_C).scale(0.55),
     ).arrange(RIGHT, buff=0.08)
-    tangent_label.next_to(axes.c2p(2.5, fa + slope * 0.5), UP, buff=0.05)
-
-    title = Text("접선 시각화", font_size=18, color=WHITE, weight=BOLD)
-    title.move_to(box["center"] + UP * (box["height"] / 2 - 0.45))
+    tangent_label.next_to(axes.c2p(2.8, fa + slope * 0.8), UP, buff=0.05)
 
     return VGroup(
-        title,
         axes,
         graph,
         tangent,
