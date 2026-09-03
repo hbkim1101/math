@@ -20,9 +20,9 @@ def _build_layout_content():
     guides = make_region_guides(show_labels=True)
 
     problem_text = build_suneung_2_problem()
-    explain_right, explain_bottom = build_suneung_2_explanation()
+    explain_graph, explain_bottom = build_suneung_2_explanation()
 
-    return VGroup(bg, guides, problem_text, explain_right, explain_bottom)
+    return VGroup(bg, guides, problem_text, explain_graph, explain_bottom)
 
 
 class LayoutStaticScene(Scene):
@@ -39,15 +39,15 @@ class LayoutPreviewScene(Scene):
     def construct(self):
         bg = make_chalkboard_background(self)
         content = _build_layout_content()
-        _, guides, problem_text, explain_right, explain_bottom = content
+        _, guides, problem_text, explain_graph, explain_bottom = content
 
         self.add(bg)
 
         self.play(FadeIn(guides), run_time=0.8)
         self.play(
             FadeIn(problem_text),
-            FadeIn(explain_right),
+            FadeIn(explain_graph),
             FadeIn(explain_bottom),
-            run_time=0.8,
+            run_time=0.9,
         )
         self.wait(2.0)

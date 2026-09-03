@@ -136,6 +136,16 @@ def place_in_problem(mobject, buff=0.45):
     return mobject
 
 
+def explain_right_box():
+    """우측 해설 영역의 중심·크기."""
+    r = LayoutRegions
+    return {
+        "center": np.array(r.explain_right_center),
+        "width": r.EXPLAIN_RIGHT_W,
+        "height": r.EXPLAIN_RIGHT_H,
+    }
+
+
 def place_in_explain_right(mobject, buff=0.45):
     """객체를 우측 해설 영역 안에 배치."""
     box = RoundedRectangle(
