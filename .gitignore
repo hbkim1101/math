@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+media/
+preview/*
+!preview/index.html
+.DS_Store
