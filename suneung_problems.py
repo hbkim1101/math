@@ -37,8 +37,8 @@ def build_suneung_2_problem():
     return problem
 
 
-def build_suneung_2_tangent_graph():
-    """f(x) 그래프 + x=2에서의 접선 시각화 (우측 해설 영역)."""
+def build_suneung_2_graph_parts():
+    """그래프 요소를 애니메이션 단계별로 분리해서 반환."""
     box = explain_right_box()
     fa = suneung2_f(A)
     slope = suneung2_df(A)
@@ -60,7 +60,6 @@ def build_suneung_2_tangent_graph():
         stroke_width=2.5,
     )
 
-    # 접선: y - f(2) = f'(2)(x - 2)
     tangent = axes.plot(
         lambda x: fa + slope * (x - A),
         x_range=[-0.5, 3.0],
@@ -90,22 +89,31 @@ def build_suneung_2_tangent_graph():
     ).arrange(RIGHT, buff=0.08)
     tangent_label.next_to(axes.c2p(2.8, fa + slope * 0.8), UP, buff=0.05)
 
+    annotations = VGroup(
+        x_dash, point, x_label, point_label, tangent_label
+    )
+
+    return {
+        "axes": axes,
+        "graph": graph,
+        "tangent": tangent,
+        "annotations": annotations,
+    }
+
+
+def build_suneung_2_tangent_graph():
+    """f(x) 그래프 + 접선 (정적 PNG용 — 전체 묶음)."""
+    parts = build_suneung_2_graph_parts()
     return VGroup(
-        axes,
-        graph,
-        tangent,
-        x_dash,
-        point,
-        x_label,
-        point_label,
-        tangent_label,
+        parts["axes"],
+        parts["graph"],
+        parts["tangent"],
+        parts["annotations"],
     )
 
 
-def build_suneung_2_explanation():
-    """2025 수능 2번 해설 — 그래프(우측) + 수식(좌하단)."""
-    graph = build_suneung_2_tangent_graph()
-
+def build_suneung_2_explain_bottom():
+    """좌하단 해설 수식."""
     explain_bottom = VGroup(
         Text("해설", font_size=18, color=WHITE, weight=BOLD),
         MathTex(
@@ -127,5 +135,20 @@ def build_suneung_2_explanation():
     explain_bottom.move_to(box.get_center() + UP * 0.1)
     explain_bottom.set_max_width(box.width - 0.9)
     explain_bottom.set_max_height(box.height - 0.5)
+    return explain_bottom
 
-    return graph, explain_bottom
+
+def build_suneung_2_explanation():
+    """2025 수능 2번 해설 — 그래프(우측) + 수식(좌하단)."""
+    return build_suneung_2_tangent_graph(), build_suneung_2_explain_bottom()
+
+
+def animate_suneung_2_graph(scene, parts, axes_run=1.0, graph_run=1.8, tangent_run=1.2):
+    """좌표평면 → 함수 → 접선 순서로 그래프 애니메이션."""
+    scene.play(Create(parts["axes"]), run_time=axes_run)
+    scene.play(Create(parts["graph"]), run_time=graph_run)
+    scene.play(
+        Create(parts["tangent"]),
+        FadeIn(parts["annotations"]),
+        run_time=tangent_run,
+    )
