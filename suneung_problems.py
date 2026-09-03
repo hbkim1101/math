@@ -12,9 +12,9 @@ from manim_kit import (
     tex,
 )
 from manim_kit.input_parser import (
-    parse_dsl,
-    substitution_spec_from_dsl,
-    SUNEUNG_2_DSL,
+    parse_input,
+    substitution_spec_from_input,
+    SUNEUNG_2_INPUT,
 )
 
 A = 2
@@ -38,7 +38,7 @@ def _explain_bottom_anchor():
 
 
 def build_suneung_2_problem():
-    parsed = parse_dsl(SUNEUNG_2_DSL)
+    parsed = parse_input(SUNEUNG_2_INPUT)
     problem = VGroup(
         Text("2025 수능 2번", font_size=20, color=TEAL_A, weight=BOLD),
         tex(r"f(x) = x^3 - 8x + 7", scale=0.78),
@@ -66,8 +66,8 @@ def suneung_2_graph_spec() -> GraphSpec:
 
 
 def suneung_2_substitution_spec():
-    return substitution_spec_from_dsl(
-        SUNEUNG_2_DSL,
+    return substitution_spec_from_input(
+        SUNEUNG_2_INPUT,
         _explain_bottom_anchor() + DOWN * 0.15,
     )
 
@@ -81,7 +81,7 @@ def build_suneung_2_tangent_graph():
 
 
 def build_suneung_2_explain_header():
-    parsed = parse_dsl(SUNEUNG_2_DSL)
+    parsed = parse_input(SUNEUNG_2_INPUT)
     anchor = _explain_bottom_anchor()
     header = VGroup(
         Text("해설", font_size=18, color=WHITE, weight=BOLD),
@@ -112,7 +112,7 @@ def build_suneung_2_deriv_substitution_steps():
 
 
 def build_suneung_2_explain_bottom():
-    parsed = parse_dsl(SUNEUNG_2_DSL)
+    parsed = parse_input(SUNEUNG_2_INPUT)
     header = build_suneung_2_explain_header()
     final_step = parsed.substitution_steps[-1] if parsed.substitution_steps else "f'(2)=4"
     final = tex(final_step, scale=0.55, color=YELLOW_E)

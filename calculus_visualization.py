@@ -61,7 +61,7 @@ class MeanValueCandidateScene(Scene):
 
         # ---------- 왼쪽 수식 ----------
         eq = MathTex(
-            r"\frac{f(x)-f(1)}{x-1}",  # 할선 기울기 분자/분mo
+            r"\frac{f(x)-f(1)}{x-1}",  # 할선 기울기 (분자: f(x)-f(1), 분모: x-1)
             r"=",                      # 등호
             r"f'(g(x))",               # f의 도함수를 g(x)에서
             r"\quad (x\neq 1)",         # x≠1 조건

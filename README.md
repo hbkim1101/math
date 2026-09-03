@@ -37,6 +37,23 @@ manim -qh -r 1920,1080 calculus_visualization.py MeanValueCandidateScene
 
 출력: `media/videos/calculus_visualization/1080p60/MeanValueCandidateScene.mp4`
 
+## manim_kit (재사용 함수)
+
+자주 쓰는 **그래프 그리기** · **LaTeX 대입 애니메이션** 모듈.
+
+```python
+from manim_kit import GraphSpec, SubstitutionSpec, build_graph_parts, animate_graph
+from manim_kit import build_substitution_steps, animate_substitution, tex
+```
+
+**사용법:** [`manim_kit/USAGE.md`](manim_kit/USAGE.md)
+
+| 함수 | 역할 |
+|------|------|
+| `tex(latex)` | LaTeX → MathTex |
+| `GraphSpec` + `build_graph_parts` + `animate_graph` | 축 → 곡선 → 접선 |
+| `SubstitutionSpec` + `build_substitution_steps` + `animate_substitution` | x 대입 단계 Transform |
+
 ## 레이아웃 (문제 / 해설)
 
 화면을 **왼쪽 위 = 문제**, **나머지 = 해설**로 나눕니다.

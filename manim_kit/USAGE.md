@@ -4,40 +4,43 @@ LaTeX로 수식을 입력하고, Manim으로 **그래프·대입 애니메이션
 
 ---
 
-## 입력 형식 (DSL) — 이렇게 쓰면 됩니다
+## 입력 형식 — 일반 LaTeX + shortcut 3가지
+
+극한·분수 등은 **표준 LaTeX** 그대로 씁니다 (`\lim_{h \to 0}`, `\frac{...}{...}`).
+LaTeX 문법을 몰라도 되는 **shortcut**은 아래 3가지만 있습니다.
 
 ```
-\lim{h->0}{나누기{f(2+h)-f(2)}{h}}=f`(2)
+\lim_{h \to 0} \frac{f(2+h)-f(2)}{h} = f`(2)
 [f`(x)=3x^2-8]_{x=2}
 f`(2)=3 2^2-8 =4
 ```
 
-| 기호 | 의미 | LaTeX 변환 |
-|------|------|------------|
+| 기호 | 의미 | 변환 |
+|------|------|------|
 | `` f`(x) `` | f'(x) | 백틱 `` ` `` = 프라임 |
-| `\lim{h->0}{...}` | 극한 | `\lim_{h \to 0} ...` |
-| `나누기{a}{b}` | 분수 | `\frac{a}{b}` |
 | `[식]_{x=2}` | x=2 대입 | 대입 애니메이션 2단계 |
 | `3 2^2` | 곱셈 | `3 \cdot 2^2` |
 
 ```python
-from manim_kit import parse_dsl, substitution_spec_from_dsl, SUNEUNG_2_DSL
+from manim_kit import parse_input, substitution_spec_from_input, SUNEUNG_2_INPUT
 
-parsed = parse_dsl(SUNEUNG_2_DSL)
+parsed = parse_input(SUNEUNG_2_INPUT)
 print(parsed.problem_latex)
 # \lim_{h \to 0} \frac{f(2+h)-f(2)}{h} = f'(2)
 
 print(parsed.substitution_steps)
 # ["f'(x) = 3x^2-8", "f'(2) = 3 \\cdot 2^2-8", "f'(2) = 4"]
 
-spec = substitution_spec_from_dsl(SUNEUNG_2_DSL, anchor=ORIGIN)
+spec = substitution_spec_from_input(SUNEUNG_2_INPUT, anchor=ORIGIN)
 ```
+
+> `parse_dsl`, `SUNEUNG_2_DSL` 등은 하위 호환 alias입니다.
 
 예시 파일: `examples/suneung2.dsl.txt`
 
 ---
 
-> **곡선 그리기:** Python 함수 `f(x)` 필요 (DSL → 곡선 파싱은 추후)
+> **곡선 그리기:** Python 함수 `f(x)` 필요 (LaTeX → 곡선 파싱은 추후)
 
 ---
 

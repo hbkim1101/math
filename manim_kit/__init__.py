@@ -13,10 +13,14 @@ from manim_kit.substitution import (
 )
 from manim_kit.latex import tex, tex_block
 from manim_kit.input_parser import (
+    parse_input,
     parse_dsl,
+    normalize_line,
     dsl_to_latex,
+    substitution_spec_from_input,
     substitution_spec_from_dsl,
     ParsedProblem,
+    SUNEUNG_2_INPUT,
     SUNEUNG_2_DSL,
 )
 
@@ -31,9 +35,13 @@ __all__ = [
     "build_and_animate_substitution",
     "tex",
     "tex_block",
+    "parse_input",
     "parse_dsl",
+    "normalize_line",
     "dsl_to_latex",
+    "substitution_spec_from_input",
     "substitution_spec_from_dsl",
     "ParsedProblem",
+    "SUNEUNG_2_INPUT",
     "SUNEUNG_2_DSL",
 ]
