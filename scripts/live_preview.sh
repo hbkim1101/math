@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# 실시간 미리보기: 파일 저장 시 자동 재렌더 + 브라우저에서 확인
+# 실시간 미리보기: 파일 저장 시 PNG 이미지 자동 재렌더 + 브라우저에서 확인
 #
 # 사용법:
-#   ./scripts/live_preview.sh                          # 기본 씬
-#   ./scripts/live_preview.sh problem_explanation.py LayoutPreviewScene
+#   ./scripts/live_preview.sh
+#   ./scripts/live_preview.sh problem_explanation.py LayoutStaticScene
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 SCENE_FILE="${1:-problem_explanation.py}"
-SCENE_NAME="${2:-LayoutPreviewScene}"
+SCENE_NAME="${2:-LayoutStaticScene}"
 PORT="${PREVIEW_PORT:-8765}"
 QUALITY="${PREVIEW_QUALITY:-l}"   # l=저화질(빠름), m=중, h=고
 
@@ -20,35 +20,35 @@ if [[ -f "$VENV" ]]; then
 fi
 
 OUTPUT_DIR="preview"
-OUTPUT_MP4="$OUTPUT_DIR/latest.mp4"
+OUTPUT_PNG="$OUTPUT_DIR/latest.png"
 mkdir -p "$OUTPUT_DIR"
 
 render() {
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "  렌더 중: $SCENE_FILE → $SCENE_NAME  (-q$QUALITY)"
+  echo "  PNG 렌더: $SCENE_FILE → $SCENE_NAME  (-q$QUALITY -s)"
   echo "  $(date '+%H:%M:%S')"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-  manim -q"$QUALITY" --format mp4 --media_dir "$OUTPUT_DIR/media" \
+  manim -q"$QUALITY" -s --format png --media_dir "$OUTPUT_DIR/media" \
     "$SCENE_FILE" "$SCENE_NAME" 2>&1 | tail -5
 
-  # 최신 mp4를 preview/latest.mp4로 복사
-  LATEST=$(find "$OUTPUT_DIR/media" -name "${SCENE_NAME}.mp4" -printf '%T@ %p\n' 2>/dev/null \
+  # 최신 png를 preview/latest.png로 복사
+  LATEST=$(find "$OUTPUT_DIR/media/images" -name "${SCENE_NAME}*.png" -printf '%T@ %p\n' 2>/dev/null \
     | sort -rn | head -1 | cut -d' ' -f2-)
   if [[ -n "${LATEST:-}" && -f "$LATEST" ]]; then
-    cp -f "$LATEST" "$OUTPUT_MP4"
-    echo "  → $OUTPUT_MP4 갱신 완료"
+    cp -f "$LATEST" "$OUTPUT_PNG"
+    echo "  → $OUTPUT_PNG 갱신 완료"
   fi
 }
 
-# HTML 미리보기 페이지 생성
+# HTML 미리보기 페이지 (이미지)
 cat > "$OUTPUT_DIR/index.html" << 'HTML'
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="3">
+  <meta http-equiv="refresh" content="2">
   <title>Manim 실시간 미리보기</title>
   <style>
     * { margin: 0; box-sizing: border-box; }
@@ -64,7 +64,7 @@ cat > "$OUTPUT_DIR/index.html" << 'HTML'
     }
     h1 { font-size: 1.25rem; margin-bottom: 8px; color: #5eead4; }
     p { font-size: 0.85rem; color: #94a3b8; margin-bottom: 16px; }
-    video {
+    img {
       max-width: 100%;
       border: 2px solid #334155;
       border-radius: 8px;
@@ -75,10 +75,8 @@ cat > "$OUTPUT_DIR/index.html" << 'HTML'
 </head>
 <body>
   <h1>Manim 실시간 미리보기</h1>
-  <p>코드를 저장하면 자동 재렌더됩니다. 이 페이지는 3초마다 새로고침됩니다.</p>
-  <video controls autoplay loop muted playsinline>
-    <source src="latest.mp4?t=REFRESH" type="video/mp4">
-  </video>
+  <p>코드를 저장하면 PNG 이미지가 자동 재렌더됩니다. (2초마다 새로고침)</p>
+  <img src="latest.png?t=REFRESH" alt="레이아웃 미리보기">
   <p class="status">REFRESH_TIME</p>
 </body>
 </html>
@@ -91,12 +89,10 @@ render
 if ! pgrep -f "python.*http.server.*$PORT" > /dev/null 2>&1; then
   python3 -m http.server "$PORT" --directory "$OUTPUT_DIR" > /dev/null 2>&1 &
   echo ""
-  echo "  미리보기 주소: http://localhost:$PORT"
-  echo "  (Cloud Agent VM에서는 포트 포워딩으로 접속)"
+  echo "  미리보기: http://localhost:$PORT"
   echo ""
 fi
 
-# 파일 변경 감지 루프
 WATCH_FILES=("$SCENE_FILE" "layout_config.py" "calculus_visualization.py")
 echo "  감시 중: ${WATCH_FILES[*]}"
 echo "  Ctrl+C 로 종료"

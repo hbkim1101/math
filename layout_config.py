@@ -44,10 +44,8 @@ class LayoutRegions:
     )
 
 
-def make_chalkboard_background(scene, seed=4, count=34, opacity=0.09):
-    """칠판 느낌 배경: 짙은 남색 + 희미한 수식 텍스처."""
-    scene.camera.background_color = "#0A1630"
-
+def make_chalkboard_bg_texts(seed=4, count=34, opacity=0.09):
+    """칠판 배경용 희미한 수식 텍스처만 반환."""
     bg_texts = VGroup()
     snippets = [
         r"\int_a^b f(x)\,dx", r"\sum_{n=1}^{\infty}", r"\frac{a}{b}",
@@ -69,6 +67,12 @@ def make_chalkboard_background(scene, seed=4, count=34, opacity=0.09):
         bg_texts.add(tex)
 
     return bg_texts
+
+
+def make_chalkboard_background(scene, seed=4, count=34, opacity=0.09):
+    """칠판 느낌 배경: 짙은 남색 + 희미한 수식 텍스처."""
+    scene.camera.background_color = "#0A1630"
+    return make_chalkboard_bg_texts(seed=seed, count=count, opacity=opacity)
 
 
 def make_region_guides(show_labels=True):
