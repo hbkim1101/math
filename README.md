@@ -56,24 +56,17 @@ manim -qh -r 1920,1080 calculus_visualization.py MeanValueCandidateScene
 └──────────┴─────────────────┘
 ```
 
-## 실시간 미리보기 (PNG 이미지)
-
-코드를 저장하면 **PNG 이미지**가 자동 재렌더됩니다.
+## 실시간 미리보기 (PNG + 재생)
 
 ```bash
 source .venv/bin/activate
 ./scripts/live_preview.sh
-# → http://localhost:8765  (브라우저에서 latest.png 확인)
+# → http://localhost:8765
 ```
 
-한 번만 빠르게 렌더:
-
-```bash
-./scripts/render_once.sh
-# → preview/latest.png
-```
-
-기본 씬은 애니메이션 없는 `LayoutStaticScene` (즉시 PNG 출력).
+- **저장 시:** PNG 자동 갱신 (`preview/latest.png`)
+- **▶ 재생 버튼:** `LayoutPreviewScene` 애니메이션 MP4 렌더 후 재생
+- **🖼 정지 화면:** PNG로 되돌리기
 
 ## 내용
 

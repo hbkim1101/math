@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Manim 실시간 미리보기</title>
+  <style>
+    * { margin: 0; box-sizing: border-box; }
+    body {
+      background: #0A1630;
+      color: #e0e0e0;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    h1 { font-size: 1.25rem; margin-bottom: 8px; color: #5eead4; }
+    p { font-size: 0.85rem; color: #94a3b8; margin-bottom: 16px; }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background: #14b8a6;
+      color: #042f2e;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { background: #2dd4bf; }
+    button:disabled {
+      background: #334155;
+      color: #94a3b8;
+      cursor: not-allowed;
+    }
+    .viewer {
+      width: 100%;
+      max-width: 960px;
+      border: 2px solid #334155;
+      border-radius: 8px;
+      background: #000;
+      overflow: hidden;
+    }
+    img, video {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    video { display: none; }
+    .status { margin-top: 12px; font-size: 0.8rem; color: #64748b; }
+  </style>
+</head>
+<body>
+  <h1>Manim 실시간 미리보기</h1>
+  <p>저장하면 PNG가 갱신됩니다. ▶ 재생으로 애니메이션을 렌더합니다.</p>
+
+  <div class="toolbar">
+    <button id="playBtn" type="button">▶ 재생</button>
+    <button id="staticBtn" type="button">🖼 정지 화면</button>
+  </div>
+
+  <div class="viewer">
+    <img id="preview" src="latest.png" alt="레이아웃 미리보기">
+    <video id="player" controls playsinline></video>
+  </div>
+  <p class="status" id="status">로딩 중...</p>
+
+  <script>
+    let lastVersion = null;
+    const img = document.getElementById("preview");
+    const video = document.getElementById("player");
+    const status = document.getElementById("status");
+    const playBtn = document.getElementById("playBtn");
+    const staticBtn = document.getElementById("staticBtn");
+
+    function showStatic() {
+      video.style.display = "none";
+      video.pause();
+      img.style.display = "block";
+      status.textContent = "정지 화면 (PNG)";
+    }
+
+    function showVideo(src) {
+      img.style.display = "none";
+      video.style.display = "block";
+      video.src = src;
+      video.load();
+      video.play().catch(() => {});
+      status.textContent = "애니메이션 재생 중";
+    }
+
+    async function pollPng() {
+      try {
+        const res = await fetch("version.txt?" + Date.now(), { cache: "no-store" });
+        const ver = (await res.text()).trim();
+        if (ver !== lastVersion) {
+          lastVersion = ver;
+          if (img.style.display !== "none") {
+            img.src = "latest.png?v=" + ver;
+          }
+          const d = new Date(Number(ver) * 1000);
+          if (video.style.display === "none") {
+            status.textContent = "마지막 PNG: " + d.toLocaleTimeString("ko-KR");
+          }
+        }
+      } catch (e) {
+        if (video.style.display === "none") {
+          status.textContent = "version.txt 대기 중...";
+        }
+      }
+    }
+
+    async function waitForVideo() {
+      for (let i = 0; i < 120; i++) {
+        const res = await fetch("/api/video-status?" + Date.now(), { cache: "no-store" });
+        const data = await res.json();
+        if (data.status === "ready") {
+          return data.version;
+        }
+        if (data.status === "error") {
+          throw new Error(data.error || "렌더 실패");
+        }
+        status.textContent = "애니메이션 렌더 중...";
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      throw new Error("렌더 시간 초과");
+    }
+
+    playBtn.addEventListener("click", async () => {
+      playBtn.disabled = true;
+      staticBtn.disabled = true;
+      try {
+        status.textContent = "애니메이션 렌더 요청 중...";
+        const res = await fetch("/api/render-video", { method: "POST" });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || "렌더 요청 실패");
+        }
+        const ver = await waitForVideo();
+        showVideo("latest.mp4?v=" + ver);
+      } catch (e) {
+        status.textContent = "오류: " + e.message;
+        showStatic();
+      } finally {
+        playBtn.disabled = false;
+        staticBtn.disabled = false;
+      }
+    });
+
+    staticBtn.addEventListener("click", showStatic);
+
+    pollPng();
+    setInterval(pollPng, 1500);
+  </script>
+</body>
+</html>

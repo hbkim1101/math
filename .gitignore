@@ -2,5 +2,6 @@
 __pycache__/
 *.pyc
 media/
-preview/
+preview/*
+!preview/index.html
 .DS_Store
