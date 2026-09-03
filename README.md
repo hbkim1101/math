@@ -37,6 +37,48 @@ manim -qh -r 1920,1080 calculus_visualization.py MeanValueCandidateScene
 
 출력: `media/videos/calculus_visualization/1080p60/MeanValueCandidateScene.mp4`
 
+## 레이아웃 (문제 / 해설)
+
+화면을 **왼쪽 위 = 문제**, **나머지 = 해설**로 나눕니다.
+
+| 파일 | 역할 |
+|------|------|
+| `layout_config.py` | 영역 좌표, 배경, 가이드선, 배치 헬퍼 |
+| `problem_explanation.py` | 레이아웃 미리보기 씬 (`LayoutPreviewScene`) |
+
+```
+┌──────────┬─────────────────┐
+│  문제     │                 │
+│ (좌상단)  │   해설 (우측)    │
+│          │                 │
+├──────────┤                 │
+│ 해설(좌하)│                 │
+└──────────┴─────────────────┘
+```
+
+## 실시간 미리보기
+
+코드를 저장하면 자동 재렌더 + 브라우저에서 확인:
+
+```bash
+source .venv/bin/activate
+./scripts/live_preview.sh
+# → http://localhost:8765
+```
+
+한 번만 빠르게 렌더:
+
+```bash
+./scripts/render_once.sh
+# → preview/latest.mp4
+```
+
+다른 씬 지정:
+
+```bash
+./scripts/live_preview.sh calculus_visualization.py MeanValueCandidateScene
+```
+
 ## 내용
 
 `MeanValueCandidateScene`은 다음 등식을 그래프로 보여줍니다.
