@@ -85,9 +85,15 @@ def build_suneung_2_graph_parts():
 
     tangent_label = VGroup(
         Text("접선 기울기", font_size=14, color=GREEN_C),
-        MathTex(r"f'(2)=4", color=GREEN_C).scale(0.55),
+        MathTex(r"f'(2)=?", color=GREEN_C).scale(0.55),
     ).arrange(RIGHT, buff=0.08)
     tangent_label.next_to(axes.c2p(2.8, fa + slope * 0.8), UP, buff=0.05)
+
+    tangent_label_final = VGroup(
+        Text("접선 기울기", font_size=14, color=GREEN_C),
+        MathTex(r"f'(2)=4", color=GREEN_C).scale(0.55),
+    ).arrange(RIGHT, buff=0.08)
+    tangent_label_final.move_to(tangent_label)
 
     annotations = VGroup(
         x_dash, point, x_label, point_label, tangent_label
@@ -98,44 +104,149 @@ def build_suneung_2_graph_parts():
         "graph": graph,
         "tangent": tangent,
         "annotations": annotations,
+        "tangent_label": tangent_label,
+        "tangent_label_final": tangent_label_final,
     }
 
 
 def build_suneung_2_tangent_graph():
     """f(x) 그래프 + 접선 (정적 PNG용 — 전체 묶음)."""
     parts = build_suneung_2_graph_parts()
+    static_annotations = VGroup(
+        parts["annotations"][0],  # x_dash
+        parts["annotations"][1],  # point
+        parts["annotations"][2],  # x_label
+        parts["annotations"][3],  # point_label
+        parts["tangent_label_final"],
+    )
     return VGroup(
         parts["axes"],
         parts["graph"],
         parts["tangent"],
-        parts["annotations"],
+        static_annotations,
     )
 
 
-def build_suneung_2_explain_bottom():
-    """좌하단 해설 수식."""
-    explain_bottom = VGroup(
-        Text("해설", font_size=18, color=WHITE, weight=BOLD),
-        MathTex(
-            r"\lim_{h \to 0} \frac{f(2+h) - f(2)}{h} = f'(2)",
-            color=WHITE,
-        ).scale(0.58),
-        MathTex(r"f'(x) = 3x^2 - 8 \;\;\Rightarrow\;\; f'(2) = 4", color=YELLOW_E).scale(0.6),
-        MathTex(
-            r"f'(a) = \lim_{h \to 0} \frac{f(a+h) - f(a)}{h}",
-            color=GREY_B,
-        ).scale(0.52),
-    ).arrange(DOWN, buff=0.1, aligned_edge=LEFT)
-
+def _explain_bottom_anchor():
+    """좌하단 해설 영역 중심."""
     box = RoundedRectangle(
         width=LayoutRegions.PROBLEM_W,
         height=LayoutRegions.EXPLAIN_BOTTOM_H,
         corner_radius=0.12,
     ).move_to(LayoutRegions.explain_bottom_center)
-    explain_bottom.move_to(box.get_center() + UP * 0.1)
-    explain_bottom.set_max_width(box.width - 0.9)
-    explain_bottom.set_max_height(box.height - 0.5)
-    return explain_bottom
+    return box.get_center() + UP * 0.05
+
+
+def build_suneung_2_explain_header():
+    """해설 제목 + 극한식 = f'(2)."""
+    anchor = _explain_bottom_anchor()
+    title = Text("해설", font_size=18, color=WHITE, weight=BOLD)
+    limit_eq = MathTex(
+        r"\lim_{h \to 0} \frac{f(2+h) - f(2)}{h} = f'(2)",
+        color=WHITE,
+    ).scale(0.58)
+    header = VGroup(title, limit_eq).arrange(DOWN, buff=0.1, aligned_edge=LEFT)
+    header.move_to(anchor + UP * 1.05)
+    header.set_max_width(LayoutRegions.PROBLEM_W - 0.9)
+    return header
+
+
+def build_suneung_2_deriv_substitution_steps():
+    """f'(x) → x=2 대입 → f'(2)=4 단계별 수식 (같은 위치에 겹침)."""
+    anchor = _explain_bottom_anchor()
+    line_y = anchor + DOWN * 0.15
+
+    # x를 isolate해서 대입 전후 Transform
+    step_x = MathTex(
+        r"f'(x)", r"=", r"3", r"x", r"^2", r"-", r"8",
+        substrings_to_isolate=[r"x"],
+        color=WHITE,
+    ).scale(0.58).move_to(line_y)
+
+    step_sub = MathTex(
+        r"f'(2)", r"=", r"3", r"\cdot", r"2", r"^2", r"-", r"8",
+        color=WHITE,
+    ).scale(0.58).move_to(line_y)
+
+    step_calc = MathTex(
+        r"f'(2)", r"=", r"12", r"-", r"8",
+        color=WHITE,
+    ).scale(0.58).move_to(line_y)
+
+    step_final = MathTex(
+        r"f'(2)", r"=", r"4",
+        color=YELLOW_E,
+    ).scale(0.62).move_to(line_y)
+
+    return {
+        "step_x": step_x,
+        "step_sub": step_sub,
+        "step_calc": step_calc,
+        "step_final": step_final,
+    }
+
+
+def build_suneung_2_explain_definition():
+    """미분계수 정의 (마지막에 등장)."""
+    anchor = _explain_bottom_anchor()
+    definition = MathTex(
+        r"f'(a) = \lim_{h \to 0} \frac{f(a+h) - f(a)}{h}",
+        color=GREY_B,
+    ).scale(0.52)
+    definition.move_to(anchor + DOWN * 1.05)
+    definition.set_max_width(LayoutRegions.PROBLEM_W - 0.9)
+    return definition
+
+
+def build_suneung_2_explain_bottom():
+    """좌하단 해설 수식 (정적 PNG용 — 최종 상태)."""
+    header = build_suneung_2_explain_header()
+    final_line = build_suneung_2_deriv_substitution_steps()["step_final"]
+    final_line.set_color(WHITE)
+    final_deriv = MathTex(
+        r"f'(x)=3x^2-8 \;\Rightarrow\; f'(2)=4",
+        color=YELLOW_E,
+    ).scale(0.55).move_to(final_line.get_center())
+    definition = build_suneung_2_explain_definition()
+    return VGroup(header, final_deriv, definition)
+
+
+def animate_suneung_2_deriv_substitution(scene, steps, graph_parts=None):
+    """f'(x)에 x=2를 대입하는 애니메이션."""
+    step_x = steps["step_x"]
+    step_sub = steps["step_sub"]
+    step_calc = steps["step_calc"]
+    step_final = steps["step_final"]
+
+    scene.play(Write(step_x), run_time=0.8)
+
+    x_part = step_x.get_part_by_tex("x")
+    scene.play(Indicate(x_part, color=YELLOW, scale_factor=1.8), run_time=0.6)
+
+    scene.play(
+        TransformMatchingTex(step_x, step_sub, key_map={r"x": r"2"}),
+        run_time=1.0,
+    )
+
+    scene.play(
+        TransformMatchingTex(step_sub, step_calc),
+        run_time=0.9,
+    )
+
+    scene.play(
+        TransformMatchingTex(step_calc, step_final),
+        run_time=0.7,
+    )
+
+    if graph_parts is not None:
+        scene.play(
+            Transform(
+                graph_parts["tangent_label"],
+                graph_parts["tangent_label_final"],
+            ),
+            run_time=0.5,
+        )
+        graph_parts["tangent_label"] = graph_parts["tangent_label_final"]
 
 
 def build_suneung_2_explanation():

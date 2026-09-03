@@ -9,15 +9,14 @@ from layout_config import (
 from suneung_problems import (
     build_suneung_2_problem,
     build_suneung_2_explain_bottom,
+    build_suneung_2_explain_header,
+    build_suneung_2_explain_definition,
+    build_suneung_2_deriv_substitution_steps,
     build_suneung_2_tangent_graph,
     build_suneung_2_graph_parts,
     animate_suneung_2_graph,
+    animate_suneung_2_deriv_substitution,
 )
-
-# 렌더 (이미지):
-#   manim -ql -s problem_explanation.py LayoutStaticScene
-# 애니메이션 (재생 버튼):
-#   manim -ql problem_explanation.py LayoutPreviewScene
 
 
 def _build_layout_content():
@@ -39,30 +38,30 @@ class LayoutStaticScene(Scene):
 
 
 class LayoutPreviewScene(Scene):
-    """레이아웃 + 그래프 단계별 애니메이션 씬."""
+    """레이아웃 + 그래프 + f'(2) 대입 애니메이션 씬."""
 
     def construct(self):
         bg = make_chalkboard_background(self)
         guides = make_region_guides(show_labels=True)
         problem_text = build_suneung_2_problem()
         graph_parts = build_suneung_2_graph_parts()
-        explain_bottom = build_suneung_2_explain_bottom()
+        explain_header = build_suneung_2_explain_header()
+        deriv_steps = build_suneung_2_deriv_substitution_steps()
+        definition = build_suneung_2_explain_definition()
 
         self.add(bg)
 
-        # 1) 영역·문제·해설 수식
+        # 1) 영역 · 문제 · 극한식
         self.play(FadeIn(guides), run_time=0.6)
         self.play(FadeIn(problem_text), run_time=0.6)
-        self.play(Write(explain_bottom[0]), run_time=0.3)
-        self.play(
-            Write(explain_bottom[1]),
-            Write(explain_bottom[2]),
-            run_time=0.8,
-        )
+        self.play(Write(explain_header), run_time=0.8)
 
-        # 2) 그래프: 좌표평면 → 함수 → 접선
+        # 2) 그래프: 좌표평면 → 함수 → 접선 (f'(2)=? 상태)
         animate_suneung_2_graph(self, graph_parts)
 
-        # 3) 미분계수 정의
-        self.play(Write(explain_bottom[3]), run_time=0.6)
+        # 3) f'(x)에 x=2 대입 → f'(2)=4 (+ 그래프 라벨 갱신)
+        animate_suneung_2_deriv_substitution(self, deriv_steps, graph_parts)
+
+        # 4) 미분계수 정의
+        self.play(Write(definition), run_time=0.6)
         self.wait(1.5)
