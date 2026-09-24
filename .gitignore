@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+output/_cache/
+output/*/media/
+output/*/actions_log.json
+*.egg-info/
+.venv/

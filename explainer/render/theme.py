@@ -1,0 +1,61 @@
+"""색상·폰트·LaTeX 템플릿 등 시각 테마."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from manim import TexTemplate
+
+KOREAN_FONT = "Noto Sans CJK KR"
+
+# xelatex + kotex: 한글과 수식을 한 문장에 섞어 조판한다.
+KO_TEX_TEMPLATE = TexTemplate(
+    tex_compiler="xelatex",
+    output_format=".xdv",
+    documentclass=r"\documentclass[preview]{standalone}",
+    preamble=r"""
+\usepackage{amsmath,amssymb}
+\usepackage{fontspec}
+\usepackage{kotex}
+\setmainhangulfont{Noto Sans CJK KR}
+\setsanshangulfont{Noto Sans CJK KR}
+\setlength{\parindent}{0pt}
+""",
+)
+
+# 수식 전용(pdflatex, 빠름). Manim 기본 템플릿에 몇 개 패키지를 추가.
+MATH_TEX_TEMPLATE = TexTemplate()
+MATH_TEX_TEMPLATE.add_to_preamble(r"\usepackage{amsmath,amssymb}")
+
+
+@dataclass
+class Theme:
+    background: str = "#0b0f19"
+    text: str = "#e5e7eb"
+    muted: str = "#9aa3b5"
+    axis: str = "#8b93a7"
+    grid: str = "#1e293b"
+    grid_faded: str = "#131c2e"
+    panel: str = "#111827"
+    panel_border: str = "#243049"
+    accent: str = "#58c4dd"
+    highlight: str = "#fde047"
+    palette: dict[str, str] = field(
+        default_factory=lambda: {
+            "exp": "#ff8a65",  # y = a^x
+            "log": "#4fc3f7",  # 로그
+            "q1": "#a3e635",  # 첫 번째 포물선
+            "q2": "#c084fc",  # 두 번째 포물선
+            "point": "#fde047",
+            "rect": "#f8fafc",
+            "axis_sym": "#f472b6",
+            "guide": "#64748b",
+            "ok": "#34d399",
+            "warn": "#fb7185",
+        }
+    )
+
+    def color(self, name: str | None, default: str | None = None) -> str | None:
+        if name is None:
+            return default
+        return self.palette.get(name, name)
