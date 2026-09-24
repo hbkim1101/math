@@ -63,7 +63,7 @@ segments:
 | 분류 | 액션 |
 |---|---|
 | 카드/전환 | `title_card`, `end_card`, `section`, `clear`, `wait`, `caption` |
-| 문제/보드 | `problem`(한글+수식 전문), `problem_dock`(보드 헤더로 축소), `board`, `board_write`, `board_replace`, `board_highlight`, `board_clear`, `board_title` |
+| 문제/보드 | `problem`(한글+수식 전문, `lines:` 로 줄별 렌더), `problem_focus`(읽는 줄만 밝게 + 포인터 바), `problem_dock`(보드 헤더로 축소), `board`, `board_write`, `board_replace`, `board_highlight`, `board_clear`, `board_title` |
 | 그래프 | `axes`(등축 자동), `plot`(y 범위 밖 자동 클리핑), `line`, `vline`, `point`, `points`, `polygon`, `segment`, `arrow`, `guides`, `label` |
 | 기하 연출 | `translate_copy`(평행이동 복사), `reflect`(직선 대칭이동 + 수선/직각 표시) |
 | 강조 | `highlight`(indicate/flash/circumscribe/pulse), `dim`/`undim`(stroke·fill 원본 비율 유지), `fade`, `answer` |

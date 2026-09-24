@@ -28,8 +28,24 @@ def test_theme_color_resolution():
 
 def test_registry_has_core_actions():
     for name in ["axes", "plot", "point", "points", "polygon", "reflect", "translate_copy",
-                 "board", "board_write", "problem", "problem_dock", "dim", "undim", "caption", "answer", "custom"]:
+                 "board", "board_write", "problem", "problem_dock", "problem_focus", "dim", "undim",
+                 "caption", "answer", "custom"]:
         assert name in REGISTRY
+
+
+def test_problem_focus_is_noop_without_lines():
+    """problem 을 tex 한 덩어리로 그린 경우 problem_focus 는 아무 것도 재생하지 않아야 한다."""
+    class FakeScene:
+        problem_lines = []
+        objs = {}
+        played = 0
+
+        def play(self, *a, **k):
+            self.played += 1
+
+    sc = FakeScene()
+    REGISTRY["problem_focus"](sc, index=2)
+    assert sc.played == 0 and sc.objs == {}
 
 
 def test_split_long_sentence_prefers_commas():

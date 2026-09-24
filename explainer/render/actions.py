@@ -149,11 +149,21 @@ def section(scene, text: str, run_time: float | None = None, id: str = "section"
 
 # ====================================================================== 문제 패널 / 보드
 @action("problem")
-def problem(scene, tex: str, width: float = 12.0, scale: float = 0.85, run_time: float | None = None,
-            id: str = "problem", title: str = "", **_):
-    """문제 전문을 화면 중앙에 크게 보여준다 (한글+수식, xelatex). width: 표시 폭(Manim 단위)."""
+def problem(scene, tex: str | None = None, lines: list[str] | None = None, width: float = 12.0,
+            scale: float = 0.85, run_time: float | None = None, id: str = "problem", title: str = "",
+            line_buff: float = 0.32, **_):
+    """문제 전문을 화면 중앙에 크게 보여준다 (한글+수식, xelatex). width: 표시 폭(Manim 단위).
+
+    `lines` 로 주면 줄(문장)별로 따로 렌더되어 `problem_focus` 로 읽는 위치를 따라갈 수 있다.
+    """
     rt = _rt(run_time, 1.8)
-    body = scene.ktex(tex, width=width, scale=scale)
+    line_mobs: list[Mobject] = []
+    if lines:
+        line_mobs = [scene.ktex(s, width=width, scale=scale) for s in lines]
+        body = VGroup(*line_mobs).arrange(DOWN, buff=line_buff, aligned_edge=LEFT)
+    else:
+        assert tex is not None, "problem 액션에는 tex 또는 lines 가 필요합니다"
+        body = scene.ktex(tex, width=width, scale=scale)
     items = []
     if title:
         items.append(scene.ktext(title, size=30, weight="BOLD", color=scene.theme.accent))
@@ -165,7 +175,33 @@ def problem(scene, tex: str, width: float = 12.0, scale: float = 0.85, run_time:
         g.scale_to_fit_height(5.9)
     g.move_to([0, 0.55, 0])  # 하단 자막 영역을 피해 약간 위에 배치
     scene.register(id, g)
+    scene.problem_lines = line_mobs
+    for i, m in enumerate(line_mobs):
+        scene.register(f"{id}_line_{i}", m)
     scene.play(FadeIn(g, shift=UP * 0.2), run_time=rt)
+
+
+@action("problem_focus")
+def problem_focus(scene, index: int, id: str = "problem", run_time: float | None = None,
+                  dim_opacity: float = 0.32, color: str | None = None, **_):
+    """`problem` 을 lines 로 그렸을 때, 내레이션이 읽고 있는 줄만 밝게 하고 왼쪽에 포인터 바를 둔다."""
+    lines = list(getattr(scene, "problem_lines", None) or [])
+    if not lines:
+        return
+    rt = _rt(run_time, 0.6)
+    index = max(0, min(int(index), len(lines) - 1))
+    accent = scene.color(color, scene.theme.accent)
+    target = lines[index]
+    anims = [Transform(m, _opacity_target(m, 1.0 if i == index else dim_opacity)) for i, m in enumerate(lines)]
+    bar = Rectangle(width=0.09, height=target.height + 0.22, fill_color=accent, fill_opacity=1, stroke_width=0)
+    bar.next_to(target, LEFT, buff=0.28).set_z_index(3)
+    old = scene.objs.get(f"{id}_focus")
+    scene.register(f"{id}_focus", bar)
+    if old is not None:
+        anims.append(ReplacementTransform(old, bar))
+    else:
+        anims.append(FadeIn(bar, shift=RIGHT * 0.15))
+    scene.play(*anims, run_time=rt)
 
 
 @action("board")
@@ -192,6 +228,12 @@ def problem_dock(scene, id: str = "problem", run_time: float | None = None, tex:
     # ReplacementTransform 은 대상이 원본(문제 패널)의 그리기 순서를 물려받아 보드 프레임 뒤로 숨을 수 있다
     target.set_z_index(3)
     shift_anims = scene.board.make_room_for_header(target)
+    focus = scene.objs.pop(f"{id}_focus", None)
+    if focus is not None:
+        shift_anims.append(FadeOut(focus))
+    for i in range(len(getattr(scene, "problem_lines", None) or [])):
+        scene.objs.pop(f"{id}_line_{i}", None)
+    scene.problem_lines = []
     if src is not None:
         scene.play(ReplacementTransform(src, target), *shift_anims, run_time=rt)
         scene.objs.pop(id, None)
