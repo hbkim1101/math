@@ -29,6 +29,7 @@ layout:
   graph:
     x_range: [-1, 4, 1]
     y_range: [-0.75, 3.5, 1]
+    center: [-2.6, 0.35]
   board:
     title: "풀이"
     line_scale: 0.7
@@ -78,7 +79,7 @@ segments:
           $\mathrm{ABCD}$는 직사각형, $a^3=\frac qp$ 일 때 $p+q=?$
       - {do: axes, run_time: 1.0}
       - {do: plot, id: exp, expr: "a**x", color: exp, label: "y=a^x", label_at: 1.85, label_dir: RIGHT, run_time: 1.4}
-      - {do: plot, at: s2, id: q1, expr: "2*x**2-7/2*x+3", color: q1, label: "y=2x^2-\\tfrac72x+3", label_at: -0.1, label_dir: LEFT, label_scale: 0.6, run_time: 1.4}
+      - {do: plot, at: s2, id: q1, expr: "2*x**2-7/2*x+3", color: q1, label: "y=2x^2-\\tfrac72x+3", label_at: -0.05, label_dir: LEFT, label_scale: 0.55, run_time: 1.4}
       - do: points
         items:
           - {id: A, at: ["3/4", "3/2"], label: "\\mathrm{A}", label_dir: UL}
@@ -91,7 +92,7 @@ segments:
       이 네 점 A, B, C, D가 직사각형을 이룬다는 것이 핵심 조건이고, 우리가 구해야 할 것은 a의 값입니다.
     actions:
       - {do: vline, id: asym, x: "1/4", color: guide, run_time: 0.5}
-      - {do: plot, id: log, expr: "log(x-1/4)/log(a)-1/4", color: log, x_range: ["0.2501", 4], label: "y=\\log_a\\!\\left(x-\\tfrac14\\right)-\\tfrac14", label_at: 3.5, label_dir: DOWN, label_scale: 0.58, run_time: 1.4}
+      - {do: plot, id: log, expr: "log(x-1/4)/log(a)-1/4", color: log, x_range: ["0.2501", 4], label: "y=\\log_a\\!\\left(x-\\tfrac14\\right)-\\tfrac14", label_at: 3.25, label_dir: DOWN, label_scale: 0.56, run_time: 1.4}
       - {do: plot, id: q2, expr: "2*x**2-15/2*x+15/2", color: q2, label: "y=2x^2-\\tfrac{15}{2}x+\\tfrac{15}{2}", label_at: 2.3, label_dir: DR, label_scale: 0.58, run_time: 1.4}
       - do: points
         items:

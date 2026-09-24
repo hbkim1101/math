@@ -37,6 +37,10 @@ def main(argv: list[str] | None = None) -> int:
     va.add_argument("project")
     va.add_argument("--tex", action="store_true", help="모든 LaTeX 문자열을 미리 컴파일해 검사")
 
+    sb = sub.add_parser("storyboard", help="세그먼트별 대표 프레임 스토리보드 PNG 생성")
+    sb.add_argument("out_dir")
+    sb.add_argument("--columns", type=int, default=3)
+
     sub.add_parser("actions", help="액션 목록")
 
     args = p.parse_args(argv)
@@ -74,6 +78,11 @@ def main(argv: list[str] | None = None) -> int:
             if errors:
                 return 2
         print("OK")
+        return 0
+
+    if args.cmd == "storyboard":
+        from .verify.storyboard import build_storyboard
+        build_storyboard(args.out_dir, columns=args.columns)
         return 0
 
     if args.cmd == "actions":

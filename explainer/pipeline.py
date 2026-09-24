@@ -55,6 +55,8 @@ def build(project_path: str | Path, out_root: str | Path = "output", preview: bo
         w, h = RESOLUTIONS["480p"] if preview else RESOLUTIONS[project.meta.resolution]
         report = verify_output(out_dir, expect_resolution=(w, h), expect_fps=15 if preview else project.meta.fps)
         log(report.render_text())
+        from .verify.storyboard import build_storyboard
+        build_storyboard(out_dir, log=log)
     log(f"완료: {final}  (소요 {time.time() - t0:.0f}s)")
     return final, report
 

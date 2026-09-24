@@ -6,3 +6,5 @@ output/*/media/
 output/*/actions_log.json
 *.egg-info/
 .venv/
+output/*/*_preview.mp4
+output/*/storyboard_frames/
