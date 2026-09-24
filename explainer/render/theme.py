@@ -14,7 +14,7 @@ KO_TEX_TEMPLATE = TexTemplate(
     output_format=".xdv",
     documentclass=r"\documentclass[preview]{standalone}",
     preamble=r"""
-\usepackage{amsmath,amssymb}
+\usepackage{amsmath,amssymb,mathtools}
 \usepackage{fontspec}
 \usepackage{kotex}
 \setmainhangulfont{Noto Sans CJK KR}
@@ -25,7 +25,7 @@ KO_TEX_TEMPLATE = TexTemplate(
 
 # 수식 전용(pdflatex, 빠름). Manim 기본 템플릿에 몇 개 패키지를 추가.
 MATH_TEX_TEMPLATE = TexTemplate()
-MATH_TEX_TEMPLATE.add_to_preamble(r"\usepackage{amsmath,amssymb}")
+MATH_TEX_TEMPLATE.add_to_preamble(r"\usepackage{amssymb,mathtools}")
 
 
 @dataclass
@@ -55,7 +55,14 @@ class Theme:
         }
     )
 
+    _ATTR_COLORS = ("text", "muted", "axis", "grid", "panel", "accent", "highlight", "background")
+
     def color(self, name: str | None, default: str | None = None) -> str | None:
+        """팔레트 이름 → 색상. 팔레트에 없으면 테마 속성(accent, highlight, ...), 그것도 없으면 그대로(hex 등)."""
         if name is None:
             return default
-        return self.palette.get(name, name)
+        if name in self.palette:
+            return self.palette[name]
+        if name in self._ATTR_COLORS:
+            return getattr(self, name)
+        return name

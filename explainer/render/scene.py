@@ -84,7 +84,9 @@ class ExplainerScene(Scene):
             self._segment_start = self.now
             seg.start = self.now
             if seg.clip is not None:
-                self.add_sound(seg.clip.audio_path)
+                # Scene.add_sound 는 직전 애니메이션이 캐시에서 재사용되면(skip_animations=True) 소리를 버린다.
+                # 파일 라이터에 직접 넣어 캐시 여부와 무관하게 항상 삽입되도록 한다.
+                self.renderer.file_writer.add_sound(seg.clip.audio_path, self.now)
 
             for action in seg_model.actions:
                 if action.at is not None:

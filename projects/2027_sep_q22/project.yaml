@@ -1,0 +1,269 @@
+# 2027학년도 9월 모의평가 (2026.9 시행) 수학 공통 22번 — 지수·로그함수와 직사각형 ABCD
+# 렌더: python -m explainer build projects/2027_sep_q22/project.yaml
+
+meta:
+  id: 2027_sep_q22
+  title: "2027학년도 9월 모의평가 수학 22번"
+  subtitle: "지수함수·로그함수와 직사각형 ABCD"
+  voice: ko-KR-InJoonNeural
+  rate: "+4%"
+  resolution: 1080p
+  fps: 30
+  subtitles: burn
+  segment_pad: 0.5
+
+params:
+  a: "(81/16)**(1/3)"      # 정답 a^3 = 81/16 → 시각화용 실제 값 ≈ 1.7171
+  h1: "7/8"                 # 첫 포물선 꼭짓점 x
+  k1: "47/32"
+  h2: "15/8"                # 둘째 포물선 꼭짓점 x
+  k2: "15/32"
+
+t2c:
+  "\\mathrm{A}": point
+  "\\mathrm{B}": point
+  "\\mathrm{C}": log
+  "\\mathrm{D}": log
+
+layout:
+  graph:
+    x_range: [-1, 4, 1]
+    y_range: [-0.75, 3.5, 1]
+  board:
+    title: "풀이"
+    line_scale: 0.7
+
+segments:
+  # ───────────────────────────── 0. 인트로
+  - id: intro
+    narration: >
+      이번 9월 모의평가 22번은 지수함수와 로그함수 단원에서 출제되었습니다.
+      두 이차함수의 평행이동과, 지수함수와 로그함수의 대칭 관계를 꿰뚫어 보면 계산이 놀랄 만큼 짧아지는 문제입니다.
+      함께 풀어 보겠습니다.
+    actions:
+      - {do: title_card, title: "2027학년도 9월 모의평가 수학 22번", subtitle: "지수함수·로그함수와 직사각형 ABCD", tag: "평행이동 · 역함수 대칭 · 연립"}
+
+  # ───────────────────────────── 1. 문제 읽기
+  - id: read_problem
+    narration: >
+      문제를 읽어 보겠습니다.
+      상수 a와 직사각형 ABCD가 다음 조건을 만족시킵니다.
+      조건 가, 두 곡선 y는 a의 x제곱과, y는 2x제곱 빼기 2분의 7 x 더하기 3은 모두 점 A와 점 B를 지납니다.
+      조건 나, 두 곡선 y는 로그 a, x 빼기 4분의 1, 빼기 4분의 1과, y는 2x제곱 빼기 2분의 15 x 더하기 2분의 15는 모두 점 C와 점 D를 지납니다.
+      a의 세제곱이 p분의 q일 때, p 더하기 q의 값을 구하는 문제입니다.
+    actions:
+      - {do: clear, run_time: 0.5}
+      - do: problem
+        title: "22. [4점]"
+        width: 11.5
+        scale: 0.9
+        tex: >
+          상수 $a\,(a>1)$과 직사각형 $\mathrm{ABCD}$가 다음 조건을 만족시킨다.\\[1.0em]
+          (가) 두 곡선 $y=a^x$, $y=2x^2-\dfrac{7}{2}x+3$은 모두 점 $\mathrm{A}$와 점 $\mathrm{B}$를 지난다.\\[0.8em]
+          (나) 두 곡선 $y=\log_a\!\left(x-\dfrac14\right)-\dfrac14$, $y=2x^2-\dfrac{15}{2}x+\dfrac{15}{2}$은 모두 점 $\mathrm{C}$와 점 $\mathrm{D}$를 지난다.\\[1.0em]
+          $a^3=\dfrac{q}{p}$일 때, $p+q$의 값을 구하시오. (단, $p$와 $q$는 서로소인 자연수이다.)
+
+  # ───────────────────────────── 2. 상황 그리기 (가)
+  - id: setup_exp
+    narration: >
+      a가 1보다 크므로 y는 a의 x제곱은 이렇게 증가하는 곡선입니다.
+      여기에 첫 번째 이차함수의 그래프를 두 점에서 만나도록 그리면, 그 두 교점이 바로 점 A와 점 B입니다.
+    actions:
+      - {do: board, run_time: 0.5}
+      - do: problem_dock
+        scale: 0.56
+        tex: >
+          (가) $y=a^x$, $y=2x^2-\frac72x+3$ 이 $\mathrm{A},\mathrm{B}$를 지남\\[0.3em]
+          (나) $y=\log_a\!\left(x-\frac14\right)-\frac14$, $y=2x^2-\frac{15}{2}x+\frac{15}{2}$ 이 $\mathrm{C},\mathrm{D}$를 지남\\[0.3em]
+          $\mathrm{ABCD}$는 직사각형, $a^3=\frac qp$ 일 때 $p+q=?$
+      - {do: axes, run_time: 1.0}
+      - {do: plot, id: exp, expr: "a**x", color: exp, label: "y=a^x", label_at: 1.85, label_dir: RIGHT, run_time: 1.4}
+      - {do: plot, at: s2, id: q1, expr: "2*x**2-7/2*x+3", color: q1, label: "y=2x^2-\\tfrac72x+3", label_at: -0.1, label_dir: LEFT, label_scale: 0.6, run_time: 1.4}
+      - do: points
+        items:
+          - {id: A, at: ["3/4", "3/2"], label: "\\mathrm{A}", label_dir: UL}
+          - {id: B, at: ["3/2", "9/4"], label: "\\mathrm{B}", label_dir: UL}
+
+  # ───────────────────────────── 3. 상황 그리기 (나)
+  - id: setup_log
+    narration: >
+      마찬가지로 조건 나의 로그함수와 두 번째 이차함수가 만나는 두 교점이 점 C와 점 D입니다.
+      이 네 점 A, B, C, D가 직사각형을 이룬다는 것이 핵심 조건이고, 우리가 구해야 할 것은 a의 값입니다.
+    actions:
+      - {do: vline, id: asym, x: "1/4", color: guide, run_time: 0.5}
+      - {do: plot, id: log, expr: "log(x-1/4)/log(a)-1/4", color: log, x_range: ["0.2501", 4], label: "y=\\log_a\\!\\left(x-\\tfrac14\\right)-\\tfrac14", label_at: 3.5, label_dir: DOWN, label_scale: 0.58, run_time: 1.4}
+      - {do: plot, id: q2, expr: "2*x**2-15/2*x+15/2", color: q2, label: "y=2x^2-\\tfrac{15}{2}x+\\tfrac{15}{2}", label_at: 2.3, label_dir: DR, label_scale: 0.58, run_time: 1.4}
+      - do: points
+        items:
+          - {id: D, at: ["7/4", "1/2"], label: "\\mathrm{D}", label_dir: DR, color: log}
+          - {id: C, at: ["5/2", "5/4"], label: "\\mathrm{C}", label_dir: RIGHT, color: log}
+      - {do: polygon, at: s2, id: rect, points: [A, B, C, D], color: rect, fill_opacity: 0.10, run_time: 1.6}
+      - {do: caption, text: "네 점 A, B, C, D는 직사각형의 꼭짓점"}
+
+  # ───────────────────────────── 4. 직사각형의 성질 + 합동인 포물선
+  - id: rect_property
+    narration: >
+      직사각형의 성질에서 출발합니다.
+      선분 AB와 선분 CD는 길이가 같고 서로 평행합니다.
+      그리고 A, B는 첫 번째 포물선 위의 점이고, C, D는 두 번째 포물선 위의 점입니다.
+      두 이차함수의 최고차항 계수가 모두 2로 같다는 점에 주목하세요. 두 포물선은 서로 합동입니다.
+    actions:
+      - {do: board_title, text: "풀이 1 · 직사각형과 합동인 포물선"}
+      - {do: segment, at: s2, id: segAB, a: A, b: B, color: point, stroke_width: 6, run_time: 0.7}
+      - {do: segment, id: segCD, a: C, b: D, color: log, stroke_width: 6, run_time: 0.7}
+      - {do: board_write, tex: "\\overline{\\mathrm{AB}}=\\overline{\\mathrm{CD}},\\quad \\mathrm{AB}\\parallel\\mathrm{CD}", plain: true}
+      - {do: highlight, at: s3, ids: [q1], mode: pulse, color: q1, run_time: 0.8}
+      - {do: highlight, ids: [q2], mode: pulse, color: q2, run_time: 0.8}
+      - {do: board_write, at: s4, ko: true, tex: "최고차항 계수가 모두 $2$ $\\;\\Rightarrow\\;$ 두 포물선은 합동", color: ok}
+      - {do: caption, text: "합동인 두 포물선 위에 놓인, 평행하고 길이가 같은 두 현"}
+
+  # ───────────────────────────── 5. 현의 유일성 (기울기는 일차식)
+  - id: chord_uniqueness
+    narration: >
+      포물선 위에서 길이와 기울기가 모두 정해진 현은 단 하나뿐입니다.
+      두 점의 x좌표 차가 일정할 때, 현의 기울기는 두 x좌표의 합에 대한 일차식이기 때문에, 현을 옮기면 기울기가 한 방향으로만 변합니다.
+      따라서 특정한 기울기를 만드는 위치는 오직 하나이고, A와 D, 그리고 B와 C는 각각의 포물선 위에서 같은 상대적 위치에 있습니다.
+    actions:
+      - {do: dim, ids: [exp, log, q2, segCD, rect, exp_label, log_label, q2_label, asym], opacity: 0.18, run_time: 0.5}
+      - {do: board_write, ko: true, lines: ["현의 기울기 $=\\dfrac{f(x_2)-f(x_1)}{x_2-x_1}$", "$\\qquad\\;=2(x_1+x_2)-\\dfrac72$ \\; ($x_1$에 대한 일차식)"]}
+      - {do: custom, at: s2, fn: sliding_chord, func: q1, gap: 0.75, t_from: -0.2, t_to: 1.05, t_final: 0.75, run_time: 5.0}
+      - {do: caption, text: "x좌표 차가 같은 현: 위치를 옮기면 기울기가 일차식으로 변한다"}
+      - {do: fade, at: s3, ids: [chord, chord_readout], run_time: 0.5}
+      - {do: undim, ids: [exp, log, q2, segCD, rect, exp_label, log_label, q2_label, asym], run_time: 0.5}
+      - {do: board_write, ko: true, tex: "$\\mathrm{AB}$, $\\mathrm{CD}$의 길이·기울기가 같다 $\\Rightarrow$ 포물선 위 대응 위치가 같다"}
+
+  # ───────────────────────────── 6. 두 포물선의 평행이동 관계
+  - id: vertex_form
+    narration: >
+      이제 두 포물선의 위치 관계를 구해 봅시다.
+      두 식을 꼭짓점이 드러나도록 고쳐 쓰면, 꼭짓점은 각각 8분의 7, 32분의 47과 8분의 15, 32분의 15입니다.
+      x좌표는 1 커지고 y좌표는 1 작아졌으므로, 첫 번째 포물선을 x축 방향으로 1, y축 방향으로 마이너스 1만큼 평행이동하면 두 번째 포물선이 됩니다.
+    actions:
+      - {do: board_clear}
+      - {do: board_title, text: "풀이 2 · 두 포물선의 평행이동"}
+      - {do: fade, ids: [segAB, segCD, caption], run_time: 0.4}
+      - {do: board_write, at: s2, lines: ["y=2\\bigl(x-\\tfrac78\\bigr)^2+\\tfrac{47}{32}", "y=2\\bigl(x-\\tfrac{15}{8}\\bigr)^2+\\tfrac{15}{32}"], plain: true, run_time: 1.6}
+      - do: points
+        items:
+          - {id: V1, at: [h1, k1], color: q1, radius: 0.06}
+          - {id: V2, at: [h2, k2], color: q2, radius: 0.06}
+      - {do: arrow, at: s3, id: vshift, a: V1, b: V2, color: accent, label: "(1,\\,-1)", label_dir: DL, run_time: 0.9}
+      - {do: custom, fn: ghost_translate, source: q1, dx: 1, dy: -1, run_time: 1.6}
+      - {do: board_write, ko: true, tex: "꼭짓점 $\\bigl(\\tfrac78,\\tfrac{47}{32}\\bigr)\\to\\bigl(\\tfrac{15}{8},\\tfrac{15}{32}\\bigr)$: $x$축으로 $1$, $y$축으로 $-1$ 평행이동", color: ok}
+      - {do: caption, text: "첫 포물선을 (1, −1)만큼 옮기면 두 번째 포물선"}
+
+  # ───────────────────────────── 7. 점의 평행이동 → AD, BC의 기울기
+  - id: translate_points
+    narration: >
+      그러므로 점 A를 x축으로 1, y축으로 마이너스 1만큼 옮기면 점 D가 되고, 점 B를 똑같이 옮기면 점 C가 됩니다.
+      따라서 선분 AD와 선분 BC의 기울기는 모두 마이너스 1입니다.
+    actions:
+      - {do: fade, ids: [V1, V2, vshift, vshift_label], run_time: 0.4}
+      - {do: arrow, id: arAD, a: A, b: D, color: accent, label: "(1,-1)", label_dir: UR, label_scale: 0.6, run_time: 0.9}
+      - {do: arrow, id: arBC, a: B, b: C, color: accent, label: "(1,-1)", label_dir: UR, label_scale: 0.6, run_time: 0.9}
+      - {do: board_write, tex: "\\mathrm{D}=\\mathrm{A}+(1,-1),\\quad \\mathrm{C}=\\mathrm{B}+(1,-1)"}
+      - {do: board_write, at: s2, ko: true, tex: "기울기$(\\mathrm{AD})=$ 기울기$(\\mathrm{BC})=-1$", color: ok}
+      - {do: caption, text: "AD, BC의 기울기 = −1"}
+
+  # ───────────────────────────── 8. 지수·로그의 대칭축
+  - id: symmetry
+    narration: >
+      이번에는 지수함수와 로그함수를 봅시다.
+      y는 로그 a, x 빼기 4분의 1, 빼기 4분의 1은, y는 a의 x제곱을 직선 y는 x에 대해 대칭이동한 다음, x축으로 4분의 1, y축으로 마이너스 4분의 1만큼 평행이동한 곡선입니다.
+      그래서 두 곡선은 직선 y는 x 빼기 4분의 1에 대하여 서로 대칭입니다.
+    actions:
+      - {do: board_clear}
+      - {do: board_title, text: "풀이 3 · 지수함수와 로그함수의 대칭"}
+      - {do: fade, ids: [arAD, arBC, arAD_label, arBC_label, caption], run_time: 0.4}
+      - {do: dim, ids: [q1, q2, q1_label, q2_label], opacity: 0.18, run_time: 0.5}
+      - {do: highlight, at: s2, ids: [exp], mode: pulse, color: exp, run_time: 0.8}
+      - {do: board_write, ko: true, tex: "$y=a^x \\;\\xleftrightarrow{\\;y=x\\;}\\; y=\\log_a x$"}
+      - {do: board_write, ko: true, tex: "$y=\\log_a x$를 $x$축으로 $\\tfrac14$, $y$축으로 $-\\tfrac14$ 평행이동 $\\Rightarrow$ $y=\\log_a\\!\\left(x-\\tfrac14\\right)-\\tfrac14$"}
+      - {do: highlight, ids: [log], mode: pulse, color: log, run_time: 0.8}
+      - {do: line, at: s3, id: sym, slope: 1, intercept: "-1/4", color: axis_sym, label: "y=x-\\tfrac14", label_at: -0.45, label_dir: UR, run_time: 1.0}
+      - {do: board_write, ko: true, tex: "두 곡선은 직선 $y=x-\\tfrac14$에 대하여 대칭", color: ok}
+      - {do: caption, text: "대칭축: y = x − 1/4  (직선 y = x를 (1/4, −1/4)만큼 옮긴 것)"}
+
+  # ───────────────────────────── 9. 대칭이동으로 A↔D, B↔C
+  - id: reflect
+    narration: >
+      그러면 점 A를 이 대칭축에 대해 대칭이동한 점은 어디로 갈까요.
+      그 점은 로그함수의 그래프 위에 있고, 점 A를 지나면서 대칭축에 수직인 직선 위에 있어야 합니다.
+      대칭축의 기울기가 1이니까 그 수선의 기울기는 마이너스 1인데, 기울기가 마이너스 1인 직선 AD가 바로 그 수선입니다. 따라서 대칭이동한 점은 D여야 합니다.
+      같은 이유로 점 B를 대칭이동한 점은 C입니다.
+    actions:
+      - {do: reflect, at: s2, source: A, slope: 1, intercept: "-1/4", id: A_ref, color: log, run_time: 2.2}
+      - {do: caption, at: s3, text: "A를 지나고 대칭축에 수직인 직선 = 직선 AD  ⟹  A의 대칭점은 D"}
+      - {do: highlight, ids: [D], mode: flash, color: log, run_time: 0.6}
+      - {do: board_write, tex: "\\mathrm{A}\\ \\xleftrightarrow{\\ y=x-\\frac14\\ }\\ \\mathrm{D}"}
+      - {do: reflect, at: s4, source: B, slope: 1, intercept: "-1/4", id: B_ref, color: log, run_time: 1.6}
+      - {do: board_write, tex: "\\mathrm{B}\\ \\xleftrightarrow{\\ y=x-\\frac14\\ }\\ \\mathrm{C}"}
+
+  # ───────────────────────────── 10. 직선 AB, CD의 방정식
+  - id: lines
+    narration: >
+      이제 결정적인 사실이 나옵니다.
+      대칭축은 선분 AD와 선분 BC의 중점을 지나고, 직선 AB와 직선 CD는 이 대칭축과 평행하며 대칭축에서 같은 거리에 있습니다.
+      직선 AB를 x축으로 2분의 1, y축으로 마이너스 2분의 1만큼 옮기면 대칭축이 되므로, 직선 AB는 y는 x 더하기 4분의 3, 직선 CD는 y는 x 빼기 4분의 5입니다.
+    actions:
+      - {do: fade, ids: [A_ref, B_ref, A_ref_guide, B_ref_guide, A_ref_rightangle, B_ref_rightangle, caption], run_time: 0.4}
+      - {do: board_clear}
+      - {do: board_title, text: "풀이 4 · 점들이 놓인 직선"}
+      - {do: line, at: s2, id: lineAB, slope: 1, intercept: "3/4", color: point, dashed: true, label: "y=x+\\tfrac34", label_at: -0.5, label_dir: UP, run_time: 1.0}
+      - {do: line, id: lineCD, slope: 1, intercept: "-5/4", color: log, dashed: true, label: "y=x-\\tfrac54", label_at: 3.55, label_dir: UL, run_time: 1.0}
+      - {do: board_write, at: s3, ko: true, tex: "$\\mathrm{AB}$를 $\\bigl(\\tfrac12,-\\tfrac12\\bigr)$ 옮기면 대칭축 $y=x-\\tfrac14$"}
+      - {do: board_write, lines: ["\\mathrm{AB}:\\ y=x+\\tfrac34", "\\mathrm{CD}:\\ y=x-\\tfrac54"], plain: true, color: ok, run_time: 1.4}
+      - {do: caption, text: "AB ∥ CD ∥ 대칭축, 대칭축은 AB와 CD의 한가운데"}
+
+  # ───────────────────────────── 11. 연립하여 A, B의 좌표
+  - id: intersect
+    narration: >
+      점 A와 점 B는 직선 y는 x 더하기 4분의 3 위에 있으면서, 첫 번째 포물선 위에도 있습니다.
+      두 식을 연립하면 8x제곱 빼기 18x 더하기 9는 0. 인수분해하면 4x 빼기 3, 곱하기 2x 빼기 3은 0이므로, x는 4분의 3 또는 2분의 3입니다.
+      따라서 점 A는 4분의 3, 2분의 3, 점 B는 2분의 3, 4분의 9입니다.
+    actions:
+      - {do: undim, ids: [q1, q1_label], run_time: 0.4}
+      - {do: dim, ids: [log, q2, log_label, q2_label, lineCD, lineCD_label, sym, sym_label, asym], opacity: 0.15, run_time: 0.5}
+      - {do: board_write, tex: "2x^2-\\tfrac72x+3=x+\\tfrac34", plain: true}
+      - {do: board_write, at: s2, lines: ["8x^2-18x+9=0", "(4x-3)(2x-3)=0", "x=\\tfrac34,\\ \\tfrac32"], plain: true, run_time: 2.4}
+      - {do: guides, at: s3, point: A, color: point, x_label: "\\tfrac34", y_label: "\\tfrac32", run_time: 0.8}
+      - {do: guides, point: B, color: point, x_label: "\\tfrac32", y_label: "\\tfrac94", run_time: 0.8}
+      - {do: board_write, tex: "\\mathrm{A}\\bigl(\\tfrac34,\\tfrac32\\bigr),\\quad \\mathrm{B}\\bigl(\\tfrac32,\\tfrac94\\bigr)", color: ok}
+      - {do: caption, text: "직선 y = x + 3/4 와 첫 포물선의 교점이 A, B"}
+
+  # ───────────────────────────── 12. a의 값과 정답
+  - id: solve_a
+    narration: >
+      이 두 점은 y는 a의 x제곱 위의 점이기도 합니다.
+      점 A의 좌표를 대입하면 a의 4분의 3제곱은 2분의 3. 양변을 네제곱하면 a의 세제곱은 16분의 81입니다.
+      p는 16, q는 81이므로 정답은 97입니다.
+    actions:
+      - {do: board_clear}
+      - {do: board_title, text: "풀이 5 · a의 값"}
+      - {do: fade, ids: [guides_A, guides_B, lineAB, lineAB_label, caption], run_time: 0.4}
+      - {do: undim, ids: [log, q2, log_label, q2_label, sym, sym_label, asym], run_time: 0.4}
+      - {do: highlight, ids: [exp, A], mode: pulse, color: exp, run_time: 0.8}
+      - {do: board_write, at: s2, lines: ["a^{3/4}=\\tfrac32", "a^3=\\bigl(\\tfrac32\\bigr)^4=\\tfrac{81}{16}"], plain: true, run_time: 1.8}
+      - {do: board_write, at: s3, tex: "p=16,\\ q=81\\ \\Rightarrow\\ p+q=97", plain: true, color: ok}
+      - {do: answer, tex: "p+q=97", caption_text: "정답", run_time: 1.2}
+
+  # ───────────────────────────── 13. B를 대입하면?
+  - id: check_B
+    narration: >
+      그런데 왜 점 B의 좌표는 대입하지 않았을까요.
+      B를 대입해 보면 a의 2분의 3제곱은 4분의 9, 양변을 제곱하면 a의 세제곱은 16분의 81로 똑같은 결과가 나옵니다.
+      조건이 하나 남는 것처럼 보이지만 사실은 모순 없이 딱 맞아떨어지는 것이고, 미지수를 더 둘 수도 있는 문제를 풀기 쉽게 준 셈입니다.
+    actions:
+      - {do: fade, ids: [answer], run_time: 0.4}
+      - {do: highlight, at: s2, ids: [B], mode: flash, color: point, run_time: 0.6}
+      - {do: board_write, lines: ["a^{3/2}=\\tfrac94", "a^3=\\bigl(\\tfrac94\\bigr)^2=\\tfrac{81}{16}\\ \\checkmark"], plain: true, run_time: 1.6}
+      - {do: caption, at: s3, text: "A, B 어느 점을 대입해도 a³ = 81/16 — 조건이 서로 모순 없이 일치"}
+
+  # ───────────────────────────── 14. 정리
+  - id: outro
+    narration: >
+      정리하면, 직사각형의 성질에서 두 포물선의 평행이동을 읽고, 지수함수와 로그함수의 대칭축을 찾아 점들이 놓인 직선을 결정한 뒤, 연립하여 a를 구하는 문제였습니다.
+      정답은 97입니다. 시청해 주셔서 감사합니다.
+    actions:
+      - {do: clear, board: true, run_time: 0.8}
+      - {do: end_card, title: "정답  97", subtitle: "직사각형 → 포물선의 평행이동 (1, −1) → 대칭축 y = x − 1/4 → 직선 y = x + 3/4 와 연립"}

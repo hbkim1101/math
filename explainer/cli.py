@@ -35,6 +35,7 @@ def main(argv: list[str] | None = None) -> int:
 
     va = sub.add_parser("validate", help="시나리오 YAML 검사")
     va.add_argument("project")
+    va.add_argument("--tex", action="store_true", help="모든 LaTeX 문자열을 미리 컴파일해 검사")
 
     sub.add_parser("actions", help="액션 목록")
 
@@ -67,6 +68,11 @@ def main(argv: list[str] | None = None) -> int:
         if unknown:
             print(f"알 수 없는 액션: {unknown}")
             return 2
+        if args.tex:
+            from .lint import lint_tex
+            errors = lint_tex(proj)
+            if errors:
+                return 2
         print("OK")
         return 0
 

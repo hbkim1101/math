@@ -31,6 +31,7 @@ class Board:
         ).move_to([cx, cy, 0])
         self.title = Text(layout.title, font=KOREAN_FONT, font_size=26, weight="BOLD", color=theme.muted)
         self.title.next_to(self.frame.get_corner(UP + LEFT), DOWN + RIGHT, buff=0.22)
+        self.title.set_z_index(3)
         self.header: Optional[Mobject] = None
         self.lines: list[Mobject] = []
         self.group = VGroup(self.frame, self.title)
@@ -101,6 +102,7 @@ class Board:
                  animation: str = "write") -> None:
         """새 줄을 추가한다. 공간이 부족하면 오래된 줄을 스크롤아웃한다."""
         self.fit_width(mob)
+        mob.set_z_index(3)
         prev = self.lines[-1] if self.lines else None
         self._place_below(mob, prev)
         if indent:

@@ -93,13 +93,11 @@ async def _synthesize_async(text: str, voice: str, rate: str, pitch: str, mp3_pa
 
 def _sentences_from_marks(text: str, marks: list[dict], total: float) -> list[Sentence]:
     """SentenceBoundary 이벤트를 문장 타이밍으로 변환한다. 개수가 맞지 않으면 단어 기반 폴백."""
-    sents = split_sentences(text)
-    if marks and len(marks) == len(sents):
-        result = [Sentence(s, m["start"], m["end"]) for s, m in zip(sents, marks)]
-    elif marks and all(re.sub(r"\s+", "", m["text"]) == re.sub(r"\s+", "", s) for m, s in zip(marks, sents)):
-        result = [Sentence(s, m["start"], m["end"]) for s, m in zip(sents, marks)]
+    if marks:
+        # TTS 엔진이 실제로 끊어 읽은 문장 경계를 그대로 사용한다 (자막/동기화의 기준)
+        result = [Sentence(m["text"].strip(), m["start"], m["end"]) for m in marks if m["text"].strip()]
     else:
-        return _sentences_from_words(text, marks, total)
+        return _sentences_from_words(text, [], total)
     result[0].start = 0.0
     result[-1].end = total
     for i in range(len(result) - 1):

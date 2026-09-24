@@ -36,7 +36,50 @@ def wrap_korean(text: str, max_chars: int = MAX_CHARS_PER_LINE) -> str:
     return best[0] + "\n" + best[1]
 
 
+MAX_CUE_CHARS = 2 * MAX_CHARS_PER_LINE
+
+
+def split_long_sentence(text: str, max_chars: int = MAX_CUE_CHARS) -> list[str]:
+    """두 줄에 담기지 않는 긴 문장을 쉼표/어절 경계에서 여러 조각으로 나눈다."""
+    text = text.strip()
+    if len(text) <= max_chars:
+        return [text]
+    # 1차: 쉼표 뒤에서 끊기
+    clauses = [c.strip() for c in re.split(r"(?<=,)\s+", text) if c.strip()]
+    chunks: list[str] = []
+    cur = ""
+    for c in clauses:
+        cand = f"{cur} {c}".strip() if cur else c
+        if len(cand) <= max_chars:
+            cur = cand
+        else:
+            if cur:
+                chunks.append(cur)
+            cur = c
+    if cur:
+        chunks.append(cur)
+    # 2차: 여전히 긴 조각은 어절 단위로 강제 분할
+    out: list[str] = []
+    for ch in chunks:
+        if len(ch) <= max_chars:
+            out.append(ch)
+            continue
+        words, cur = ch.split(), ""
+        for w in words:
+            cand = f"{cur} {w}".strip()
+            if len(cand) <= max_chars:
+                cur = cand
+            else:
+                if cur:
+                    out.append(cur)
+                cur = w
+        if cur:
+            out.append(cur)
+    return out
+
+
 def build_cues(timeline: Timeline, min_gap: float = 0.05) -> list[Cue]:
+    """문장 단위 큐. 긴 문장은 글자 수 비례로 시간을 나눠 여러 큐로 분할한다."""
     cues: list[Cue] = []
     idx = 1
     for seg in timeline.segments:
@@ -47,8 +90,15 @@ def build_cues(timeline: Timeline, min_gap: float = 0.05) -> list[Cue]:
             end = seg.start + s.end
             if cues and start < cues[-1].end + min_gap:
                 cues[-1].end = max(cues[-1].start + 0.3, start - min_gap)
-            cues.append(Cue(idx, start, max(end, start + 0.6), wrap_korean(s.text)))
-            idx += 1
+            pieces = split_long_sentence(s.text)
+            total_chars = sum(len(p) for p in pieces) or 1
+            t = start
+            span = max(end - start, 0.6)
+            for p in pieces:
+                dur = span * len(p) / total_chars
+                cues.append(Cue(idx, t, t + dur, wrap_korean(p)))
+                idx += 1
+                t += dur
     return cues
 
 

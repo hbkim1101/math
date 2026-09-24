@@ -16,7 +16,7 @@ from manim import (
     Polygon, Rectangle, ReplacementTransform, RoundedRectangle, SurroundingRectangle, Transform,
     TransformFromCopy, TransformMatchingTex, VGroup, VMobject, Write, Axes, AnimationGroup,
     LaggedStart, Wiggle, ShowPassingFlash, Uncreate, Text, BackgroundRectangle, always_redraw,
-    ManimColor, Elbow, RightAngle, smooth, linear, there_and_back, TracedPath, ValueTracker,
+    ManimColor, Elbow, RightAngle, smooth, linear, there_and_back, TracedPath, ValueTracker, config,
 )
 
 from ..script.models import Action
@@ -80,7 +80,10 @@ def end_card(scene, title: str, subtitle: str = "", run_time: float | None = Non
     t = scene.ktext(title, size=54, weight="BOLD")
     items = [t]
     if subtitle:
-        items.append(scene.ktext(subtitle, size=30, color=scene.theme.muted))
+        s = scene.ktext(subtitle, size=30, color=scene.theme.muted)
+        if s.width > 12.5:
+            s.scale_to_fit_width(12.5)
+        items.append(s)
     g = VGroup(*items).arrange(DOWN, buff=0.4).move_to(ORIGIN)
     scene.register(id, g)
     scene.play(FadeIn(g, shift=UP * 0.2), run_time=rt)
@@ -155,11 +158,12 @@ def problem(scene, tex: str, width: float = 12.0, scale: float = 0.85, run_time:
     if title:
         items.append(scene.ktext(title, size=30, weight="BOLD", color=scene.theme.accent))
     items.append(body)
-    g = VGroup(*items).arrange(DOWN, buff=0.4, aligned_edge=LEFT).move_to(ORIGIN)
+    g = VGroup(*items).arrange(DOWN, buff=0.35, aligned_edge=LEFT)
     if g.width > 12.8:
         g.scale_to_fit_width(12.8)
-    if g.height > 6.8:
-        g.scale_to_fit_height(6.8)
+    if g.height > 5.9:
+        g.scale_to_fit_height(5.9)
+    g.move_to([0, 0.55, 0])  # 하단 자막 영역을 피해 약간 위에 배치
     scene.register(id, g)
     scene.play(FadeIn(g, shift=UP * 0.2), run_time=rt)
 
@@ -185,6 +189,8 @@ def problem_dock(scene, id: str = "problem", run_time: float | None = None, tex:
     else:
         target = src.copy()
     scene.board.header_target_position(target)
+    # ReplacementTransform 은 대상이 원본(문제 패널)의 그리기 순서를 물려받아 보드 프레임 뒤로 숨을 수 있다
+    target.set_z_index(3)
     shift_anims = scene.board.make_room_for_header(target)
     if src is not None:
         scene.play(ReplacementTransform(src, target), *shift_anims, run_time=rt)
@@ -208,7 +214,11 @@ def board_write(scene, lines: list[str] | None = None, tex: str | None = None, c
     sc = scale if scale is not None else scene.project.layout.board.line_scale
     per = _rt(run_time, 0.9) / max(1, len(items))
     for i, s in enumerate(items):
-        mob = scene.ktex(s, scale=sc, color=color) if ko else scene.mtex(s, color=color, scale=sc, t2c=t2c, plain=plain)
+        if ko:
+            # 한글 문장은 축소 대신 보드 폭에 맞춰 자동 줄바꿈
+            mob = scene.ktex(s, scale=sc, color=color, width=scene.board.content_width - indent)
+        else:
+            mob = scene.mtex(s, color=color, scale=sc, t2c=t2c, plain=plain)
         scene.board.add_line(mob, scene, run_time=per, indent=indent, animation=animation)
         if id and i == len(items) - 1:
             scene.register(id, mob)
@@ -243,7 +253,10 @@ def board_clear(scene, run_time: float | None = None, keep_header: bool = True, 
 def board_title(scene, text: str, run_time: float | None = None, **_):
     assert scene.board is not None
     new = scene.ktext(text, size=26, weight="BOLD", color=scene.theme.muted)
+    if new.width > scene.board.content_width:
+        new.scale_to_fit_width(scene.board.content_width)
     new.move_to(scene.board.title, aligned_edge=LEFT)
+    new.set_z_index(3)
     scene.play(Transform(scene.board.title, new), run_time=_rt(run_time, 0.5))
 
 
@@ -337,6 +350,8 @@ def plot(scene, id: str, expr: str, color: str | None = None, x_range: list | No
             lab.next_to(scene.c2p(x, f(x)), scene.direction(label_dir), buff=0.12)
         else:
             lab.next_to(group, scene.direction(label_dir), buff=0.1)
+        lab.add_background_rectangle(color=scene.theme.background, opacity=0.7, buff=0.05)
+        lab.set_z_index(6)
         scene.register(f"{id}_label", lab)
         anims.append(FadeIn(lab, shift=UP * 0.1))
     scene.play(*anims, run_time=rt)
@@ -371,6 +386,8 @@ def line(scene, id: str, slope: Any = None, intercept: Any = None, expr: str | N
         xr, _ = scene.axes_ranges
         x = scene.eval(label_at) if label_at is not None else xr[1] - 0.6
         lab.next_to(scene.c2p(x, f(x)), scene.direction(label_dir), buff=0.1)
+        lab.add_background_rectangle(color=scene.theme.background, opacity=0.7, buff=0.05)
+        lab.set_z_index(6)
         scene.register(f"{id}_label", lab)
         anims.append(FadeIn(lab))
     scene.play(*anims, run_time=rt)
@@ -684,17 +701,23 @@ def caption(scene, text: str = "", tex: str | None = None, color: str | None = N
     bar.align_to(bg, LEFT).shift(RIGHT * 0.08)
     body.move_to(bg).shift(RIGHT * 0.08)
     g = VGroup(bg, bar, body).set_z_index(9)
-    ref = scene.axes if scene.axes is not None else None
-    if ref is not None:
-        anchor_x = ref.get_center()[0]
-    else:
-        anchor_x = 0
+    # 그래프 영역(보드 왼쪽) 안에 들어오도록 폭을 제한하고 좌우를 클램프한다
+    frame_left = -config.frame_width / 2 + 0.25
+    frame_right = (scene.board.frame.get_left()[0] - 0.2) if scene.board is not None else config.frame_width / 2 - 0.25
+    max_w = frame_right - frame_left
+    if g.width > max_w:
+        g.scale_to_fit_width(max_w)
+    anchor_x = scene.axes.get_center()[0] if scene.axes is not None else (frame_left + frame_right) / 2
     if position == "top":
         g.to_edge(UP, buff=0.22)
     else:
-        # 하단 자막 영역(약 1 유닛)을 비워 둔다
-        g.to_edge(DOWN, buff=1.05)
+        # 하단 자막 영역(2줄 기준 약 1.3 유닛)을 비워 둔다
+        g.to_edge(DOWN, buff=1.4)
     g.set_x(anchor_x)
+    if g.get_left()[0] < frame_left:
+        g.shift(RIGHT * (frame_left - g.get_left()[0]))
+    if g.get_right()[0] > frame_right:
+        g.shift(LEFT * (g.get_right()[0] - frame_right))
     scene.caption = g
     scene.register(id, g)
     if old is not None:
@@ -712,34 +735,62 @@ def fade(scene, ids: list[str] | str, out: bool = True, run_time: float | None =
     if not mobs:
         return
     if opacity is not None:
-        scene.play(*(m.animate.set_opacity(opacity) for m in mobs), run_time=rt)
+        scene.play(*(Transform(m, _opacity_target(m, opacity)) for m in mobs), run_time=rt)
         return
     if out:
         scene.play(*(FadeOut(m) for m in mobs), run_time=rt)
         for i in ids:
+            if scene.caption is not None and scene.objs.get(i) is scene.caption:
+                scene.caption = None
             scene.objs.pop(i, None)
     else:
         scene.play(*(FadeIn(m) for m in mobs), run_time=rt)
 
 
+def _remember_opacity(mob: Mobject) -> None:
+    """stroke/fill 원본 불투명도를 서브모브젼트별로 기억한다 (최초 1회)."""
+    if getattr(mob, "_orig_opacity", None) is not None:
+        return
+    rec = {}
+    for sm in mob.family_members_with_points():
+        if isinstance(sm, VMobject):
+            rec[id(sm)] = (float(sm.get_stroke_opacity()), float(sm.get_fill_opacity()))
+    mob._orig_opacity = rec
+
+
+def _opacity_target(mob: Mobject, factor: float) -> Mobject:
+    """원본 대비 factor 배의 불투명도를 가진 복사본(Transform 목표)을 만든다. fill 이 0 이던 곡선은 0 을 유지."""
+    _remember_opacity(mob)
+    target = mob.copy()
+    for src, dst in zip(mob.family_members_with_points(), target.family_members_with_points()):
+        if isinstance(dst, VMobject):
+            so, fo = mob._orig_opacity.get(id(src), (1.0, 0.0))
+            dst.set_stroke(opacity=so * factor)
+            dst.set_fill(opacity=fo * factor)
+    target._orig_opacity = mob._orig_opacity
+    return target
+
+
 @action("dim")
 def dim(scene, ids: list[str] | str, opacity: float = 0.25, run_time: float | None = None, **_):
+    """객체를 흐리게. stroke/fill 을 원본 비율로 함께 낮춘다 (곡선이 채워지는 부작용 없음)."""
     rt = _rt(run_time, 0.5)
     if isinstance(ids, str):
         ids = [ids]
     mobs = [scene.get(i) for i in ids if i in scene.objs]
     if mobs:
-        scene.play(*(m.animate.set_opacity(opacity) for m in mobs), run_time=rt)
+        scene.play(*(Transform(m, _opacity_target(m, opacity)) for m in mobs), run_time=rt)
 
 
 @action("undim")
 def undim(scene, ids: list[str] | str, run_time: float | None = None, **_):
+    """dim 으로 흐려진 객체를 원래 불투명도로 복원."""
     rt = _rt(run_time, 0.5)
     if isinstance(ids, str):
         ids = [ids]
     mobs = [scene.get(i) for i in ids if i in scene.objs]
     if mobs:
-        scene.play(*(m.animate.set_opacity(1.0) for m in mobs), run_time=rt)
+        scene.play(*(Transform(m, _opacity_target(m, 1.0)) for m in mobs), run_time=rt)
 
 
 @action("answer")

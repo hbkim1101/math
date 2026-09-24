@@ -175,7 +175,7 @@ def verify_output(out_dir: str | Path, expect_resolution: tuple[int, int] | None
         long_lines = [c for c in cues if any(len(line) > 34 for line in c["text"].split("\n"))]
         rep.add("자막 줄 길이", not long_lines, f"34자 초과 줄 {len(long_lines)}개")
         expected_cues = sum(len(s["sentences"]) for s in segs)
-        rep.add("자막 수 = 문장 수", len(cues) == expected_cues, f"{len(cues)} / {expected_cues}")
+        rep.add("자막이 모든 문장을 포함", len(cues) >= expected_cues, f"큐 {len(cues)}개 ≥ 문장 {expected_cues}개")
 
     # ---- 프레임 품질
     frames = _sample_frames(video, frame_samples)
