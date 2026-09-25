@@ -1,0 +1,132 @@
+{
+ "video": "output/2027_sep_q21/2027_sep_q21.mp4",
+ "ok": true,
+ "checks": [
+  {
+   "name": "비디오 스트림",
+   "ok": true,
+   "detail": "codec=h264",
+   "value": null
+  },
+  {
+   "name": "해상도",
+   "ok": true,
+   "detail": "1920x1080 (기대 1920x1080)",
+   "value": null
+  },
+  {
+   "name": "프레임레이트",
+   "ok": true,
+   "detail": "30.00 fps (기대 30)",
+   "value": 30.0
+  },
+  {
+   "name": "픽셀 포맷 호환",
+   "ok": true,
+   "detail": "pix_fmt=yuv420p",
+   "value": null
+  },
+  {
+   "name": "오디오 스트림",
+   "ok": true,
+   "detail": "codec=aac, sr=48000",
+   "value": null
+  },
+  {
+   "name": "오디오/비디오 길이 일치",
+   "ok": true,
+   "detail": "video=401.73s audio=401.72s (차이 0.01s)",
+   "value": 0.012333000000012362
+  },
+  {
+   "name": "세그먼트 순서(단조 증가)",
+   "ok": true,
+   "detail": "12개 세그먼트",
+   "value": null
+  },
+  {
+   "name": "내레이션 잘림 없음",
+   "ok": true,
+   "detail": "모든 세그먼트가 오디오 길이 이상",
+   "value": null
+  },
+  {
+   "name": "타임라인이 영상 안에 있음",
+   "ok": true,
+   "detail": "마지막 세그먼트 종료 400.76s / 영상 401.73s",
+   "value": null
+  },
+  {
+   "name": "발화 비율",
+   "ok": true,
+   "detail": "내레이션 391.9s / 영상 401.7s = 98%",
+   "value": 0.9755127787715838
+  },
+  {
+   "name": "자막 겹침 없음",
+   "ok": true,
+   "detail": "79개 큐, 겹침 0",
+   "value": null
+  },
+  {
+   "name": "자막 시간 범위",
+   "ok": true,
+   "detail": "모든 큐가 영상 길이 안",
+   "value": null
+  },
+  {
+   "name": "자막 줄 길이",
+   "ok": true,
+   "detail": "34자 초과 줄 0개",
+   "value": null
+  },
+  {
+   "name": "자막이 모든 문장을 포함",
+   "ok": true,
+   "detail": "큐 79개 ≥ 문장 49개",
+   "value": null
+  },
+  {
+   "name": "검은/빈 프레임 없음",
+   "ok": true,
+   "detail": "24장 중 검은 프레임 0장 (평균 밝기 22.4)",
+   "value": null
+  },
+  {
+   "name": "화면 변화(정지 아님)",
+   "ok": true,
+   "detail": "연속 샘플 23쌍 중 변화 23쌍",
+   "value": null
+  },
+  {
+   "name": "선명도",
+   "ok": true,
+   "detail": "라플라시안 분산 중앙값 2205.7",
+   "value": 2205.69482421875
+  },
+  {
+   "name": "콘텐츠 존재",
+   "ok": true,
+   "detail": "밝은 픽셀 비율 평균 7.3%",
+   "value": null
+  },
+  {
+   "name": "라우드니스",
+   "ok": true,
+   "detail": "I=-16.1 LUFS (목표 -16)",
+   "value": -16.1
+  },
+  {
+   "name": "트루피크(클리핑 없음)",
+   "ok": true,
+   "detail": "peak=-2.6 dBFS",
+   "value": -2.6
+  },
+  {
+   "name": "긴 무음 없음",
+   "ok": true,
+   "detail": "최장 무음 2.8s, 무음 비율 7%",
+   "value": 2.77135
+  }
+ ]
+}
