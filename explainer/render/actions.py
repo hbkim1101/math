@@ -358,15 +358,16 @@ def axes(scene, id: str = "axes", x_range: list | None = None, y_range: list | N
     scene.play(*anims, run_time=rt)
 
 
-def _plot_pieces(scene, f, x_range, color, stroke_width, dashed=False, samples=600):
+def _plot_pieces(scene, f, x_range, color, stroke_width, dashed=False, samples=600, smooth=True, steps=400):
     xr, yr = scene.axes_ranges
     x0 = xr[0] if x_range is None else scene.eval(x_range[0])
     x1 = xr[1] if x_range is None else scene.eval(x_range[1])
     pieces = scene.clipped_pieces(f, (x0, x1), (yr[0], yr[1]), samples=samples)
     group = VGroup()
     for a, b in pieces:
-        step = (b - a) / 400
-        g = scene.axes.plot(f, x_range=[a, b, step], color=color, stroke_width=stroke_width, use_smoothing=True)
+        step = (b - a) / steps
+        # smooth=False: 절댓값·조각 함수처럼 뾰족점이 있는 그래프를 둥글리지 않고 그린다
+        g = scene.axes.plot(f, x_range=[a, b, step], color=color, stroke_width=stroke_width, use_smoothing=smooth)
         if dashed:
             g = DashedVMobject(g, num_dashes=int(max(12, (b - a) * 14)), dashed_ratio=0.55)
         group.add(g)
@@ -376,13 +377,14 @@ def _plot_pieces(scene, f, x_range, color, stroke_width, dashed=False, samples=6
 @action("plot")
 def plot(scene, id: str, expr: str, color: str | None = None, x_range: list | None = None,
          label: str | None = None, label_at: Any = None, label_dir: Any = "UR", label_scale: float = 0.75,
-         stroke_width: float = 4.0, run_time: float | None = None, dashed: bool = False, **_):
-    """y = expr(x) 그래프. y 범위를 벗어나는 부분은 자동으로 잘라낸다."""
+         stroke_width: float = 4.0, run_time: float | None = None, dashed: bool = False,
+         smooth: bool = True, **_):
+    """y = expr(x) 그래프. y 범위를 벗어나는 부분은 자동으로 잘라낸다. smooth=false 면 뾰족점을 보존."""
     rt = _rt(run_time, 1.4)
     f = scene.func(expr)
     scene.funcs[id] = f
     col = scene.color(color, scene.theme.accent)
-    group = _plot_pieces(scene, f, x_range, col, stroke_width, dashed)
+    group = _plot_pieces(scene, f, x_range, col, stroke_width, dashed, smooth=smooth, steps=400 if smooth else 800)
     scene.register(id, group)
     anims = [Create(group)]
     if label:
@@ -457,11 +459,14 @@ def vline(scene, id: str, x: Any, color: str | None = None, dashed: bool = True,
 
 
 @action("point")
-def point(scene, id: str, at: Any, color: str | None = None, label: str | None = None,
+def point(scene, id: str, pos: Any = None, at: Any = None, color: str | None = None, label: str | None = None,
           label_dir: Any = "UR", label_scale: float = 0.8, radius: float = 0.08, run_time: float | None = None,
           flash: bool = True, coords_label: bool = False, **_):
+    """점 하나. 좌표는 `pos` 로 준다 (`at` 은 액션 실행 시각과 이름이 겹치므로 YAML 에서는 pos 사용)."""
     rt = _rt(run_time, 0.7)
-    x, y = scene.resolve_coord(at)
+    if pos is None:
+        raise ValueError(f"point {id!r}: 좌표 pos 가 필요합니다")
+    x, y = scene.resolve_coord(pos)
     col = scene.color(color, scene.theme.palette["point"])
     dot = Dot(scene.c2p(x, y), radius=radius, color=col, z_index=5)
     dot.set_stroke(scene.theme.background, width=2)
@@ -702,16 +707,16 @@ def highlight(scene, ids: list[str] | str, color: str | None = None, mode: str =
 
 
 @action("label")
-def label(scene, id: str, tex: str, near: str | None = None, at: Any = None, dir: Any = "UR",
+def label(scene, id: str, tex: str, near: str | None = None, pos: Any = None, dir: Any = "UR",
           color: str | None = None, scale: float = 0.75, run_time: float | None = None, ko: bool = False,
           bg: bool = True, buff: float = 0.12, **_):
-    """수식 라벨을 객체 근처 또는 좌표에 배치."""
+    """수식 라벨을 객체 근처(near) 또는 좌표(pos)에 배치."""
     rt = _rt(run_time, 0.6)
     lab = scene.ktex(tex, scale=scale, color=color) if ko else scene.mtex(tex, color=color, scale=scale, plain=True)
     if near is not None:
         lab.next_to(scene.get(near), scene.direction(dir), buff=buff)
-    elif at is not None:
-        lab.move_to(scene.c2p(*scene.resolve_coord(at))).shift(scene.direction(dir) * buff)
+    elif pos is not None:
+        lab.move_to(scene.c2p(*scene.resolve_coord(pos))).shift(scene.direction(dir) * buff)
     if bg:
         lab.add_background_rectangle(color=scene.theme.background, opacity=0.75, buff=0.05)
     lab.set_z_index(7)

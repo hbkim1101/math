@@ -112,7 +112,8 @@ class ExplainerScene(Scene):
         return float(safe_eval(expr, self.params))
 
     def func(self, expr: str) -> Callable[[float], float]:
-        return make_function(expr, self.params)
+        # 앞서 plot/line 으로 등록된 함수 id 를 식 안에서 호출할 수 있다 (예: "7*f(x)"); params 가 우선
+        return make_function(expr, {**self.funcs, **self.params})
 
     def resolve_coord(self, spec) -> tuple[float, float]:
         """좌표 스펙 → (x, y). 숫자 쌍, 표현식 쌍, 점 id, {on: f, x: ...} 를 지원."""

@@ -38,6 +38,14 @@ _BIN_OPS = {
     ast.Mod: operator.mod,
 }
 _UNARY_OPS = {ast.USub: operator.neg, ast.UAdd: operator.pos}
+_CMP_OPS = {
+    ast.Lt: operator.lt,
+    ast.LtE: operator.le,
+    ast.Gt: operator.gt,
+    ast.GtE: operator.ge,
+    ast.Eq: operator.eq,
+    ast.NotEq: operator.ne,
+}
 
 
 class ExpressionError(ValueError):
@@ -62,11 +70,25 @@ def _eval_node(node: ast.AST, env: Mapping[str, Any]) -> Any:
     if isinstance(node, ast.UnaryOp) and type(node.op) in _UNARY_OPS:
         return _UNARY_OPS[type(node.op)](_eval_node(node.operand, env))
     if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-        fn = _ALLOWED_FUNCS.get(node.func.id)
+        # env 에 등록된 함수(예: 앞서 plot 한 그래프 id)도 호출할 수 있다
+        fn = env.get(node.func.id)
+        if not callable(fn):
+            fn = _ALLOWED_FUNCS.get(node.func.id)
         if fn is None or not callable(fn):
             raise ExpressionError(f"허용되지 않는 함수: {node.func.id}")
         args = [_eval_node(a, env) for a in node.args]
         return fn(*args)
+    if isinstance(node, ast.IfExp):
+        # 조각적으로 정의된 함수: `-f(x) if f(x) >= 0 else 7*f(x)`
+        return _eval_node(node.body, env) if _eval_node(node.test, env) else _eval_node(node.orelse, env)
+    if isinstance(node, ast.Compare) and all(type(op) in _CMP_OPS for op in node.ops):
+        left = _eval_node(node.left, env)
+        for op, comp in zip(node.ops, node.comparators):
+            right = _eval_node(comp, env)
+            if not _CMP_OPS[type(op)](left, right):
+                return False
+            left = right
+        return True
     if isinstance(node, (ast.Tuple, ast.List)):
         return [_eval_node(e, env) for e in node.elts]
     raise ExpressionError(f"허용되지 않는 구문: {ast.dump(node)}")

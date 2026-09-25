@@ -31,6 +31,18 @@ def test_make_function_and_params_chain():
     assert f(1.5) == pytest.approx(2.25, rel=1e-6)
 
 
+def test_piecewise_expression_and_registered_function_calls():
+    f = make_function("(x-r)**2*(x-s)", {"r": 0.5, "s": 1})
+    g = make_function("-f(x) if f(x) >= 0 else 7*f(x)", {"f": f})
+    assert g(0) == pytest.approx(7 * f(0))       # f(0) = -1/4 < 0 → 7f
+    assert g(2) == pytest.approx(-f(2))          # f(2) = 2.25 ≥ 0 → -f
+    assert safe_eval("1 if 0 < x <= 2 else 0", {"x": 2}) == 1
+    assert safe_eval("1 if 0 < x <= 2 else 0", {"x": 3}) == 0
+    # 비교 연산 이외의 논리 구문(and/or)은 여전히 거부
+    with pytest.raises(ExpressionError):
+        safe_eval("x > 0 and x < 2", {"x": 1})
+
+
 def test_action_params_and_extra_fields():
     act = Action(do="plot", id="f", expr="x**2", color="q1", at="s2", run_time=1.5)
     p = act.params
