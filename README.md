@@ -6,7 +6,9 @@ YAML 시나리오 한 장으로 **3Blue1Brown / 수학도장 스타일의 해설
 YAML 시나리오 ──▶ TTS(문장 타이밍) ──▶ Manim 렌더(내레이션과 동기화) ──▶ ffmpeg 합성(자막·라우드니스) ──▶ 자동 검증 리포트
 ```
 
-데모: `projects/2027_sep_q22/` — 2027학년도 9월 모의평가(2026.9 시행) 수학 공통 22번 (지수·로그함수와 직사각형 ABCD, 정답 97).
+데모 (2027학년도 9월 모의평가, 2026.9 시행, 수학 공통):
+- `projects/2027_sep_q22/` — 22번: 지수·로그함수와 직사각형 ABCD (정답 97)
+- `projects/2027_sep_q21/` — 21번: 절댓값 함수의 미분가능성, 뾰족점의 상쇄 (정답 12)
 
 ---
 
@@ -57,6 +59,7 @@ segments:
 - **세그먼트** = 내레이션 한 덩어리. 오디오 길이를 측정해 애니메이션이 끝나도 내레이션이 끝날 때까지 기다리고, 반대로 애니메이션이 길면 그만큼 자연히 늘어납니다 → 잘림 없음.
 - **`at`** = 세그먼트 시작 기준 실행 시각. 숫자(초) 또는 `s2`(TTS 가 인식한 2번째 문장의 시작). 문장 경계는 edge-tts 의 `SentenceBoundary` 이벤트로 얻습니다.
 - 좌표는 숫자/표현식(`"3/4"`)/점 id(`A`)/`{on: q1, x: "0.5"}` 모두 가능. 표현식은 AST 화이트리스트 기반 안전 평가기(`safe_eval`)로만 계산됩니다.
+- 표현식 안에서 앞서 `plot` 한 그래프 id 를 함수로 부를 수 있고(`"7*f(x)"`), 조건식으로 조각 함수를 만들 수 있습니다(`"-f(x) if f(x) >= 0 else 7*f(x)"`). 뾰족점이 있는 그래프는 `smooth: false` 로 그립니다.
 
 ### 액션 (일부)
 
@@ -64,10 +67,10 @@ segments:
 |---|---|
 | 카드/전환 | `title_card`, `end_card`, `section`, `clear`, `wait`, `caption` |
 | 문제/보드 | `problem`(한글+수식 전문, `lines:` 로 줄별 렌더), `problem_focus`(읽는 줄만 밝게 + 포인터 바), `problem_dock`(보드 헤더로 축소), `board`, `board_write`, `board_replace`, `board_highlight`, `board_clear`, `board_title` |
-| 그래프 | `axes`(등축 자동), `plot`(y 범위 밖 자동 클리핑), `line`, `vline`, `point`, `points`, `polygon`, `segment`, `arrow`, `guides`, `label` |
+| 그래프 | `axes`(등축 자동, `equal_aspect: false` 가능), `plot`(y 범위 밖 자동 클리핑, `smooth`), `line`, `vline`, `point`(좌표는 `pos`), `points`, `polygon`, `segment`, `arrow`, `guides`, `label` |
 | 기하 연출 | `translate_copy`(평행이동 복사), `reflect`(직선 대칭이동 + 수선/직각 표시) |
 | 강조 | `highlight`(indicate/flash/circumscribe/pulse), `dim`/`undim`(stroke·fill 원본 비율 유지), `fade`, `answer` |
-| 확장 | `custom` → 프로젝트 폴더의 `hooks.py` 함수 호출 (예: 데모의 `sliding_chord`, `ghost_translate`) |
+| 확장 | `custom` → 프로젝트 폴더의 `hooks.py` 함수 호출 (22번: `sliding_chord`, `ghost_translate` / 21번: `corner_tangents`(좌·우 접선으로 뾰족점 표시), `sweep_param`(매개변수 슬라이더)) |
 
 ## 4. 자동 검증 (`explainer verify`)
 
@@ -80,7 +83,7 @@ segments:
 | 스토리보드 | 세그먼트별 대표 프레임 + 내레이션 콘택트 시트 `storyboard.png` (`explainer storyboard out_dir`) |
 | 오디오 | 통합 라우드니스(-16 LUFS 목표), 트루피크(클리핑 없음), 긴 무음 없음 |
 
-수학적 내용은 `tests/test_math_q22.py` 에서 sympy 로 증명합니다(포물선 평행이동 (1,−1), 현 기울기 일차식, 대칭축 y=x−1/4 에 대한 A↔D·B↔C 대칭, 직선 y=x+3/4 와의 교점, a³=81/16, p+q=97).
+수학적 내용은 sympy 로 증명합니다: `tests/test_math_q22.py`(포물선 평행이동 (1,−1), 현 기울기 일차식, 대칭축 y=x−1/4 에 대한 A↔D·B↔C 대칭, 직선 y=x+3/4 와의 교점, a³=81/16, p+q=97), `tests/test_math_q21.py`(f'(s)=(s−r)², g 의 뾰족점은 s 하나·기울기 변화 −8(s−r)², |w| 의 뾰족점 +2|w'(t)|, a∈{1,2,3}, 각 경우의 f(0), h 의 미분가능성, 최댓값×최솟값 = 12).
 
 ## 5. 구조
 
@@ -93,6 +96,7 @@ explainer/
   verify/    checks.py(자동 검증)
   lint.py · pipeline.py · cli.py
 projects/2027_sep_q22/  project.yaml · hooks.py
+projects/2027_sep_q21/  project.yaml · hooks.py
 tests/
 ```
 
