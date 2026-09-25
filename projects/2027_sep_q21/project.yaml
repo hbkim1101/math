@@ -70,11 +70,12 @@ segments:
     actions:
       - {do: board, run_time: 0.5}
       - do: problem_dock
-        scale: 0.52
+        scale: 0.5
         tex: >
           $f$: 최고차항 계수 $1$인 삼차, 서로 다른 실근 $2$개\\[0.2em]
           $g=\begin{cases}-f&(f\ge0)\\ \;7f&(f<0)\end{cases}$\\[0.2em]
-          $w=(x-1)(x-a)(x-4+a)$, \; $h=g+|w|$ 가 미분가능\\[0.2em]
+          $w=(x-1)(x-a)(x-4+a)$\\[0.2em]
+          $h=g+|w|$ 가 실수 전체에서 미분가능\\[0.2em]
           $f(0)$의 최댓값 $\times$ 최솟값 $=?$
       - {do: board_title, text: "풀이 1 · 조건 (가): 중근과 단순근"}
       - {do: axes, run_time: 1.0, equal_aspect: false}
@@ -110,7 +111,7 @@ segments:
         run_time: 1.6
       - {do: board_write, tex: "g(x)=\\begin{cases}-f(x) & (f(x)\\ge 0)\\\\ \\;7f(x) & (f(x)<0)\\end{cases}", plain: true}
       - {do: highlight, at: s4, ids: [rpt], mode: flash, color: exp, run_time: 0.6}
-      - {do: board_write, ko: true, tex: "$x=r$ 근처: $f$의 부호 불변 $\\Rightarrow$ $g=c\\,f$ (매끄럽다)"}
+      - {do: board_write, ko: true, tex: "$x=r$ 근처: 부호 불변 $\\Rightarrow$ $g=c\\,f$, 매끄럽다"}
       - {do: caption, text: "중근 r 근처에서는 g가 f의 상수배 → 미분가능"}
       - do: custom
         at: s5
@@ -125,7 +126,7 @@ segments:
         right_dir: UR
         id: corner_g
         run_time: 1.2
-      - {do: board_write, ko: true, tex: "$x=s$: 왼쪽 $7f$, 오른쪽 $-f$ $\\Rightarrow$ 뾰족점", color: warn}
+      - {do: board_write, ko: true, tex: "$x=s$: $7f$ 와 $-f$ 가 만남 $\\Rightarrow$ 뾰족점", color: warn}
       - {do: caption, text: "단순근 s: 왼쪽 7f, 오른쪽 −f 가 만나 뾰족점"}
 
   # ───────────────────────────── 4. 꺾임의 크기
@@ -244,7 +245,7 @@ segments:
         color: q1
         id: corner_w2
         run_time: 1.0
-      - {do: board_write, ko: true, tex: "② 위 꺾임 $2|w'(s)|$ $=$ 아래 꺾임 $8(s-r)^2$"}
+      - {do: board_write, ko: true, tex: "② 위 꺾임 $2|w'(s)|$ $=$ 아래 꺾임 $8(s-r)^2$", scale: 0.62}
       - {do: board_write, at: s4, tex: "|w'(s)|=4(s-r)^2", plain: true, color: ok}
       - {do: board_highlight, index: -1, box: true, color: ok, run_time: 0.8}
 
