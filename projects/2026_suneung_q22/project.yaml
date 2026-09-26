@@ -1,0 +1,261 @@
+# 2026학년도 대학수학능력시험 (2025.11 시행) 수학 공통 22번 — 로그·지수함수와 대칭이동, 중점
+# Explainer Studio 로 작성 (python -m explainer studio) · 렌더: python -m explainer build projects/2026_suneung_q22/project.yaml
+
+meta:
+  id: 2026_suneung_q22
+  title: "2026학년도 수능 수학 22번"
+  subtitle: "로그함수·지수함수와 대칭이동, 그리고 중점"
+  voice: ko-KR-InJoonNeural
+  rate: "+4%"
+  resolution: 1080p
+  fps: 30
+  subtitles: burn
+  segment_pad: 1.0
+  style: chalkboard
+  background: "#101614"
+
+params:
+  ax: "1"                      # 개념도용 점 A 의 x좌표 (실제 a=63/4 는 그림에 담기지 않아 축소 개념도로 그림)
+  ay: "log(10)/log(16)"        # A 의 y좌표 = log16(8·1+2)
+  a: "63/4"                    # 실제 정답 값 (유일성 그래프에 사용)
+  b: "7/4"
+
+t2c:
+  "\\mathrm{A}": point
+  "\\mathrm{B}": exp
+  "\\mathrm{M}": ok
+
+layout:
+  graph:
+    x_range: [-1, 4, 1]
+    y_range: [-1, 4, 1]
+    grid: false
+  chalk:
+    board_color: "#24493a"
+    line_scale: 0.7
+    sections:
+      - {id: title, layout: full}
+      - {id: problem, title: "문제", layout: full}
+      - {id: picture, title: "상황 그리기 · A → A′ → B", layout: split}
+      - {id: cond, title: "조건을 식으로 · 로그를 지수로", layout: full}
+      - {id: cond2, title: "지수함수 위의 점 · 두 식의 비교", layout: full}
+      - {id: unique, title: "B는 하나뿐인가 · 볼록성", layout: split}
+      - {id: midpoint, title: "중점 조건으로 a 구하기", layout: full}
+      - {id: findb, title: "b 구하기 · 검산", layout: full}
+      - {id: final, title: "정답", layout: full}
+      - {id: wrap, title: "정리", layout: full}
+
+segments:
+  # ───────────────────────────── 0. 인트로
+  - id: intro
+    narration: >
+      2026학년도 수능 수학 22번입니다.
+      로그함수 위의 점을 직선 y는 x에 대칭이동하고, 그 점을 지나는 직선 위에서 지수함수와 만나는 점을 찾는 문제인데요,
+      그림으로 시작하지만 결국은 로그를 지수로 바꾸는 식 변형과 연립방정식으로 마무리되는 문제입니다. 함께 풀어 보겠습니다.
+    actions:
+      - {do: title_card, title: "2026학년도 수능 수학 22번", subtitle: "로그함수·지수함수와 대칭이동, 그리고 중점", tag: "로그→지수 · 대칭이동 · 중점"}
+
+  # ───────────────────────────── 1. 문제 읽기
+  - id: read_problem
+    narration: >
+      문제를 읽어 보겠습니다.
+      곡선 y는 로그 16, 8x 더하기 2 위의 점 A, a, b와, 곡선 y는 4의 x 빼기 1제곱 빼기 2분의 1 위의 점 B가 제1사분면에 있습니다.
+      점 A를 직선 y는 x에 대하여 대칭이동한 점이 직선 OB 위에 있고, 선분 AB의 중점의 좌표가 8분의 77, 8분의 133일 때, a 곱하기 b는 p분의 q입니다.
+      p 더하기 q의 값을 구하는 문제입니다. O는 원점이고, p와 q는 서로소인 자연수입니다.
+    actions:
+      - {do: goto, section: problem, run_time: 1.6}
+      - do: problem
+        title: "22. [4점]"
+        scale: 0.9
+        line_buff: 0.4
+        lines:
+          - "곡선 $y=\\log_{16}(8x+2)$ 위의 점 $\\mathrm{A}(a,\\,b)$와 곡선 $y=4^{x-1}-\\dfrac12$ 위의 점 $\\mathrm{B}$가 제$1$사분면에 있다."
+          - "점 $\\mathrm{A}$를 직선 $y=x$에 대하여 대칭이동한 점이 직선 $\\mathrm{OB}$ 위에 있고 선분 $\\mathrm{AB}$의 중점의 좌표가 $\\left(\\dfrac{77}{8},\\,\\dfrac{133}{8}\\right)$일 때, $a\\times b=\\dfrac{q}{p}$이다."
+          - "$p+q$의 값을 구하시오. (단, $\\mathrm{O}$는 원점이고, $p$와 $q$는 서로소인 자연수이다.)"
+      - {do: problem_focus, at: s2, index: 0}
+      - {do: problem_focus, at: s3, index: 1}
+      - {do: problem_focus, at: s4, index: 2}
+
+  # ───────────────────────────── 2. 상황 그리기 (축소 개념도)
+  - id: picture
+    narration: >
+      먼저 상황을 그림으로 봅시다. 곡선 y는 로그 16, 8x 더하기 2는 천천히 증가하는 로그함수의 그래프이고, 곡선 y는 4의 x 빼기 1제곱 빼기 2분의 1은 빠르게 증가하는 지수함수의 그래프입니다.
+      로그함수 위에 점 A, a, b를 잡고 직선 y는 x에 대하여 대칭이동하면, 좌표가 뒤바뀐 점 A프라임, b, a가 됩니다.
+      문제는 이 점 A프라임이 직선 OB 위에 있다고 합니다. 즉, 원점과 A프라임을 지나는 직선이 지수함수의 그래프와 만나는 제1사분면의 점이 B입니다.
+      그리고 선분 AB의 중점 M이 8분의 77, 8분의 133이라는 조건이 붙어 있습니다. 실제 좌표는 훨씬 크지만, 이 그림은 상황을 이해하기 위한 축소 개념도입니다.
+    actions:
+      - {do: goto, section: picture}
+      - {do: axes, run_time: 1.0}
+      - {do: plot, id: c1, expr: "log(8*x+2)/log(16)", color: log, x_range: ["-0.2499", 4], label: "y=\\log_{16}(8x+2)", label_at: 3.3, label_dir: UP, label_scale: 0.6, run_time: 1.4}
+      - {do: plot, id: c2, expr: "4**(x-1)-1/2", color: exp, label: "y=4^{x-1}-\\tfrac12", label_at: 1.85, label_dir: LEFT, label_scale: 0.6, run_time: 1.4}
+      - do: points
+        at: s3
+        items:
+          - {id: A, at: [ax, ay], label: "\\mathrm{A}(a,b)", label_dir: DR}
+      - {do: line, id: yx, slope: 1, intercept: 0, color: axis_sym, label: "y=x", label_at: 3.7, label_dir: DR, run_time: 0.8}
+      - {do: reflect, source: A, slope: 1, intercept: 0, id: Ap, color: q2, label: "\\mathrm{A}'(b,a)", label_dir: UL, run_time: 1.8}
+      - {do: line, at: s4, id: OB, slope: "ax/ay", intercept: 0, x_range: [0, "4*ay/ax"], color: guide, dashed: false, stroke_width: 2.4, label: "\\mathrm{OB}", label_at: 3.0, label_dir: DR, label_scale: 0.6, run_time: 1.0}
+      - do: points
+        at: s5
+        items:
+          - {id: B, at: ["2*ay", "2*ax"], label: "\\mathrm{B}", label_dir: RIGHT, color: exp}
+      - {do: write, ko: true, tex: "$\\mathrm{A}(a,b)$ $\\xrightarrow{\\;y=x\\;}$ $\\mathrm{A}'(b,a)$ 가 직선 $\\mathrm{OB}$ 위"}
+      - {do: segment, at: s6, id: segAB, a: A, b: B, color: point, dashed: true, stroke_width: 2.4, run_time: 0.7}
+      - do: points
+        items:
+          - {id: M, at: ["(ax+2*ay)/2", "(ay+2*ax)/2"], label: "\\mathrm{M}", label_dir: DR, color: ok, radius: 0.065}
+      - {do: write, ko: true, tex: "$\\mathrm{AB}$의 중점 $\\mathrm{M}\\bigl(\\tfrac{77}{8},\\ \\tfrac{133}{8}\\bigr)$"}
+      - {do: caption, at: s7, text: "축소 개념도 — 실제 A, B는 훨씬 멀리 있다"}
+
+  # ───────────────────────────── 3. 조건을 식으로 (로그 → 지수)
+  - id: cond
+    narration: >
+      이제 조건을 식으로 옮깁니다. 점 A가 로그함수 위에 있으니 b는 로그 16, 8a 더하기 2.
+      로그의 정의에 따라 16의 b제곱은 8a 더하기 2. 16은 2의 네제곱이고, 8a 더하기 2는 2 곱하기 4a 더하기 1이므로,
+      양변을 2로 나누면 2의 4b 빼기 1제곱은 4a 더하기 1입니다. 이것이 점 A의 조건입니다.
+      한편 지수함수 위의 점 x, y는, y는 4의 x 빼기 1제곱 빼기 2분의 1. 양변에 2를 곱하고 1을 더하면 2y 더하기 1은 2 곱하기 4의 x 빼기 1제곱, 곧 2의 2x 빼기 1제곱입니다.
+      두 식을 나란히 놓고 비교해 보세요. 두 번째 식에 x는 2b, y는 2a를 넣으면 4a 더하기 1은 2의 4b 빼기 1제곱. 첫 번째 식과 정확히 같습니다.
+      즉, 점 A, a, b가 로그함수 위에 있으면 점 2b, 2a는 반드시 지수함수 위에 있습니다.
+    actions:
+      - {do: goto, section: cond}
+      - do: derive
+        id: d1
+        steps:
+          - {at: s2, parts: ["b", "=", "\\log_{16}(8a+2)"], why: "$\\mathrm{A}(a,b)$가 곡선 $y=\\log_{16}(8x+2)$ 위"}
+          - {at: 10.0, parts: ["16^{b}", "=", "8a+2"], why: "로그의 정의"}
+          - {at: 15.5, parts: ["2^{4b}", "=", "2(4a+1)"], from: {"2^{4b}": "16^{b}", "2(4a+1)": "8a+2"}, why: "$16=2^4$, $8a+2=2(4a+1)$", run_time: 1.6}
+          - {at: 21.0, parts: ["2^{4b-1}", "=", "4a+1"], why: "양변을 $2$로 나눈다", box: true, hold: s3, run_time: 1.6}
+      - {do: goto, section: cond2, at: s4, run_time: 1.4}
+      - {do: write, id: ref, ko: true, tex: "앞 칸의 결과 $(1)$: $\\;2^{4b-1}=4a+1$", color: muted}
+      - do: derive
+        id: d2
+        steps:
+          - {at: 31.0, parts: ["y", "=", "4^{x-1}", "-", "\\tfrac12"], why: "곡선 $y=4^{x-1}-\\tfrac12$ 위의 점 $(x,y)$"}
+          - {at: 36.0, parts: ["2y+1", "=", "2\\cdot4^{x-1}"], why: "양변 $\\times2$, 그리고 $+1$", run_time: 1.6}
+          - {at: 40.0, parts: ["2y+1", "=", "2^{2x-1}"], from: {"2^{2x-1}": "2\\cdot4^{x-1}"}, why: "$2\\cdot4^{x-1}=2\\cdot2^{2x-2}$", box: true, run_time: 1.6}
+          - {at: s6, parts: ["4a+1", "=", "2^{4b-1}"], from: {"4a+1": "2y+1", "2^{4b-1}": "2^{2x-1}"}, why: "$x=2b,\\ y=2a$ 대입", color: ok, pulse: true, run_time: 1.8}
+      - {do: highlight, at: s7, ids: [ref], mode: indicate, color: ok, run_time: 1.0}
+      - {do: write, at: s8, ko: true, tex: "$\\therefore$ $\\mathrm{A}(a,b)$가 로그함수 위 $\\Rightarrow$ $(2b,\\,2a)$는 지수함수 $y=4^{x-1}-\\tfrac12$ 위", color: ok, box: true}
+      - {do: caption, text: "(x, y) → (y, x) → (2y, 2x) : y = x 대칭 후 원점 중심 2배 확대"}
+
+  # ───────────────────────────── 4. 그림으로 확인 (곡선 전체의 대칭 → 확대)
+  - id: map
+    narration: >
+      이 사실을 그림으로 확인해 봅시다. 로그함수의 그래프를 직선 y는 x에 대하여 대칭이동하면 이렇게 되고,
+      그것을 원점을 중심으로 2배 확대하면, 지수함수 y는 4의 x 빼기 1제곱 빼기 2분의 1의 그래프와 정확히 겹칩니다.
+      점 A도 A프라임을 거쳐 원점에서 두 배 늘어난 자리로 가는데, 그 점 2b, 2a는 직선 OA프라임 위에 있고 지수함수 위에도 있으니 바로 점 B의 후보입니다.
+      그런데 직선 OB와 지수함수 그래프의 교점이 정말 이 점 하나뿐일까요. 다음 칸에서 확인합니다.
+    actions:
+      - {do: goto, section: picture, run_time: 1.6}
+      - {do: dim, ids: [segAB, M, M_label], opacity: 0.25, run_time: 0.4}
+      - do: custom
+        fn: swap_then_scale
+        source: c1
+        factor: 2
+        id: img
+        color: exp
+        mid_color: q2
+        t_range: ["-0.2499", 4]
+        show_diag: false
+        points: [{id: A, out_id: A2}]
+        swap_at: s2
+        scale_at: 11.0
+        caption_swap: "y = x 대칭: (x, y) → (y, x)"
+        caption_scale: "원점 중심 2배 확대 → 지수함수 그래프와 정확히 겹친다"
+        run_time: 2.6
+      - {do: highlight, at: s3, ids: [B], mode: flash, color: exp, run_time: 0.8}
+      - {do: write, ko: true, tex: "곡선 전체가 대칭 $\\to$ $2$배 확대로 옮겨 감: $\\mathrm{A}\\to\\mathrm{A}'\\to(2b,\\,2a)$", color: ok}
+      - {do: highlight, at: s4, ids: [OB, c2], mode: pulse, color: point, run_time: 1.0}
+      - {do: caption, text: "직선 OB 와 지수함수의 교점이 하나뿐인지 확인해야 한다"}
+
+  # ───────────────────────────── 5. B의 유일성 (볼록성)
+  - id: unique
+    narration: >
+      이제 B의 좌표를 정합니다. B는 원점과 A프라임, b, a를 지나는 직선 위의 제1사분면 점이므로, 양수 k에 대하여 B는 kb, ka로 놓을 수 있습니다.
+      B가 지수함수 위에 있다는 조건, 2y 더하기 1은 2의 2x 빼기 1제곱에 대입하면, 2ak 더하기 1은 2의 2bk 빼기 1제곱입니다.
+      앞에서 본 것처럼 k가 2이면 이 식은 성립합니다. 그런데 다른 k는 없을까요.
+      좌변은 k에 대한 직선, 우변은 아래로 볼록한 지수함수입니다. k가 0일 때 직선의 값은 1, 지수함수의 값은 2분의 1이라 직선이 위에 있으니, k가 0보다 큰 쪽에서 두 그래프는 딱 한 번만 만납니다.
+      따라서 k는 2이고, 점 B의 좌표는 2b, 2a입니다.
+    actions:
+      - {do: goto, section: unique}
+      - {do: write, at: s2, ko: true, tex: "$\\mathrm{B}$는 직선 $\\mathrm{OA}'$ 위 $\\Rightarrow$ $\\mathrm{B}(kb,\\,ka)$, $k>0$"}
+      - do: derive
+        id: u
+        at: s3
+        steps:
+          - {parts: ["2y+1", "=", "2^{2x-1}"], why: "지수함수 위의 점의 조건"}
+          - {parts: ["2ak+1", "=", "2^{2bk-1}"], from: {"2ak+1": "2y+1", "2^{2bk-1}": "2^{2x-1}"}, why: "$x=kb,\\ y=ka$ 대입", box: true, run_time: 1.6}
+      - {do: write, at: s4, ko: true, tex: "$k=2$: $4a+1=2^{4b-1}$ 성립 $\\checkmark$"}
+      - {do: caption, at: s5, text: "다른 k 는 없을까? — 그래프로 확인"}
+      - {do: axes, at: s6, x_range: [-0.5, 2.6, 1], y_range: [-8, 72, 20], equal_aspect: false, numbers: false, labels: false, run_time: 0.9}
+      - {do: plot, id: expk, expr: "2**(2*b*x-1)", color: exp, x_range: [-0.5, 2.6], label: "y=2^{2bk-1}", label_at: 1.2, label_dir: RIGHT, label_scale: 0.6, run_time: 1.2}
+      - {do: plot, id: linek, expr: "2*a*x+1", color: log, label: "y=2ak+1", label_at: 0.9, label_dir: UL, label_scale: 0.6, run_time: 1.0}
+      - do: points
+        items:
+          - {id: K2, at: [2, 64], label: "k=2", label_dir: DR, label_scale: 0.65}
+      - {do: guides, point: K2, color: point, x_label: "2", run_time: 0.7}
+      - {do: write, at: s7, ko: true, tex: "$k=0$에서 직선이 위 $(1>\\tfrac12)$, 볼록 $\\Rightarrow$ $k>0$ 교점 하나"}
+      - {do: write, at: s8, tex: "k=2,\\qquad \\mathrm{B}(2b,\\,2a)", color: ok, box: true}
+      - {do: caption, text: "교점은 k = 2 하나 → B(2b, 2a)"}
+
+  # ───────────────────────────── 6. 중점 조건 → a, b
+  - id: midpoint
+    narration: >
+      이제 중점 조건을 씁니다. A는 a, b, B는 2b, 2a이므로 중점의 x좌표는 2분의 a 더하기 2b, y좌표는 2분의 b 더하기 2a입니다.
+      이것이 8분의 77과 8분의 133이므로, a 더하기 2b는 4분의 77, 2a 더하기 b는 4분의 133.
+      두 번째 식에 2를 곱하고 첫 번째 식을 빼면, 3a는 4분의 266 빼기 4분의 77, 곧 4분의 189. 그러므로 a는 4분의 63입니다.
+      첫 번째 식에 넣으면 2b는 4분의 77 빼기 4분의 63으로 4분의 14, 따라서 b는 4분의 7입니다.
+      검산해 봅시다. 8a 더하기 2는 126 더하기 2, 128은 2의 7제곱이고, 로그 16, 128은 4분의 7로 b와 일치합니다. 또 B는 2분의 7, 2분의 63인데, 4의 2분의 5제곱 빼기 2분의 1은 32 빼기 2분의 1, 2분의 63으로 역시 일치합니다.
+    actions:
+      - {do: goto, section: midpoint}
+      - {do: write, at: s2, tex: "\\mathrm{M}\\Bigl(\\tfrac{a+2b}{2},\\ \\tfrac{b+2a}{2}\\Bigr)=\\Bigl(\\tfrac{77}{8},\\ \\tfrac{133}{8}\\Bigr)"}
+      - {do: write, at: s3, lines: ["a+2b=\\tfrac{77}{4}\\quad\\cdots(1)", "2a+b=\\tfrac{133}{4}\\quad\\cdots(2)"], plain: true, run_time: 1.6}
+      - do: derive
+        id: m
+        at: s4
+        steps:
+          - {parts: ["2(2a+b)", "-", "(a+2b)", "=", "\\tfrac{266}{4}", "-", "\\tfrac{77}{4}"], why: "$(2)\\times2-(1)$"}
+          - {parts: ["3a", "=", "\\tfrac{189}{4}"], run_time: 1.6}
+          - {at: s5, parts: ["a", "=", "\\tfrac{63}{4}"], why: "양변을 $3$으로 나눈다", box: true, run_time: 1.6}
+      - {do: goto, section: findb, at: s6, run_time: 1.4}
+      - do: derive
+        id: n
+        steps:
+          - {parts: ["2b", "=", "\\tfrac{77}{4}", "-", "a"], why: "$(1)\\;a+2b=\\tfrac{77}{4}$에서"}
+          - {parts: ["=", "\\tfrac{77}{4}", "-", "\\tfrac{63}{4}"], from: {"\\tfrac{63}{4}": "a"}, why: "$a=\\tfrac{63}{4}$ 대입", run_time: 1.6}
+          - {parts: ["=", "\\tfrac{14}{4}"], run_time: 1.4}
+          - {parts: ["b", "=", "\\tfrac{7}{4}"], box: true, run_time: 1.6}
+      - {do: write, at: s8, ko: true, tex: "검산: $8a+2=128=2^7$, $\\log_{16}128=\\tfrac74=b$ $\\checkmark$", color: ok}
+      - {do: write, at: s9, ko: true, tex: "$\\mathrm{B}\\bigl(\\tfrac72,\\ \\tfrac{63}{2}\\bigr)$: $4^{5/2}-\\tfrac12=32-\\tfrac12=\\tfrac{63}{2}$ $\\checkmark$", color: ok}
+      - {do: caption, text: "A(63/4, 7/4), B(7/2, 63/2) — 두 곡선 위에 있음을 확인"}
+
+  # ───────────────────────────── 7. 정답
+  - id: answer
+    narration: >
+      구하는 값은 a 곱하기 b. 4분의 63 곱하기 4분의 7은 16분의 441입니다.
+      441은 21의 제곱, 16은 2의 네제곱이니 서로소. p는 16, q는 441이므로 정답은 457입니다.
+    actions:
+      - {do: goto, section: final}
+      - do: derive
+        id: ans
+        steps:
+          - {parts: ["a", "\\times", "b", "=", "\\tfrac{63}{4}", "\\times", "\\tfrac{7}{4}"], why: "$a=\\tfrac{63}{4},\\ b=\\tfrac{7}{4}$"}
+          - {parts: ["=", "\\tfrac{441}{16}"], box: true, pulse: true, run_time: 1.6}
+      - {do: write, at: s2, ko: true, tex: "$p=16,\\ q=441$ $\\;(441=21^2,\\ 16=2^4$: 서로소$)$"}
+      - {do: answer, at: s3, tex: "p+q=457", caption_text: "정답", run_time: 1.0}
+      - {do: wait, seconds: 1.5}
+
+  # ───────────────────────────── 8. 정리
+  - id: outro
+    narration: >
+      정리하면, 로그 조건을 지수식으로 바꾸어 점 2b, 2a가 지수함수 위에 있음을 보이고, 볼록성으로 B가 그 점임을 확정한 뒤, 중점 조건으로 a와 b를 구하는 문제였습니다.
+      정답은 457입니다. 시청해 주셔서 감사합니다.
+    actions:
+      - {do: goto, section: wrap, run_time: 1.4}
+      - do: end_card
+        title: "정리 · 정답 457"
+        lines:
+          - "① b = log₁₆(8a+2) ⇔ 2^(4b−1) = 4a+1,   (x, y) 가 지수함수 위 ⇔ 2y+1 = 2^(2x−1)  →  (2b, 2a) 는 지수함수 위"
+          - "② B(kb, ka): 직선 vs 볼록한 지수함수, k = 0 에서 직선이 위 → k > 0 인 교점은 k = 2 하나  →  B(2b, 2a)"
+          - "③ 중점 (77/8, 133/8) → a + 2b = 77/4, 2a + b = 133/4 → a = 63/4, b = 7/4 → ab = 441/16 → p + q = 457"
+      - {do: camera, at: s2, sections: [picture, wrap], run_time: 2.4}
