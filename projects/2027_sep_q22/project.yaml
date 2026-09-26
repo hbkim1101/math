@@ -102,7 +102,7 @@ segments:
       이 네 점 A, B, C, D가 직사각형을 이룬다는 것이 핵심 조건이고, 우리가 구해야 할 것은 a의 값입니다.
     actions:
       - {do: vline, id: asym, x: "1/4", color: guide, run_time: 0.5}
-      - {do: plot, id: log, expr: "log(x-1/4)/log(a)-1/4", color: log, x_range: ["0.2501", 4], label: "y=\\log_a\\!\\left(x-\\tfrac14\\right)-\\tfrac14", label_at: 1.2, label_dir: DR, label_scale: 0.5, run_time: 1.4}
+      - {do: plot, id: log, expr: "log(x-1/4)/log(a)-1/4", color: log, x_range: ["0.2501", 4], label: "y=\\log_a\\!\\left(x-\\tfrac14\\right)-\\tfrac14", label_at: 3.6, label_dir: DOWN, label_scale: 0.5, run_time: 1.4}
       - {do: plot, id: q2, expr: "2*x**2-15/2*x+15/2", color: q2, label: "y=2x^2-\\tfrac{15}{2}x+\\tfrac{15}{2}", label_at: 2.3, label_dir: DR, label_scale: 0.58, run_time: 1.4}
       - do: points
         items:
@@ -200,7 +200,7 @@ segments:
       - {do: axes, run_time: 0.9}
       - {do: plot, id: exp3, expr: "a**x", color: exp, label: "y=a^x", label_at: 1.85, label_dir: RIGHT, run_time: 1.0}
       - {do: vline, id: asym3, x: "1/4", color: guide, run_time: 0.4}
-      - {do: plot, id: log3, expr: "log(x-1/4)/log(a)-1/4", color: log, x_range: ["0.2501", 4], label: "y=\\log_a\\!\\left(x-\\tfrac14\\right)-\\tfrac14", label_at: 1.2, label_dir: DR, label_scale: 0.5, run_time: 1.0}
+      - {do: plot, id: log3, expr: "log(x-1/4)/log(a)-1/4", color: log, x_range: ["0.2501", 4], label: "y=\\log_a\\!\\left(x-\\tfrac14\\right)-\\tfrac14", label_at: 3.6, label_dir: DOWN, label_scale: 0.5, run_time: 1.0}
       - do: points
         items:
           - {id: A3, at: ["3/4", "3/2"], label: "\\mathrm{A}", label_dir: UL, radius: 0.06}
@@ -251,7 +251,7 @@ segments:
           - {id: C4, at: ["5/2", "5/4"], label: "\\mathrm{C}", label_dir: RIGHT, color: log, radius: 0.06}
       - {do: polygon, id: rect4, points: [A4, B4, C4, D4], color: rect, fill_opacity: 0.08, stroke_width: 2.5, run_time: 0.8}
       - {do: line, id: sym4, slope: 1, intercept: "-1/4", color: axis_sym, label: "y=x-\\tfrac14", label_at: 3.3, label_dir: DR, run_time: 0.8}
-      - {do: line, at: s2, id: lineAB, slope: 1, intercept: "3/4", color: point, dashed: true, label: "y=x+\\tfrac34", label_at: -0.5, label_dir: UP, run_time: 1.0}
+      - {do: line, at: s2, id: lineAB, slope: 1, intercept: "3/4", color: point, dashed: true, label: "y=x+\\tfrac34", label_at: 2.3, label_dir: UL, run_time: 1.0}
       - {do: line, id: lineCD, slope: 1, intercept: "-5/4", color: log, dashed: true, label: "y=x-\\tfrac54", label_at: 2.9, label_dir: DR, run_time: 1.0}
       - {do: write, ko: true, tex: "대칭축은 $\\mathrm{AD}$, $\\mathrm{BC}$의 중점을 지난다 $\\Rightarrow$ $\\mathrm{AB}\\parallel\\mathrm{CD}\\parallel$ 대칭축, 같은 거리"}
       - {do: write, at: s3, ko: true, tex: "$\\mathrm{AB}$를 $\\bigl(\\tfrac12,-\\tfrac12\\bigr)$ 옮기면 대칭축 $y=x-\\tfrac14$"}
@@ -267,7 +267,7 @@ segments:
     actions:
       - {do: goto, section: sol5}
       - {do: axes, run_time: 0.9}
-      - {do: plot, id: exp5, expr: "a**x", color: exp, label: "y=a^x", label_at: -0.75, label_dir: UP, run_time: 0.9}
+      - {do: plot, id: exp5, expr: "a**x", color: exp, label: "y=a^x", label_at: -0.9, label_dir: DOWN, run_time: 0.9}
       - {do: plot, id: q1d, expr: "2*x**2-7/2*x+3", color: q1, label: "y=2x^2-\\tfrac72x+3", label_at: 0.0, label_dir: UL, label_scale: 0.55, run_time: 0.9}
       - {do: line, id: lineAB5, slope: 1, intercept: "3/4", color: point, dashed: true, label: "y=x+\\tfrac34", label_at: 2.6, label_dir: DR, run_time: 0.8}
       - do: points
