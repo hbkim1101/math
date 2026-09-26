@@ -246,3 +246,27 @@ def test_clean_log_strips_ansi_and_noise():
     out = clean_log(raw)
     assert "\x1b" not in out and "libncursesw" not in out
     assert out.splitlines() == ["[07:22:17] WARNING  Some options scene_file_writer.py:1018", "  [render] output/x.mp4  (52.9 MB)"]
+
+
+def test_sentences_fall_back_to_last_render_timeline(studio):
+    """TTS 캐시가 없어도(다른 PC에서 받은 저장소) 마지막 렌더의 timeline.json 에서 실제 문장 시각을 가져온다."""
+    client, root = studio
+    d = client.get("/api/projects/2027_sep_q03").json()
+    seg = d["doc"]["segments"][0]
+    assert d["sentences"][seg["id"]]["exact"] is False
+
+    out = root / "output" / "2027_sep_q03"
+    out.mkdir(parents=True)
+    tl = {"segments": [{"id": seg["id"], "narration": seg["narration"], "start": 0.6, "end": 9.6, "audio_duration": 9.0,
+                        "sentences": [{"text": "앞.", "start": 0.0, "end": 4.0}, {"text": "뒤.", "start": 4.0, "end": 9.0}]}]}
+    (out / "timeline.json").write_text(json.dumps(tl, ensure_ascii=False), encoding="utf-8")
+
+    info = client.get("/api/projects/2027_sep_q03").json()["sentences"][seg["id"]]
+    assert info["exact"] is True and info.get("source") == "timeline" and info["duration"] == 9.0
+    assert [s["start"] for s in info["sentences"]] == [0.0, 4.0]
+
+    # 내레이션이 바뀌면 더 이상 그 시각을 믿지 않는다 → 추정으로 돌아감
+    doc = json.loads(json.dumps(d["doc"]))
+    doc["segments"][0]["narration"] = seg["narration"] + " 새 문장입니다."
+    r = client.post("/api/projects/2027_sep_q03/sentences", json={"doc": doc}).json()
+    assert r[seg["id"]]["exact"] is False

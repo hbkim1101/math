@@ -23,6 +23,7 @@
     expanded: new Set(),      // 펼쳐진 액션 카드
     sentences: {},            // seg id → {exact, sentences:[{i,text,start?}], narr}  (서버: TTS 캐시 기준 실제 문장 경계)
   };
+  window.__studio = state;    // 브라우저 콘솔에서 상태를 들여다볼 수 있게 (디버깅용)
 
   // ------------------------------------------------------------------ API
   async function api(path, opts = {}) {
@@ -135,7 +136,8 @@
   const actIcon = (name) => (ACTION_META[name] || [null, "▪"])[1];
   const actColor = (name) => CAT_COLOR[state.catalogByName[name]?.category] || "#8b93a7";
   const short = (s, n = 60) => { s = String(s ?? ""); return s.length > n ? s.slice(0, n - 1) + "…" : s; };
-  const stripTex = (s) => String(s ?? "").replace(/\\(tfrac|dfrac|frac)\{([^}]*)\}\{([^}]*)\}/g, "$2/$3").replace(/\\mathrm\{([^}]*)\}/g, "$1")
+  const stripTex = (s) => String(s ?? "").replace(/\\(tfrac|dfrac|frac)\{([^}]*)\}\{([^}]*)\}/g, "$2/$3").replace(/\\(tfrac|dfrac|frac)(\d)(\d)/g, "$2/$3")
+    .replace(/\\(Bigl|Bigr|bigl|bigr|Big|big|left|right)\b/g, "").replace(/\\mathrm\{([^}]*)\}/g, "$1").replace(/\\(cdots|ldots|dots)\b/g, "…").replace(/\\ /g, " ")
     .replace(/\\(quad|qquad|;|,|!)/g, " ").replace(/\\(Rightarrow|to|xrightarrow)/g, "→").replace(/\\(times|cdot)/g, "×").replace(/\\(log|therefore|checkmark)/g, (m) => ({ "\\log": "log", "\\therefore": "∴", "\\checkmark": "✓" })[m])
     .replace(/\\[a-zA-Z]+/g, (m) => m.slice(1)).replace(/[{}$]/g, "").replace(/\s+/g, " ").trim();
 
@@ -174,6 +176,82 @@
   }
   const atText = (at) => (at === undefined || at === null || at === "" ? "" : typeof at === "number" ? `${at}s` : String(at));
 
+  // ------------------------------------------------------------------ 렌더된 영상에서 세그먼트 대표 화면 뽑기 (브라우저 안에서, ffmpeg 불필요)
+  const thumbs = { cache: new Map(), queue: [], busy: false, video: null, canvas: null };
+  /** 현재 프로젝트의 렌더 결과(최종 > 프리뷰)와 타임라인. 없으면 null. */
+  function renderedSource() {
+    const o = state.outputs || {}; const full = o.full || {}, part = o.partial || {};
+    if ((full.final || full.preview) && full.timeline) return { url: full.final || full.preview, timeline: full.timeline, kind: full.final ? "final" : "preview" };
+    if ((part.preview || part.final) && part.timeline) return { url: part.preview || part.final, timeline: part.timeline, kind: "partial" };
+    return null;
+  }
+  /** 렌더 타임라인에서 세그먼트 구간 [start, end]. id 와 내레이션이 같아야(바뀐 뒤엔 화면이 다르므로) 돌려준다. */
+  function renderedRange(seg) {
+    const src = renderedSource(); if (!src) return null;
+    const s = (src.timeline.segments || []).find((x) => x.id === seg.id);
+    if (!s) return null;
+    return { start: s.start, end: s.end, stale: normNarr(s.narration) !== normNarr(seg.narration), url: src.url, kind: src.kind };
+  }
+  function grabFrame(url, t) {
+    const key = `${url}@${t.toFixed(2)}`;
+    if (thumbs.cache.has(key)) return Promise.resolve(thumbs.cache.get(key));
+    return new Promise((resolve) => { thumbs.queue.push({ url, t, key, resolve }); pumpThumbs(); });
+  }
+  async function pumpThumbs() {
+    if (thumbs.busy || !thumbs.queue.length) return;
+    thumbs.busy = true;
+    const job = thumbs.queue.shift();
+    try {
+      if (!thumbs.video) { thumbs.video = el("video", { muted: "", preload: "auto", style: "position:fixed;left:-9999px;width:320px" }); document.body.append(thumbs.video); thumbs.canvas = el("canvas"); }
+      const v = thumbs.video;
+      if (v.getAttribute("src") !== job.url) {
+        v.src = job.url;
+        await new Promise((ok, bad) => { v.onloadedmetadata = ok; v.onerror = () => bad(new Error("video load")); });
+      }
+      v.currentTime = Math.min(job.t, Math.max(0, (v.duration || job.t) - 0.05));
+      await new Promise((ok, bad) => { v.onseeked = ok; v.onerror = () => bad(new Error("seek")); setTimeout(() => bad(new Error("seek timeout")), 8000); });
+      const c = thumbs.canvas; c.width = 320; c.height = Math.round(320 * (v.videoHeight || 9) / (v.videoWidth || 16));
+      c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+      const data = c.toDataURL("image/jpeg", 0.72);
+      thumbs.cache.set(job.key, data); job.resolve(data);
+    } catch (_) { job.resolve(null); }
+    thumbs.busy = false;
+    pumpThumbs();
+  }
+  /** <img> 를 돌려주고, 프레임이 준비되면 채운다. 렌더 결과가 없으면 null. */
+  function thumbImg(seg, cls, ratio = 0.72) {
+    const r = renderedRange(seg); if (!r) return null;
+    const img = el("img", { class: cls + (r.stale ? " stale" : ""), alt: "", title: r.stale ? "내레이션이 바뀐 뒤 아직 렌더하지 않았습니다 (이전 렌더 화면)" : `${fmtClock(r.start)} – ${fmtClock(r.end)}` });
+    grabFrame(r.url, r.start + (r.end - r.start) * ratio).then((d) => { if (d) img.src = d; else img.remove(); });
+    return img;
+  }
+  /** 이 세그먼트가 시작될 때 카메라가 보고 있는 칠판 칸 (이전 세그먼트들의 마지막 goto 를 따라감). */
+  function activeSection(segIndex) {
+    const secs = state.doc.layout?.chalk?.sections || [];
+    if (!secs.length) return null;
+    let cur = null;                       // 이 세그먼트가 시작될 때의 칸 (앞 세그먼트들의 마지막 goto)
+    for (let i = 0; i < segIndex; i++) {
+      for (const a of state.doc.segments[i]?.actions || []) if (a.do === "goto" && a.section) cur = a.section;
+    }
+    const visits = [];                    // 이 세그먼트 안에서 goto 로 옮겨 가는 칸들
+    for (const a of state.doc.segments[segIndex]?.actions || []) if (a.do === "goto" && a.section) visits.push(a.section);
+    const path = [cur ?? secs[0].id, ...visits].filter((v, k, arr) => k === 0 || arr[k - 1] !== v);
+    const last = path[path.length - 1];
+    const s = secs.find((x) => x.id === last);
+    return { id: last, path, layout: s?.layout || "?", title: s?.title, moved: visits.length > 0, missing: !s };
+  }
+  function playRange(seg) {
+    const r = renderedRange(seg); if (!r) return;
+    const video = $("#video"); const vs = $("#videoSource");
+    const opt = [...vs.options].find((o) => o.dataset.url === r.url);
+    if (opt && vs.value !== opt.value) { vs.value = opt.value; video.src = r.url; }
+    switchTab("video");
+    const go = () => { video.currentTime = r.start; video.play().catch(() => {}); };
+    if (video.readyState >= 1) go(); else video.addEventListener("loadedmetadata", go, { once: true });
+    const stop = () => { if (video.currentTime >= r.end - 0.05) { video.pause(); video.removeEventListener("timeupdate", stop); } };
+    video.addEventListener("timeupdate", stop);
+  }
+
   // ------------------------------------------------------------------ 세그먼트 목록
   function segDuration(seg) {
     const info = state.sentences[seg.id];
@@ -190,12 +268,13 @@
       const nS = sentencesFor(seg).list.length;
       const bar = el("div", { class: "mix" });
       for (const a of acts) bar.append(el("i", { style: `background:${actColor(a.do)}`, title: `${actLabel(a.do)} ${summarize(a)}` }));
-      const li = el("li", { class: i === state.sel ? "on" : "", draggable: "true",
-        onclick: () => { state.sel = i; showPane("seg"); renderSegList(); renderSegEditor(); } },
+      const thumb = thumbImg(seg, "thumb");
+      const li = el("li", { class: i === state.sel ? "on" : "", draggable: "true", onclick: () => selectSegment(i) },
         el("span", { class: "n" }, String(i + 1)),
         el("div", { class: "body" },
           el("div", { class: "id" }, seg.id || "(id 없음)"),
           el("div", { class: "meta" }, `${nS}문장 · ${acts.length}액션` + (dur !== null ? ` · ${dur.toFixed(0)}s` : "")),
+          thumb,
           bar),
         dur !== null ? el("span", { class: "t0" }, fmtClock(t0)) : null);
       if (dur !== null) t0 += dur + Number(seg.pad ?? state.doc.meta?.segment_pad ?? 0.5);
@@ -214,6 +293,8 @@
     });
   }
   const fmtClock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  function selectSegment(i) { state.sel = i; showPane("seg"); renderSegList(); renderSegEditor(); }
+  state.selectSegment = selectSegment;
 
   function touched() { setDirty(true); state.yamlDirty = false; }
 
@@ -234,10 +315,14 @@
     const padIn = el("input", { class: "seg-pad", value: seg.pad ?? "", placeholder: `여백 ${state.doc.meta?.segment_pad ?? 0.5}s`, title: "이 세그먼트 뒤의 여백(초). 비우면 meta.segment_pad" });
     padIn.addEventListener("change", () => { const n = parseVal(padIn.value); if (n === undefined) delete seg.pad; else seg.pad = n; touched(); });
     const dur = segDuration(seg);
+    const sec = activeSection(state.sel);
+    const secBadge = sec ? el("span", { class: "sec-badge" + (sec.missing ? " bad" : ""), title: sec.missing ? "layout.chalk.sections 에 없는 칸입니다" : (sec.moved ? "이 세그먼트에서 goto 로 칸을 옮겨 갑니다 (시작 칸 → 이동한 칸)" : "앞 세그먼트에서 이어지는 칠판 칸 (이 세그먼트에는 goto 가 없음)") },
+      "칸 ", el("b", {}, sec.path.join(" → ")), ` · ${sec.layout === "split" ? "그림+판서" : sec.layout === "full" ? "판서 전체" : sec.layout}`, sec.title ? el("span", { class: "ttl" }, ` “${sec.title}”`) : null) : null;
     const head = el("div", { class: "seg-head" },
       el("span", { class: "badge" }, String(state.sel + 1)),
       el("div", { class: "titles" }, idIn,
-        el("div", { class: "hint" }, `${state.sel + 1} / ${state.doc.segments.length} 번째 세그먼트` + (dur !== null ? ` · 내레이션 ${dur.toFixed(1)}s` : "") + ` · 액션 ${seg.actions.length}개`)),
+        el("div", { class: "hint" }, `${state.sel + 1} / ${state.doc.segments.length} 번째 세그먼트` + (dur !== null ? ` · 내레이션 ${dur.toFixed(1)}s` : "") + ` · 액션 ${seg.actions.length}개`),
+        secBadge),
       padIn,
       el("span", { class: "spacer" }),
       el("button", { class: "ghost mini", title: "위로", onclick: () => moveSeg(-1) }, "↑"),
@@ -245,6 +330,29 @@
       el("button", { class: "ghost mini", onclick: () => dupSeg() }, "복제"),
       el("button", { class: "danger mini", onclick: () => delSeg() }, "삭제"));
     pane.append(head);
+
+    // 0) 이 세그먼트의 실제 화면 (마지막 렌더에서 시작·중간·끝 프레임) + 구간 재생
+    const rr = renderedRange(seg);
+    const shot = el("section", { class: "block shots" });
+    if (rr) {
+      const frames = el("div", { class: "frames" });
+      [["시작", 0.04], ["중간", 0.5], ["끝", 0.96]].forEach(([lab, ratio]) => {
+        const img = thumbImg(seg, "frame", ratio);
+        frames.append(el("figure", { onclick: () => playRange(seg), title: "클릭하면 오른쪽 영상 패널에서 이 구간을 재생" }, img, el("figcaption", {}, lab)));
+      });
+      shot.append(el("div", { class: "block-head" }, el("h3", {}, "화면"),
+        el("span", { class: "hint" }, `${rr.kind === "final" ? "최종" : rr.kind === "preview" ? "프리뷰" : "부분"} 렌더 ${fmtClock(rr.start)} – ${fmtClock(rr.end)}` + (rr.stale ? " · 내레이션이 바뀐 뒤 렌더 안 함" : "")),
+        el("span", { class: "spacer" }),
+        el("button", { class: "mini", onclick: () => playRange(seg) }, "▶ 이 구간 재생"),
+        el("button", { class: "ghost mini", title: "이 세그먼트만 480p 로 다시 렌더", onclick: () => startBuild("partial") }, "이 구간만 다시 렌더")), frames);
+      if (rr.stale) shot.classList.add("stale");
+    } else {
+      shot.append(el("div", { class: "block-head" }, el("h3", {}, "화면"),
+        el("span", { class: "hint" }, "아직 이 세그먼트를 렌더한 적이 없습니다. 렌더하면 시작·중간·끝 화면이 여기에 보입니다."),
+        el("span", { class: "spacer" }),
+        el("button", { class: "mini", onclick: () => startBuild("partial") }, "이 구간만 렌더 (480p)")));
+    }
+    pane.append(shot);
 
     // 1) 내레이션
     const narr = el("section", { class: "block" });
@@ -736,6 +844,7 @@
         clearInterval(state.pollTimer); state.pollTimer = null;
         const outs = await api(`/api/projects/${state.pid}/outputs`);
         state.outputs = outs; renderOutputs();
+        if (r.job.status === "done") { renderSegList(); renderSegEditor(); }   // 새 렌더의 화면 썸네일 반영
         if (r.job.status === "done") { toast("렌더 완료 ✓", "ok"); switchTab(r.job.kind === "final" ? "verify" : "video"); }
         else if (r.job.status === "failed") { toast("렌더 실패 — 로그를 확인하세요", "bad"); switchTab("log"); }
         loadProjects();

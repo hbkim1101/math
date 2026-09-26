@@ -12,6 +12,8 @@ dependencies = [
   "pillow>=10",
   "numpy>=1.26",
   "sympy>=1.12",
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.27",
 ]
 
 [project.optional-dependencies]

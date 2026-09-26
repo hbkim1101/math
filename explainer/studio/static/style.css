@@ -51,6 +51,8 @@ code, pre { font-family: var(--mono); }
 #segList li .mix { display: flex; gap: 2px; margin-top: 5px; height: 4px; }
 #segList li .mix i { flex: 1; border-radius: 2px; opacity: .85; }
 #segList li .t0 { flex: none; color: var(--muted); font-size: 11px; font-family: var(--mono); margin-top: 3px; }
+#segList li img.thumb { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 5px; margin-top: 5px; background: #0c111c; border: 1px solid var(--line); }
+#segList li img.thumb.stale { opacity: .55; filter: saturate(.4); }
 #segList li.dragover { border-top: 2px solid var(--accent); }
 .side-foot { padding: 8px; border-top: 1px solid var(--line); }
 
@@ -66,6 +68,20 @@ code, pre { font-family: var(--mono); }
 .seg-head input.seg-id { font-size: 18px; font-weight: 700; padding: 3px 8px; background: transparent; border-color: transparent; width: 320px; font-family: var(--mono); }
 .seg-head input.seg-id:hover, .seg-head input.seg-id:focus { border-color: var(--line); background: #0c111c; }
 .seg-head input.seg-pad { width: 92px; font-size: 12px; }
+
+.sec-badge { display: inline-flex; gap: 3px; align-items: baseline; align-self: flex-start; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: rgba(255,210,63,.12); color: var(--accent); border: 1px solid rgba(255,210,63,.4); margin-top: 2px; }
+.sec-badge b { font-family: var(--mono); }
+.sec-badge .ttl { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.sec-badge.bad { color: var(--bad); border-color: var(--bad); background: rgba(255,107,107,.12); }
+
+/* ---- 세그먼트 실제 화면 (렌더 결과 프레임) */
+.shots .frames { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.shots figure { margin: 0; cursor: pointer; position: relative; }
+.shots figure img.frame { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 6px; background: #0c111c; border: 1px solid var(--line); }
+.shots figure:hover img.frame { border-color: var(--blue); }
+.shots figure figcaption { position: absolute; left: 6px; top: 6px; font-size: 10.5px; padding: 0 6px; border-radius: 8px; background: rgba(0,0,0,.6); color: #fff; }
+.shots.stale img.frame { opacity: .6; filter: saturate(.4); }
+.shots.stale .block-head .hint { color: var(--warn); }
 
 /* ---- 블록(①②③) */
 .block { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 10px 0; }
@@ -99,7 +115,7 @@ select.add-action { max-width: 260px; }
 .achip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px 2px 6px; border-radius: 14px; border: 1px solid var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--text); font-size: 12px; cursor: pointer; line-height: 1.4; }
 .achip:hover { background: color-mix(in srgb, var(--c) 30%, transparent); }
 .achip b { color: var(--c); font-weight: 700; }
-.achip .nm { font-weight: 600; }
+.achip .nm { font-weight: 600; white-space: nowrap; }
 .achip .sm { color: var(--muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .achip .at { color: var(--c); font-family: var(--mono); font-size: 11px; }
 .achip.warn { border-color: var(--warn); }

@@ -419,8 +419,49 @@ def _sentences_for(doc: dict[str, Any], seg: dict[str, Any], output_dir: Path) -
         return {"exact": True, "duration": round(clip.duration, 2),
                 "sentences": [{"i": i, "text": s.text, "start": round(s.start, 2), "end": round(s.end, 2)}
                               for i, s in enumerate(clip.sentences, 1)]}
+    # TTS 캐시가 없어도(다른 PC에서 받은 저장소 등) 마지막 렌더의 timeline.json 에 같은 내레이션이 있으면 그 시각을 쓴다
+    hit = _timeline_sentences(doc, seg, output_dir)
+    if hit is not None:
+        return hit
     return {"exact": False, "duration": None,
             "sentences": [{"i": i, "text": t} for i, t in enumerate(_split_sentences(text), 1)]}
+
+
+_TIMELINE_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
+
+
+def _timeline_sentences(doc: dict[str, Any], seg: dict[str, Any], output_dir: Path) -> dict[str, Any] | None:
+    """output/<id>/timeline.json (마지막 빌드) 에서 같은 id·같은 내레이션의 세그먼트를 찾아 문장 시각을 돌려준다."""
+    meta = doc.get("meta") if isinstance(doc.get("meta"), dict) else {}
+    pid = str(meta.get("id") or "")
+    if not pid:
+        return None
+    norm = lambda s: " ".join(str(s or "").split())  # noqa: E731
+    want = norm(seg.get("narration"))
+    if not want:
+        return None
+    for out_id in (pid, pid + "__part"):
+        f = output_dir / out_id / "timeline.json"
+        if not f.exists():
+            continue
+        try:
+            mtime = f.stat().st_mtime
+            cached = _TIMELINE_CACHE.get(str(f))
+            if cached is None or cached[0] != mtime:
+                cached = (mtime, json.loads(f.read_text(encoding="utf-8")))
+                _TIMELINE_CACHE[str(f)] = cached
+            tl = cached[1]
+        except Exception:  # noqa: BLE001
+            continue
+        for s in tl.get("segments") or []:
+            if norm(s.get("narration")) != want or not s.get("sentences"):
+                continue
+            sents = s["sentences"]
+            return {"exact": True, "duration": round(float(s.get("audio_duration") or sents[-1]["end"]), 2),
+                    "source": "timeline",
+                    "sentences": [{"i": i, "text": x["text"], "start": round(float(x["start"]), 2), "end": round(float(x["end"]), 2)}
+                                  for i, x in enumerate(sents, 1)]}
+    return None
 
 
 def _media_url(path: str, output_dir: Path) -> str | None:
