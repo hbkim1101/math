@@ -107,6 +107,7 @@ def end_card(scene, title: str, subtitle: str = "", run_time: float | None = Non
     if chalk:
         if scene.chalk is not None:
             # 칠판: 현재 섹션의 판서 커서 아래에 왼쪽 정렬로 이어 쓴다
+            _drop_caption(scene)
             g.arrange(DOWN, buff=0.3, aligned_edge=LEFT)
             scene.chalk.place_line(g, space=0.4)
         scene.play(handwrite(t, run_time=max(1.0, rt * 0.7)))
@@ -976,16 +977,21 @@ def _need_chalk(scene, name: str):
     return scene.chalk
 
 
+def _drop_caption(scene, run_time: float = 0.3) -> None:
+    """화면에 고정된 메모(캡션)를 지운다 — 섹션 이동·전체 훑어보기 전에."""
+    if scene.caption is None:
+        return
+    scene.caption.clear_updaters()
+    scene.play(FadeOut(scene.caption), run_time=run_time)
+    scene.objs.pop("caption", None)
+    scene.caption = None
+
+
 @action("goto")
 def goto(scene, section: str, run_time: float | None = None, overview: bool = True, title: bool = True, **_):
     """카메라를 다른 섹션으로 옮긴다. 도중에 살짝 줌아웃해 칠판 전체 흐름이 보이고, 처음 방문이면 제목을 판서한다."""
     cv = _need_chalk(scene, "goto")
-    if scene.caption is not None:
-        # 이전 섹션의 메모(캡션)는 새 섹션으로 가기 전에 지운다
-        scene.caption.clear_updaters()
-        scene.play(FadeOut(scene.caption), run_time=0.3)
-        scene.objs.pop("caption", None)
-        scene.caption = None
+    _drop_caption(scene)
     cv.goto(section, run_time=_rt(run_time, 1.8), overview=overview, write_title=title)
 
 
@@ -1068,6 +1074,7 @@ def camera(scene, focus: Any = None, pos: Any = None, width: float = 6.0, run_ti
         cv.reset_view(run_time=rt)
         return
     if sections:
+        _drop_caption(scene)
         a, b = cv.section(sections[0]), cv.section(sections[-1])
         left, right = min(a.left, b.left) - 0.4, max(a.right, b.right) + 0.4
         cv.focus([(left + right) / 2, 0.0], right - left, run_time=rt)
