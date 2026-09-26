@@ -15,14 +15,14 @@ from typing import Any, Optional
 
 # ANSI 색/스타일(CSI), 터미널 하이퍼링크(OSC 8), 그 밖의 OSC 시퀀스
 _ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\]8;[^\x1b\x07]*(?:\x1b\\|\x07)|\x1b\][^\x1b\x07]*(?:\x1b\\|\x07)")
-_NOISE = ("libncursesw",)
+_NOISE = ("libncursesw", "you have not checked for MiKTeX updates", "major issue: So far")
 
 
 def clean_log(text: str) -> str:
     """manim(rich)·ffmpeg 가 찍는 ANSI 장식과 알려진 잡음 줄을 걷어낸 사람이 읽을 로그."""
     text = _ANSI_RE.sub("", text)
     lines = [ln.rstrip() for ln in text.splitlines() if not any(n in ln for n in _NOISE)]
-    lines = [ln for ln in lines if ln.strip()]
+    lines = [ln for ln in lines if ln.strip() and ln.strip() != "updates."]   # MiKTeX 경고가 두 줄로 잘린 꼬리
     return "\n".join(lines) + ("\n" if lines else "")
 
 

@@ -36,7 +36,8 @@ def installed_font(*candidates: str) -> str:
 
 
 CHALK_FONT = installed_font("NanumBarunpen", "Nanum Pen Script", "Nanum Pen", "Noto Sans CJK KR", "Noto Sans KR", "Malgun Gothic")  # 한글 손글씨(펜) 폰트 — Pango Text 용
-CHALK_TITLE_FONT = installed_font("Nanum Pen Script", "Nanum Pen", "NanumBarunpen", "Noto Sans CJK KR", "Noto Sans KR", "Malgun Gothic")  # 제목/캡션용 더 자유로운 손글씨
+# 제목/캡션용 더 자유로운 손글씨. 구글 폰트판 "Nanum Pen" 은 →·⇒ 같은 기호 글리프가 없어 네이버판(Nanum Pen Script / Nanum Brush Script)을 먼저 찾는다.
+CHALK_TITLE_FONT = installed_font("Nanum Pen Script", "Nanum Brush Script", "NanumBarunpen", "Nanum Pen", "Noto Sans CJK KR", "Noto Sans KR", "Malgun Gothic")
 
 CHALK_KO_TEX_TEMPLATE = TexTemplate(
     tex_compiler="xelatex",

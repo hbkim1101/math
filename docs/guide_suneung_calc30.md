@@ -135,7 +135,9 @@ def slope_sweep(scene, func, point, k_from, k_to, run_time=4.0, at=None, caption
     if caption: caption_action(scene, text=caption)
 ```
 
-Studio 의 `custom` 카드는 `hooks.py` 에서 함수 이름을 읽어 `fn` 자동완성으로 보여 줍니다.
+Studio 의 `custom` 카드는 `hooks.py` 에서 함수 이름을 읽어 `fn` 자동완성으로 보여 줍니다. 카드를 펼치면 (렌더한 뒤에는) 이 액션의 **실행 전/후 프레임**이 함께 보여, 훅이 화면에서 무엇을 했는지 바로 확인할 수 있습니다.
+
+![custom 액션 카드 — 실행 전/후 프레임과 인자, 오른쪽은 부분 렌더 로그](img/calc30_studio_custom_action_preview.png)
 
 ### ④-5 시각(at) 맞추기
 카드의 **시각(at)** 칸 옆 "문장 선택…" 에서 문장을 고르면 `s4` 같은 값이 들어갑니다. 초 단위(`31.0`)도 됩니다. 비우면 앞 액션이 끝난 직후 이어서 실행됩니다. ② 동기화 표에서 각 문장 줄에 칩이 놓여, 말과 그림이 어긋난 곳이 바로 보입니다. 위 시간 바의 점(●)이 액션 시각입니다.

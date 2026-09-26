@@ -17,6 +17,8 @@ YAML 시나리오 ──▶ TTS(문장 타이밍) ──▶ Manim 렌더(내레�
 실전 데모 (2026학년도 대학수학능력시험, 2025.11 시행):
 - `projects/2026_suneung_q22/` — 22번: 로그함수·지수함수와 대칭이동, 중점 (정답 457) — **Explainer Studio(아래 §3) 로 제작**. 로그 조건을 지수식으로 바꿔 (2b, 2a) 가 지수함수 위에 있음을 보이고, 곡선 전체가 `y=x` 대칭 → 원점 중심 2배 확대로 옮겨 가는 애니메이션(`hooks.py: swap_then_scale`), 볼록성으로 교점의 유일성, 중점 조건 연립.
 
+- `projects/2026_suneung_calc30/` — 미적분 30번: 역함수의 그래프에서 교점의 개수 g(m) (정답 11) — **처음부터 끝까지 제작 과정을 따라가는 가이드: [`docs/guide_suneung_calc30.md`](docs/guide_suneung_calc30.md)**. 후보 곡선 4개에서 증가하는 가지 고르기, 직선도 y=x 에 뒤집기(`inverse_curve`), 기울기를 움직이며 교점을 실시간으로 세는 스윕(`slope_sweep`), g(m) 계단 그래프(`step_graph`).
+
 두 가지 연출 스타일을 지원합니다 (`meta.style`):
 
 | 스타일 | 설명 |
