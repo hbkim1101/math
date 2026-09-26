@@ -31,6 +31,8 @@ def iter_tex_strings(project: Project):
                 values = p[key] if isinstance(p[key], list) else [p[key]]
                 if key == "label" and act.do in ("title_card", "end_card", "caption", "section"):
                     continue
+                if act.do == "end_card":
+                    continue  # end_card 의 lines 는 LaTeX 가 아닌 손글씨 Text 로 그려진다
                 if act.do in ("problem", "problem_dock") or (act.do == "label" and ko) or (act.do == "caption"):
                     mode = "ko"
                 elif default_mode == "auto":

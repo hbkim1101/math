@@ -268,6 +268,7 @@ def render_project(project: Project, timeline: Timeline, out_dir: str | Path, pr
             "output_file": scene_name,
             "background_color": project.meta.background,
             "disable_caching": False,
+            "disable_caching_warning": True,   # 큰 장면에서 매 애니메이션마다 반복되는 캐시 경고로 로그가 뒤덮이는 것을 막는다
             "verbosity": "WARNING",
             "progress_bar": "none",
             "write_to_movie": True,

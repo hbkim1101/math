@@ -8,3 +8,6 @@ output/*/actions_log.json
 .venv/
 output/*/*_preview.mp4
 output/*/storyboard_frames/
+output/_studio_logs/
+output/*__part/
+projects/*/.history/

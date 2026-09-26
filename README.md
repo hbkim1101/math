@@ -14,6 +14,9 @@ YAML 시나리오 ──▶ TTS(문장 타이밍) ──▶ Manim 렌더(내레�
 - `projects/2027_sep_q21/` — 21번: 절댓값 함수의 미분가능성, 뾰족점의 상쇄 (정답 12) (`project_panel.yaml` 은 패널 스타일 버전)
 - `projects/2027_sep_q22/` — 22번: 지수·로그함수와 직사각형 ABCD (정답 97) (`project_panel.yaml` 은 패널 스타일 버전)
 
+실전 데모 (2026학년도 대학수학능력시험, 2025.11 시행):
+- `projects/2026_suneung_q22/` — 22번: 로그함수·지수함수와 대칭이동, 중점 (정답 457) — **Explainer Studio(아래 §3) 로 제작**. 로그 조건을 지수식으로 바꿔 (2b, 2a) 가 지수함수 위에 있음을 보이고, 곡선 전체가 `y=x` 대칭 → 원점 중심 2배 확대로 옮겨 가는 애니메이션(`hooks.py: swap_then_scale`), 볼록성으로 교점의 유일성, 중점 조건 연립.
+
 두 가지 연출 스타일을 지원합니다 (`meta.style`):
 
 | 스타일 | 설명 |
@@ -45,14 +48,37 @@ python -m explainer validate projects/2027_sep_q22/project.yaml --tex   # YAML �
 python -m explainer timing   projects/2027_sep_q22/project.yaml         # 문장별 내레이션 타이밍표 (at 값 정할 때)
 python -m explainer build    projects/2027_sep_q22/project.yaml --preview   # 480p/15fps 빠른 확인
 python -m explainer build    projects/2027_sep_q22/project.yaml             # 1080p/30fps 최종 + 자동 검증
+python -m explainer build    projects/2027_sep_q22/project.yaml --segments setup_exp,setup_log   # 일부 세그먼트만 (output/<id>__part/)
 python -m explainer verify   output/2027_sep_q22                            # 산출물 재검증
 python -m explainer actions                                                 # 액션 목록
+python -m explainer studio                                                  # 브라우저 편집기 (아래 §3)
 pytest                                                                      # 단위 테스트 + 수학 증명 테스트
 ```
 
 산출물 (`output/<id>/`): `<id>.mp4`(최종), `subtitles.srt/.ass`, `timeline.json`(세그먼트 실제 시각), `manifest.json`, `verify_report.json`.
 
-## 3. 시나리오 DSL
+## 3. Explainer Studio — 브라우저 편집기
+
+```bash
+python -m explainer studio                 # http://127.0.0.1:8765 를 브라우저로 연다
+python -m explainer studio --port 9000 --root /path/to/repo --no-browser
+```
+
+YAML 을 직접 쓰지 않고도 위 파이프라인으로 영상을 **만들고 고치는** 로컬 프로그램입니다 (FastAPI + 순수 JS, 외부 CDN 없음).
+
+| 영역 | 기능 |
+|---|---|
+| 프로젝트 | 목록 / **새 프로젝트**(칠판 템플릿: 제목·문제·풀이·정답 4개 세그먼트) / 저장(`Ctrl+S`, 저장 전 `.history/` 에 스냅샷 → **되돌리기**) |
+| 세그먼트 편집 | 왼쪽 목록에서 선택·드래그로 순서 변경·추가/삭제. 내레이션 textarea 아래에 **문장 칩(s1, s2, …)** 과 `▶ 듣기 · 문장 타이밍`(TTS 를 미리 합성해 각 문장의 시작 시각 표시) |
+| 액션 카드 | 액션 카탈로그(분류·설명·파라미터 기본값 자동 추출)에서 골라 추가. 카드마다 `at`/`run_time`, 파라미터 표(값은 숫자/불/목록/객체를 자동 해석), **식 전개(derive/step) 전용 편집기**(조각은 `|` 로 구분, why/from/cancel/box/pulse/hold), 고급 사용자는 카드별 JSON 직접 편집 |
+| 설정 | meta(제목·음성·해상도·자막), 칠판 섹션(id/제목/full·split), params, 원본 YAML 보기·적용(정렬된 형식으로 다시 저장) |
+| 검사 | **검사**(pydantic 검증 + 알 수 없는 액션/`at: s9` 가 문장 수를 넘는지/`goto` 대상 섹션 존재/derive 조각 누락 등을 세그먼트·액션 위치와 함께 표시), **LaTeX 검사**(모든 수식을 미리 컴파일) |
+| 렌더 | **선택 세그먼트 렌더**(그 부분만 480p 로 빠르게) / **프리뷰 렌더** / **최종 렌더**(1080p + 21항목 자동 검증). 진행 로그를 실시간으로 보여 주고 중지 가능. 프로젝트당 한 작업만 실행 |
+| 결과 | 오른쪽 패널에서 **영상 재생**, **스토리보드**, **검증 리포트**(PASS/FAIL 표), **타임라인**(세그먼트·문장별 실제 시각), 빌드 **로그** |
+
+REST API (`explainer/studio/server.py`)는 그대로 스크립트에서도 쓸 수 있습니다: `GET/POST /api/projects`, `GET/PUT /api/projects/{id}`, `POST …/validate`, `GET …/timing`, `POST …/build`, `GET /api/jobs/{id}?offset=`, `POST /api/tts`, `GET /api/actions`, `POST /api/yaml/format|parse`. 26학년도 수능 22번 데모는 이 API 로 저장(`PUT`)→검증→프리뷰 빌드→문장 타이밍(`/timing`)을 보고 `at` 재조정→최종 빌드 순서로 만들었습니다. 테스트: `tests/test_studio.py`(API 라운드트립·검사·빌드 작업·YAML 포맷).
+
+## 4. 시나리오 DSL
 
 ```yaml
 meta:      { id, title, subtitle, voice, rate, resolution: 1080p, fps: 30, subtitles: burn|soft|none }
@@ -81,7 +107,7 @@ segments:
 | 그래프 | `axes`(등축 자동, `equal_aspect: false` 가능), `plot`(y 범위 밖 자동 클리핑, `smooth`), `line`, `vline`, `point`(좌표는 `pos`), `points`, `polygon`, `segment`, `arrow`, `guides`, `label` |
 | 기하 연출 | `translate_copy`(평행이동 복사), `reflect`(직선 대칭이동 + 수선/직각 표시) |
 | 강조 | `highlight`(indicate/flash/circumscribe/pulse), `dim`/`undim`(stroke·fill 원본 비율 유지), `fade`, `answer` |
-| 확장 | `custom` → 프로젝트 폴더의 `hooks.py` 함수 호출 (22번: `sliding_chord`, `ghost_translate` / 21번: `corner_tangents`, `sweep_param` / 2번: `secant_to_tangent`(할선→접선, 기울기 판독) / 3번: `term_line`, `term_hops`, `term_value`(항 번호 줄과 공차 호) / 4번: `piecewise_gap`(a 슬라이더로 틈이 닫히는 순간)) |
+| 확장 | `custom` → 프로젝트 폴더의 `hooks.py` 함수 호출 (26 수능 22번: `swap_then_scale`(곡선과 점을 y=x 대칭 → 원점 중심 확대) / 22번: `sliding_chord`, `ghost_translate` / 21번: `corner_tangents`, `sweep_param` / 2번: `secant_to_tangent`(할선→접선, 기울기 판독) / 3번: `term_line`, `term_hops`, `term_value`(항 번호 줄과 공차 호) / 4번: `piecewise_gap`(a 슬라이더로 틈이 닫히는 순간)) |
 | 칠판 전용 | `goto`(섹션으로 카메라 이동 — 도중 살짝 줌아웃, 첫 방문이면 제목 판서), `write`(커서 위치에 손글씨로 한 줄씩; `ko`, `text`, `box`/`underline`, `space`), `camera`(`pos`/`focus`/`ids` 줌인, `sections` 범위 줌아웃, `reset`), `space`, **`derive` / `step`**(식 전개, 아래) |
 | 5지선다 | `problem` 의 `choices: [...]` 로 ①~⑤ 보기 줄을 쓰고, `answer` 의 `choice: n` 으로 카메라가 문제로 돌아가 보기에 분필 동그라미를 친다 |
 
@@ -137,7 +163,7 @@ layout:
 - `caption` 은 카메라 프레임에 고정된 손글씨 메모(줌인 중에도 같은 자리), `goto` 시 자동으로 지워진다.
 - 칠판 질감은 PIL 로 생성해 캐시하고 섹션별 타일로 얹는다. 카메라 줌 시 타일의 보이는 부분만 리샘플링하도록 `ChalkCamera` 가 이미지 렌더링을 최적화한다.
 
-## 4. 자동 검증 (`explainer verify`)
+## 5. 자동 검증 (`explainer verify`)
 
 | 항목 | 내용 |
 |---|---|
@@ -148,9 +174,9 @@ layout:
 | 스토리보드 | 세그먼트별 대표 프레임 + 내레이션 콘택트 시트 `storyboard.png` (`explainer storyboard out_dir`) |
 | 오디오 | 통합 라우드니스(-16 LUFS 목표), 트루피크(클리핑 없음), 긴 무음 없음 |
 
-수학적 내용은 sympy 로 증명합니다: `tests/test_math_q01_q04.py`(1~4번의 모든 전개 단계가 서로 같은 값인지, 이항·대입 단계, 보기 번호), `tests/test_math_q22.py`(포물선 평행이동 (1,−1), 현 기울기 일차식, 대칭축 y=x−1/4 에 대한 A↔D·B↔C 대칭, 직선 y=x+3/4 와의 교점, a³=81/16, p+q=97), `tests/test_math_q21.py`(f'(s)=(s−r)², g 의 뾰족점은 s 하나·기울기 변화 −8(s−r)², |w| 의 뾰족점 +2|w'(t)|, a∈{1,2,3}, 각 경우의 f(0), h 의 미분가능성, 최댓값×최솟값 = 12).
+수학적 내용은 sympy 로 증명합니다: `tests/test_math_q01_q04.py`(1~4번의 모든 전개 단계가 서로 같은 값인지, 이항·대입 단계, 보기 번호), `tests/test_math_q22.py`(포물선 평행이동 (1,−1), 현 기울기 일차식, 대칭축 y=x−1/4 에 대한 A↔D·B↔C 대칭, 직선 y=x+3/4 와의 교점, a³=81/16, p+q=97), `tests/test_math_suneung22.py`(26 수능 22번: log 조건 ⇔ 2^{4b−1}=4a+1, (2b,2a)∈지수함수, k=2 의 유일성(볼록), 연립 → a=63/4, b=7/4, ab=441/16, p+q=457), `tests/test_math_q21.py`(f'(s)=(s−r)², g 의 뾰족점은 s 하나·기울기 변화 −8(s−r)², |w| 의 뾰족점 +2|w'(t)|, a∈{1,2,3}, 각 경우의 f(0), h 의 미분가능성, 최댓값×최솟값 = 12).
 
-## 5. 구조
+## 6. 구조
 
 ```
 explainer/
@@ -159,10 +185,12 @@ explainer/
   render/    theme.py(색·폰트·xelatex 템플릿) · board.py(풀이 보드) · chalk.py(칠판 캔버스·판서·카메라) · derive.py(식 전개: 조각 매칭·이동·변형·이유 메모) · scene.py(세그먼트 실행 루프, MovingCamera) · actions.py(액션 라이브러리)
   compose/   subtitles.py(SRT/ASS, 긴 문장 분할) · mux.py(ffmpeg: 자막 번인, loudnorm, apad)
   verify/    checks.py(자동 검증)
+  studio/    server.py(FastAPI REST) · jobs.py(빌드 작업·로그) · yamlio.py(정렬된 YAML 저장·히스토리·새 프로젝트 템플릿) · catalog.py(액션 카탈로그) · static/(편집기 UI)
   lint.py · pipeline.py · cli.py
 projects/2027_sep_q01..q04/  project.yaml (· hooks.py)   — 식 전개 중심의 짧은 강의
 projects/2027_sep_q22/  project.yaml · hooks.py
 projects/2027_sep_q21/  project.yaml(칠판) · project_panel.yaml(패널) · hooks.py
+projects/2026_suneung_q22/  project.yaml · hooks.py(swap_then_scale)   — Studio 로 제작한 실전 데모
 tests/
 ```
 
