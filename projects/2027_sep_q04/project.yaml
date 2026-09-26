@@ -1,0 +1,131 @@
+# 2027학년도 9월 모의평가 (2026.9 시행) 수학 공통 4번 — 함수의 연속 (정답 ② 10)
+# 칠판 강의 스타일 + 식 전개(derive: 이항 애니메이션) + a 를 움직여 '틈'이 닫히는 순간을 보는 애니메이션
+# 렌더: python -m explainer build projects/2027_sep_q04/project.yaml
+
+meta:
+  id: 2027_sep_q04
+  title: "2027학년도 9월 모의평가 수학 4번"
+  subtitle: "함수의 연속 — 경계에서 좌·우가 만나야 한다"
+  voice: ko-KR-InJoonNeural
+  rate: "+4%"
+  resolution: 1080p
+  fps: 30
+  subtitles: burn
+  segment_pad: 0.5
+  style: chalkboard
+  background: "#101614"
+
+params:
+  a: 10
+
+layout:
+  graph:
+    x_range: [-0.8, 3.6, 1]
+    y_range: [-5, 45, 10]
+    grid: false
+  chalk:
+    board_color: "#24493a"
+    line_scale: 1.1
+    line_gap: 0.22
+    sections:
+      - {id: title, layout: full}
+      - {id: problem, title: "문제", layout: full}
+      - {id: picture, title: "풀이 1 · x = 2에서 무슨 일이 일어나나", layout: split, graph_width: 6.8}
+      - {id: compute, title: "풀이 2 · 왼쪽 끝과 오른쪽 끝을 식으로", layout: full}
+      - {id: solve, title: "풀이 3 · 좌극한 = 우극한, 이항해서 a 구하기", layout: full}
+
+segments:
+  - id: intro
+    narration: >
+      9월 모의평가 4번, 함수의 연속 문제입니다.
+      식이 두 조각으로 나뉜 함수는, 조각이 바뀌는 경계에서만 연속을 따져 보면 됩니다.
+      경계에서 왼쪽 조각과 오른쪽 조각이 딱 만나는 조건을 식으로 세우고, 이항까지 한 단계씩 따라가 보겠습니다.
+    actions:
+      - {do: title_card, title: "2027학년도 9월 모의평가 수학 4번", subtitle: "함수의 연속 — 경계에서 좌·우가 만나야 한다", tag: "수학Ⅱ · 함수의 극한과 연속"}
+
+  - id: read_problem
+    narration: >
+      문제입니다. 함수 f of x는, x가 2 이하일 때 7x 더하기 a, x가 2보다 클 때 x제곱 더하기 ax.
+      이 함수가 실수 전체의 집합에서 연속일 때, 상수 a의 값은?
+      보기는 9, 10, 11, 12, 13입니다.
+    actions:
+      - {do: goto, section: problem, run_time: 1.4}
+      - do: problem
+        title: "4. [3점]"
+        scale: 1.0
+        lines:
+          - "함수 $f(x)=\\begin{cases}7x+a & (x\\le 2)\\\\[2pt] x^{2}+ax & (x>2)\\end{cases}$"
+          - "가 실수 전체의 집합에서 연속일 때, 상수 $a$의 값은?"
+        choices: ["9", "10", "11", "12", "13"]
+      - {do: problem_focus, at: s2, index: 1}
+
+  - id: picture
+    narration: >
+      각 조각은 일차함수와 이차함수, 그 자체로는 어디서나 연속입니다.
+      문제는 조각이 바뀌는 x가 2인 지점. 왼쪽 조각의 끝점은 7 곱하기 2 더하기 a, 오른쪽 조각이 다가가는 값은 4 더하기 2a입니다.
+      a가 작으면 이렇게 틈이 벌어져 있고, a를 키우면 두 끝점이 서로 다가갑니다.
+      a가 10이 되는 순간 틈이 닫히고, 그래프가 한 줄로 이어집니다. 이 순간을 식으로 잡아내면 됩니다.
+    actions:
+      - {do: goto, section: picture, run_time: 1.6}
+      - {do: axes, run_time: 0.9, equal_aspect: false}
+      - do: custom
+        fn: piecewise_gap
+        left_expr: "7*x+a"
+        right_expr: "x**2+a*x"
+        split: 2
+        param: a
+        values: [4, 4, 10]
+        left_color: q1
+        right_color: exp
+        left_label: "y=7x+a"
+        right_label: "y=x^{2}+ax"
+        readout: "a ="
+        run_time: 5.0
+        pause: 0.5
+        stop_captions: ["a = 4 : 왼쪽 끝점 18, 오른쪽 12 → 틈이 있다 (불연속)", "", "a = 10 : 24 = 24 → 틈이 닫힌다 (연속)"]
+      - {do: write, at: s4, ko: true, tex: "$x=2$에서 (왼쪽 끝) $=$ (오른쪽 끝) 이어야 연속", color: ok, scale: 0.9}
+
+  - id: limits
+    narration: >
+      식으로 씁니다. x가 2일 때의 함숫값과 좌극한은 왼쪽 조각에서 나오니 7 곱하기 2 더하기 a, 14 더하기 a.
+      우극한은 오른쪽 조각에 2를 넣어서 2의 제곱 더하기 a 곱하기 2, 4 더하기 2a입니다.
+    actions:
+      - {do: goto, section: compute, run_time: 1.6}
+      - do: derive
+        id: l
+        steps:
+          - {parts: ["\\lim_{x\\to2-}f(x)", "=", "f(2)", "=", "7\\cdot2", "+", "a"], why: "왼쪽 조각 $7x+a$에 $x=2$"}
+          - {parts: ["=", "14", "+", "a"], same_line: false}
+      - do: derive
+        id: r
+        at: s2
+        steps:
+          - {parts: ["\\lim_{x\\to2+}f(x)", "=", "2^{2}", "+", "a\\cdot2"], why: "오른쪽 조각 $x^{2}+ax$에 $x=2$", space: 0.3}
+          - {parts: ["=", "4", "+", "2a"], same_line: false}
+
+  - id: solve
+    narration: >
+      연속이려면 이 두 값이 같아야 합니다. 14 더하기 a는 4 더하기 2a.
+      a가 있는 항은 오른쪽으로, 숫자는 왼쪽으로 이항합니다. 이항하면 부호가 바뀌죠.
+      14 빼기 4는 2a 빼기 a. 왼쪽은 10, 오른쪽은 a. 따라서 a는 10입니다.
+    actions:
+      - {do: goto, section: solve, run_time: 1.6}
+      - do: derive
+        id: s
+        steps:
+          - {parts: ["14", "+", "a", "=", "4", "+", "2a"], why: "(좌극한) $=$ (우극한) $=f(2)$"}
+          - at: s2
+            parts: ["14", "-", "4", "=", "2a", "-", "a"]
+            why: "이항 — 부호가 바뀐다"
+          - at: s3
+            parts: ["10", "=", "a"]
+            from: {"10": ["14", "4"], "a": ["2a", "a"]}
+          - {parts: ["a", "=", "10"], box: true, pulse: true}
+
+  - id: answer
+    narration: >
+      정답은 2번, a는 10입니다.
+      정리하면, 구간이 나뉜 함수의 연속은 경계 한 점에서, 좌극한, 우극한, 함숫값이 모두 같다는 조건 하나로 결정됩니다.
+    actions:
+      - {do: answer, choice: 2, tex: "a=10", caption_text: "정답 ②"}
+      - {do: caption, at: s2, text: "경계 x = 2 에서:  좌극한 = 우극한 = f(2)", position: top}

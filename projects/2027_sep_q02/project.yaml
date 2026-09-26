@@ -1,0 +1,145 @@
+# 2027학년도 9월 모의평가 (2026.9 시행) 수학 공통 2번 — 미분계수의 정의 (정답 ③ 23)
+# 칠판 강의 스타일 + 식 전개(derive) 데모 + 할선→접선 애니메이션
+# 렌더: python -m explainer build projects/2027_sep_q02/project.yaml
+
+meta:
+  id: 2027_sep_q02
+  title: "2027학년도 9월 모의평가 수학 2번"
+  subtitle: "미분계수의 정의 — 극한을 f'(2)로 읽기"
+  voice: ko-KR-InJoonNeural
+  rate: "+4%"
+  resolution: 1080p
+  fps: 30
+  subtitles: burn
+  segment_pad: 0.5
+  style: chalkboard
+  background: "#101614"
+
+layout:
+  graph:
+    x_range: [-0.6, 2.7, 1]
+    y_range: [-8, 26, 8]
+    grid: false
+  chalk:
+    board_color: "#24493a"
+    line_scale: 1.1
+    sections:
+      - {id: title, layout: full}
+      - {id: problem, title: "문제", layout: full}
+      - {id: meaning, title: "풀이 1 · 이 극한은 무엇인가", layout: split, graph_width: 6.6}
+      - {id: compute, title: "풀이 2 · f'(x)를 구해 x = 2 대입", layout: full}
+
+segments:
+  - id: intro
+    narration: >
+      9월 모의평가 2번, 미분계수의 정의를 묻는 문제입니다.
+      극한 기호가 보이면 계산부터 하지 말고, 이 극한이 무엇을 뜻하는지 먼저 읽어 내는 연습을 해 보겠습니다.
+    actions:
+      - {do: title_card, title: "2027학년도 9월 모의평가 수학 2번", subtitle: "미분계수의 정의 — 극한을 f'(2)로 읽기", tag: "수학Ⅱ · 미분"}
+
+  - id: read_problem
+    narration: >
+      문제입니다. 함수 f of x는 2x의 세제곱 빼기 x 빼기 4에 대하여,
+      x가 2로 갈 때, f of x 빼기 f of 2, 나누기, x 빼기 2의 극한값은?
+      보기는 19, 21, 23, 25, 27입니다.
+    actions:
+      - {do: goto, section: problem, run_time: 1.4}
+      - do: problem
+        title: "2. [2점]"
+        scale: 1.0
+        lines:
+          - "함수 $f(x)=2x^{3}-x-4$에 대하여"
+          - "$\\displaystyle\\lim_{x\\to2}\\frac{f(x)-f(2)}{x-2}$의 값은?"
+        choices: ["19", "21", "23", "25", "27"]
+      - {do: problem_focus, at: s2, index: 1}
+
+  - id: meaning
+    narration: >
+      분자는 f of x 빼기 f of 2, 분모는 x 빼기 2. 두 점 사이 y의 변화량을 x의 변화량으로 나눈, 평균변화율입니다.
+      그래프에서 보면 점 P, 2, f of 2와 점 Q, x, f of x를 잇는 할선의 기울기죠.
+      x를 2로 보내면 점 Q가 점 P로 다가가고, 할선은 점 P에서의 접선으로 수렴합니다.
+      따라서 이 극한은 x가 2일 때의 미분계수, f prime of 2 입니다.
+    actions:
+      - {do: goto, section: meaning, run_time: 1.6}
+      - {do: axes, run_time: 0.9, equal_aspect: false}
+      - {do: plot, id: f, expr: "2*x**3-x-4", color: q1, label: "y=f(x)", label_at: 2.45, label_dir: LEFT, label_scale: 0.7, x_range: [-0.6, 2.46], run_time: 1.2}
+      - do: derive
+        id: m
+        scale: 0.95
+        steps:
+          - {parts: ["\\dfrac{f(x)-f(2)}{x-2}"], why: "평균변화율"}
+      - do: custom
+        at: s2
+        fn: secant_to_tangent
+        func: f
+        x0: 2
+        x_from: 2.42
+        x_to: 2.003
+        color: point
+        tangent_color: ok
+        readout: "할선의 기울기 ="
+        run_time: 5.5
+        final_caption: "Q → P 이면 할선 → 접선,  기울기 → f'(2)"
+      - do: step
+        of: m
+        at: s4
+        parts: ["\\lim_{x\\to2}", "\\dfrac{f(x)-f(2)}{x-2}", "=", "f'(2)"]
+        why: "미분계수의 정의"
+        box: true
+
+  - id: differentiate
+    narration: >
+      그러면 f prime of x를 구합시다. 항별로 미분합니다.
+      2x의 세제곱은, 지수 3을 앞으로 내리고 지수를 하나 낮춰서, 2 곱하기 3 x의 제곱.
+      마이너스 x는 마이너스 1. 상수 마이너스 4는 미분하면 0이니 사라집니다.
+      정리하면 f prime of x는 6x제곱 빼기 1입니다.
+    actions:
+      - {do: goto, section: compute, run_time: 1.6}
+      - do: derive
+        id: d
+        steps:
+          - {parts: ["f(x)", "=", "2x^{3}", "-", "x", "-", "4"]}
+          - at: s2
+            parts: ["f'(x)", "=", "2\\cdot3x^{2}", "-", "1", "-", "0"]
+            from: {"f'(x)": "f(x)", "2\\cdot3x^{2}": "2x^{3}", "1": "x", "0": "4"}
+            why: "$(x^{n})'=nx^{n-1}$, 상수의 미분은 $0$"
+            cancel: [5, 6]
+          - at: s4
+            parts: ["f'(x)", "=", "6", "x^{2}", "-", "1"]
+            focus: ["2\\cdot3x^{2}"]
+            new: ["6", "x^{2}"]
+
+  - id: substitute
+    narration: >
+      이제 x에 2를 대입합니다. 6 곱하기 2의 제곱 빼기 1.
+      2의 제곱은 4, 6 곱하기 4는 24, 24 빼기 1은 23.
+      따라서 f prime of 2는 23입니다.
+    actions:
+      - do: step
+        of: d
+        parts: ["f'(2)", "=", "6", "\\cdot", "2^{2}", "-", "1"]
+        from: {"f'(2)": "f'(x)", "2^{2}": "x^{2}"}
+        why: "$x=2$ 대입"
+        space: 0.15
+      - do: step
+        of: d
+        at: s2
+        parts: ["=", "6", "\\cdot", "4", "-", "1"]
+      - do: step
+        of: d
+        parts: ["=", "24", "-", "1"]
+      - do: step
+        of: d
+        at: s3
+        parts: ["=", "23"]
+        box: true
+        pulse: true
+
+  - id: answer
+    narration: >
+      정답은 3번, 23입니다.
+      정리하면, x가 a로 갈 때 f of x 빼기 f of a, 나누기, x 빼기 a의 꼴은 항상 f prime of a로 읽는다.
+      정의를 알아보는 눈이 계산보다 먼저입니다.
+    actions:
+      - {do: answer, choice: 3, tex: "f'(2)=23", caption_text: "정답 ③"}
+      - {do: caption, at: s2, text: "lim (f(x) − f(a)) / (x − a)  =  f'(a)  — 미분계수의 정의", position: top}

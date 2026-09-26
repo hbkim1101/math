@@ -1,0 +1,102 @@
+# 2027학년도 9월 모의평가 (2026.9 시행) 수학 공통 3번 — 등차수열 (정답 ② 17)
+# 칠판 강의 스타일 + 식 전개(derive) 데모 + 항 번호 줄에서 공차를 '몇 번' 더하는지 세는 애니메이션
+# 렌더: python -m explainer build projects/2027_sep_q03/project.yaml
+
+meta:
+  id: 2027_sep_q03
+  title: "2027학년도 9월 모의평가 수학 3번"
+  subtitle: "등차수열 — 항 번호의 차가 공차의 개수"
+  voice: ko-KR-InJoonNeural
+  rate: "+4%"
+  resolution: 1080p
+  fps: 30
+  subtitles: burn
+  segment_pad: 0.5
+  style: chalkboard
+  background: "#101614"
+
+layout:
+  chalk:
+    board_color: "#24493a"
+    line_scale: 1.0
+    line_gap: 0.2
+    sections:
+      - {id: title, layout: full}
+      - {id: problem, title: "문제", layout: full}
+      - {id: sol1, title: "풀이 1 · 공차 d 구하기", layout: full}
+      - {id: sol2, title: "풀이 2 · a₂에서 a₇까지", layout: full}
+
+segments:
+  - id: intro
+    narration: >
+      9월 모의평가 3번, 등차수열 문제입니다.
+      등차수열은 항 번호가 하나 늘 때마다 공차 d를 한 번 더합니다.
+      그러니까 두 항의 번호 차이가 곧, 공차를 더한 횟수입니다. 이 한 가지만 기억하면 됩니다.
+    actions:
+      - {do: title_card, title: "2027학년도 9월 모의평가 수학 3번", subtitle: "등차수열 — 항 번호의 차가 공차의 개수", tag: "수학Ⅰ · 수열"}
+
+  - id: read_problem
+    narration: >
+      문제입니다. 등차수열 a n에 대하여 a 2는 2, a 10 빼기 a 7은 9일 때, a 7의 값은?
+      보기는 16, 17, 18, 19, 20입니다.
+    actions:
+      - {do: goto, section: problem, run_time: 1.4}
+      - do: problem
+        title: "3. [3점]"
+        scale: 1.0
+        lines:
+          - "등차수열 $\\{a_n\\}$에 대하여"
+          - "$a_2=2,\\qquad a_{10}-a_7=9$"
+          - "일 때, $a_7$의 값은?"
+        choices: ["16", "17", "18", "19", "20"]
+      - {do: problem_focus, at: s2, index: 1}
+
+  - id: find_d
+    narration: >
+      항들을 한 줄로 늘어놓고 보겠습니다. 첫째항부터 열째항까지, 옆으로 한 칸 갈 때마다 공차 d를 더합니다.
+      a 7에서 a 10까지는 세 칸이니까, d를 세 번 더한 것. 즉 a 10은 a 7 더하기 3d입니다.
+      그런데 이 차이가 9라고 했으니, 3d는 9. 공차 d는 3입니다.
+    actions:
+      - {do: goto, section: sol1, run_time: 1.6}
+      - {do: custom, fn: term_line, n: 10, known: {2: "2"}, id: terms, height: 2.0}
+      - {do: custom, at: s2, fn: term_hops, start: 7, end: 10, label: "+d", color: point, total: "a_{10}-a_{7}=3d", total_color: ok}
+      - do: derive
+        id: d
+        at: s3
+        steps:
+          - {parts: ["a_{10}", "-", "a_{7}", "=", "9"], why: "주어진 조건"}
+          - parts: ["a_7", "+", "3d", "-", "a_{7}", "=", "9"]
+            from: {"a_7": "a_{10}"}
+            why: "$a_{10}=a_{7}+3d$"
+            cancel: ["a_7", "a_{7}"]
+          - {parts: ["3d", "=", "9"]}
+          - {parts: ["d", "=", "3"], why: "양변을 $3$으로 나눈다", box: true}
+
+  - id: find_a7
+    narration: >
+      이제 a 7을 구합니다. 알고 있는 항은 a 2가 2라는 것.
+      a 2에서 a 7까지는 다섯 칸, 공차를 다섯 번 더하면 됩니다.
+      a 7은 a 2 더하기 5d. 2 더하기 5 곱하기 3은 2 더하기 15, 17입니다.
+    actions:
+      - {do: goto, section: sol2, run_time: 1.6}
+      - {do: custom, fn: term_line, n: 10, known: {2: "2", 7: "?"}, id: terms2, height: 2.0}
+      - {do: custom, at: s2, fn: term_hops, start: 2, end: 7, label: "+3", color: point, total: "a_{7}=a_{2}+5d", total_color: ok}
+      - do: derive
+        id: e
+        at: s3
+        steps:
+          - {parts: ["a_{7}", "=", "a_{2}", "+", "5d"], why: "공차를 $5$번 더한다"}
+          - parts: ["=", "2", "+", "5\\cdot3"]
+            from: {"2": "a_{2}", "5\\cdot3": "5d"}
+            why: "$a_{2}=2,\\ d=3$ 대입"
+          - {parts: ["=", "2", "+", "15"]}
+          - {parts: ["=", "17"], box: true, pulse: true}
+
+  - id: answer
+    narration: >
+      정답은 2번, 17입니다.
+      등차수열에서 a m과 a n의 차는, 항 번호의 차 곱하기 공차. a n은 a m 더하기 n 빼기 m 곱하기 d.
+      첫째항을 굳이 구하지 않아도 되는 이유가 여기에 있습니다.
+    actions:
+      - {do: answer, choice: 2, tex: "a_7=17", caption_text: "정답 ②"}
+      - {do: caption, at: s2, text: "a_n = a_m + (n − m)d  — 번호 차이 = 공차를 더한 횟수", position: top}

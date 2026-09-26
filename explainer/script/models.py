@@ -49,6 +49,7 @@ class ChalkLayout(BaseModel):
     margin: float = 0.55
     line_gap: float = 0.26
     line_scale: float = 0.72
+    bottom_reserve: float = 1.1   # 화면 하단 자막 띠에 판서가 가리지 않도록 비워 두는 높이
     texture: bool = True
     sections: list[dict[str, Any]] = Field(default_factory=list)  # [{id, title, layout: split|full, graph_width}]
 

@@ -216,6 +216,7 @@ class Canvas:
         self.margin = float(layout.margin)
         self.title_height = title_height
         self.line_gap = float(layout.line_gap)
+        self.bottom_reserve = float(getattr(layout, 'bottom_reserve', 1.1))
         self.sections: list[Section] = []
         self.by_id: dict[str, Section] = {}
         self.current: Optional[Section] = None
@@ -315,8 +316,8 @@ class Canvas:
         if mob.width > max_w:
             mob.scale_to_fit_width(max_w)
         mob.move_to(np.array([sec.notes_left + indent, sec.cursor_y, 0.0]), aligned_edge=UL)
-        if mob.get_bottom()[1] < sec.bottom + self.margin * 0.5:
-            print(f"  [chalk] 경고: 섹션 '{sec.id}' 판서가 아래로 넘칩니다 (cursor_y={sec.cursor_y:.2f})")
+        if mob.get_bottom()[1] < sec.bottom + self.bottom_reserve:
+            print(f"  [chalk] 경고: 섹션 '{sec.id}' 판서가 자막 영역까지 내려갑니다 (bottom={mob.get_bottom()[1]:.2f})")
         sec.cursor_y -= mob.height + self.line_gap
         sec.lines.append(mob)
         return sec

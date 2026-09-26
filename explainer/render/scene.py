@@ -65,6 +65,7 @@ class ExplainerScene(MovingCameraScene):
         self.board: Optional[Board] = None
         self.chalk: Optional[Canvas] = None
         self.caption: Optional[Mobject] = None
+        self.derivations: dict[str, Any] = {}
         self.current_segment: Optional[SegmentTiming] = None
         self._segment_start = 0.0
         self.log: list[dict[str, Any]] = []

@@ -22,6 +22,8 @@ from manim import (
 from ..script.models import Action
 from .board import Board
 from .chalk import handwrite, handwrite_time, pin_to_frame
+from .derive import Derivation
+from .theme import MATH_TEX_TEMPLATE
 
 Handler = Callable[..., None]
 REGISTRY: dict[str, Handler] = {}
@@ -183,10 +185,11 @@ def section(scene, text: str, run_time: float | None = None, id: str = "section"
 @action("problem")
 def problem(scene, tex: str | None = None, lines: list[str] | None = None, width: float = 12.0,
             scale: float = 0.85, run_time: float | None = None, id: str = "problem", title: str = "",
-            line_buff: float = 0.32, **_):
+            line_buff: float = 0.32, choices: list[str] | None = None, **_):
     """문제 전문을 화면 중앙에 크게 보여준다 (한글+수식, xelatex). width: 표시 폭(Manim 단위).
 
     `lines` 로 주면 줄(문장)별로 따로 렌더되어 `problem_focus` 로 읽는 위치를 따라갈 수 있다.
+    `choices` 는 5지선다 보기(수식) — ①~⑤ 로 한 줄에 쓰이며 `answer` 의 `choice` 로 동그라미 친다.
     """
     rt = _rt(run_time, 1.8)
     chalk = scene.theme.chalk and scene.chalk is not None
@@ -206,7 +209,14 @@ def problem(scene, tex: str | None = None, lines: list[str] | None = None, width
         items.append(scene.ktext(title, size=30 if not chalk else 36, weight="BOLD" if not chalk else "NORMAL",
                                  color=scene.theme.accent, font=scene.theme.title_font))
     items.append(body)
+    choice_mob = None
+    if choices:
+        choice_mob = _choices_row(scene, choices, width=width, scale=scale)
+        items.append(choice_mob)
     g = VGroup(*items).arrange(DOWN, buff=0.35, aligned_edge=LEFT)
+    if choice_mob is not None:
+        # 보기는 문제 본문과 조금 더 띄우고 살짝 들여쓴다
+        choice_mob.shift(DOWN * 0.15 + RIGHT * 0.3)
     if not chalk:
         if g.width > 12.8:
             g.scale_to_fit_width(12.8)
@@ -214,7 +224,7 @@ def problem(scene, tex: str | None = None, lines: list[str] | None = None, width
             g.scale_to_fit_height(5.9)
         g.move_to([0, 0.55, 0])  # 하단 자막 영역을 피해 약간 위에 배치
     else:
-        avail_h = sec.cursor_y - (sec.bottom + scene.chalk.margin)
+        avail_h = sec.cursor_y - (sec.bottom + scene.chalk.bottom_reserve)
         if g.height > avail_h:
             g.scale_to_fit_height(avail_h)
         g.move_to([sec.notes_left, sec.cursor_y, 0], aligned_edge=UL)
@@ -223,12 +233,30 @@ def problem(scene, tex: str | None = None, lines: list[str] | None = None, width
     scene.problem_lines = line_mobs
     for i, m in enumerate(line_mobs):
         scene.register(f"{id}_line_{i}", m)
+    if choice_mob is not None:
+        scene.register(f"{id}_choices", choice_mob)
+        scene.problem_choices = choice_mob
     if chalk:
-        pieces = ([items[0]] if title else []) + (line_mobs or [body])
+        pieces = ([items[0]] if title else []) + (line_mobs or [body]) + ([choice_mob] if choice_mob is not None else [])
         for m in pieces:
             scene.play(handwrite(m, run_time=min(2.4, handwrite_time(m, per_glyph=0.03))))
         return
     scene.play(FadeIn(g, shift=UP * 0.2), run_time=rt)
+
+
+CIRCLED = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨"]
+
+
+def _choices_row(scene, choices: list[str], width: float, scale: float) -> Mobject:
+    """5지선다 보기 한 줄: 각 보기가 개별 조각(submobject)이라 `answer choice:` 로 동그라미를 칠 수 있다."""
+    parts = [rf"\textcircled{{\scriptsize {i + 1}}}\;{c}" for i, c in enumerate(choices)]
+    m = MathTex(*parts, arg_separator=r"\qquad", tex_template=MATH_TEX_TEMPLATE)
+    m.set_color(scene.theme.text).scale(scale * 0.95)
+    scene.finish_text(m)
+    if m.width > width:
+        m.scale_to_fit_width(width)
+    return m
+
 
 
 @action("problem_focus")
@@ -936,11 +964,15 @@ def undim(scene, ids: list[str] | str, run_time: float | None = None, **_):
 
 
 @action("answer")
-def answer(scene, tex: str, run_time: float | None = None, id: str = "answer", color: str | None = None,
-           caption_text: str = "", **_):
-    """그래프 영역 중앙에 정답 박스를 강조 표시."""
+def answer(scene, tex: str | None = None, run_time: float | None = None, id: str = "answer", color: str | None = None,
+           caption_text: str = "", choice: int | None = None, **_):
+    """정답 박스를 강조 표시. `choice: n` 이면 문제의 보기 ⓝ 에 분필 동그라미를 친다 (tex 는 생략 가능)."""
     rt = _rt(run_time, 1.2)
     col = scene.color(color, scene.theme.highlight)
+    if tex is None:
+        assert choice is not None, "answer 액션에는 tex 또는 choice 가 필요합니다"
+        _circle_choice(scene, int(choice), col, id=id)
+        return
     m = scene.mtex(tex, scale=1.4, plain=True).set_color(scene.theme.text)
     items = [m]
     if caption_text:
@@ -959,6 +991,8 @@ def answer(scene, tex: str, run_time: float | None = None, id: str = "answer", c
         scene.play(handwrite(g, run_time=rt))
         scene.play(Create(box, run_time=0.7))
         scene.play(Circumscribe(box, color=col, buff=0.08), run_time=0.8)
+        if choice is not None:
+            _circle_choice(scene, int(choice), col, id=id)
         return
     box = RoundedRectangle(corner_radius=0.16, width=g.width + 0.9, height=g.height + 0.7,
                            fill_color=scene.theme.panel, fill_opacity=0.96, stroke_color=col, stroke_width=3)
@@ -968,6 +1002,30 @@ def answer(scene, tex: str, run_time: float | None = None, id: str = "answer", c
     scene.register(id, full)
     scene.play(FadeIn(box, scale=0.9), Write(g), run_time=rt)
     scene.play(Circumscribe(box, color=col, buff=0.05), run_time=0.8)
+    if choice is not None:
+        _circle_choice(scene, int(choice), col, id=id)
+
+
+def _circle_choice(scene, n: int, col: str, id: str = "answer") -> None:
+    row = getattr(scene, "problem_choices", None)
+    if row is None:
+        raise RuntimeError("answer choice: 를 쓰려면 problem 액션에 choices 가 있어야 합니다")
+    part = row.submobjects[n - 1]
+    from manim import Ellipse
+    ring = Ellipse(width=part.width + 0.55, height=part.height + 0.26, stroke_color=col, stroke_width=4,
+                   fill_opacity=0).move_to(part).set_z_index(6)
+    # 분필 동그라미: 시작점을 살짝 위쪽으로, 끝이 조금 겹치게
+    ring.rotate(PI * 0.55)
+    scene.register(f"{id}_choice", ring)
+    if scene.chalk is not None:
+        cv = scene.chalk
+        # 보기가 현재 화면 밖이면 카메라를 보기 쪽으로 옮긴다
+        f = cv.frame
+        if abs(part.get_center()[0] - f.get_center()[0]) > f.width / 2 - 0.5:
+            _drop_caption(scene)
+            cv.focus(row.get_center() + UP * 0.6, max(7.0, row.width + 3.0), run_time=1.2)
+    scene.play(Create(ring), run_time=0.7)
+    scene.play(Circumscribe(ring, color=col, buff=0.1), run_time=0.7)
 
 
 # ====================================================================== 칠판(chalkboard) 전용
@@ -1049,6 +1107,64 @@ def write(scene, lines: list[str] | None = None, tex: str | None = None, text: s
         if id:
             scene.register(f"{id}_mark", mark)
         scene.play(Create(mark), run_time=0.5)
+
+
+@action("derive")
+def derive(scene, id: str = "d", steps: list[dict] | None = None, scale: float | None = None,
+           color: str | None = None, indent: float = 0.0, accent: str | None = None, why_color: str | None = None,
+           keep_color: bool = False, section: str | None = None, run_time: float | None = None, **_):
+    """식 전개 시작(+ 단계들). 이후 `step` 액션으로 단계를 더할 수 있다 (내레이션 `at:` 동기화용).
+
+    step 항목: {parts: [...], why: "...", from: {새조각: 이전조각}, focus: [...], new: [...], cancel: [...],
+                box/underline/pulse, same_line: auto|true|false, indent, space, at}
+    - 그대로인 조각은 미끄러져 내려오고, 바뀌는 조각은 출처가 상자로 강조된 뒤 날아가 변형된다.
+    - 등호 반대편으로 옮긴 조각(이항)은 호를 그리며 건너가고 새 부호가 강조된다.
+    - from 은 대입처럼 문자열이 다른 조각을 짝지을 때 쓴다: {"2": "x"} → 모든 "2" 가 "x" 자리에서 날아온다.
+    """
+    cv = _need_chalk(scene, "derive")
+    sec = cv.section(section)
+    sc = scale if scale is not None else scene.project.layout.chalk.line_scale
+    d = Derivation(scene, sec, id, sc, color, indent=indent, accent=accent, why_color=why_color, keep_color=keep_color)
+    scene.derivations[id] = d
+    for st in steps or []:
+        _run_step(scene, d, dict(st), run_time)
+
+
+@action("step")
+def step(scene, of: str = "d", parts: list[str] | None = None, tex: str | None = None, run_time: float | None = None, **params):
+    """`derive` 로 시작한 식 전개에 한 단계를 더한다."""
+    d = scene.derivations.get(of)
+    if d is None:
+        raise KeyError(f"derive id {of!r} 가 없습니다. 먼저 derive 액션으로 시작하세요")
+    params["parts"] = parts if parts is not None else [tex]
+    _run_step(scene, d, params, run_time)
+
+
+def _run_step(scene, d: Derivation, st: dict, run_time: float | None) -> None:
+    at = st.pop("at", None)
+    if at is not None and scene.current_segment is not None:
+        scene.wait_until(scene.current_segment.resolve_at(at))
+    parts = st.pop("parts", None)
+    if parts is None:
+        parts = [st.pop("tex")]
+    if isinstance(parts, str):
+        parts = [parts]
+    d.step(
+        [str(p) for p in parts],
+        same_line=st.get("same_line", "auto"),
+        focus=st.get("focus"),
+        new=st.get("new"),
+        from_map=st.get("from"),
+        why=st.get("why"),
+        box=bool(st.get("box", False)),
+        underline=bool(st.get("underline", False)),
+        cancel=st.get("cancel"),
+        run_time=st.get("run_time", run_time),
+        indent=float(st.get("indent", 0.0)),
+        color=st.get("color"),
+        pulse=bool(st.get("pulse", False)),
+        space=float(st.get("space", 0.0)),
+    )
 
 
 @action("space")

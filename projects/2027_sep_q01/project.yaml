@@ -1,0 +1,123 @@
+# 2027학년도 9월 모의평가 (2026.9 시행) 수학 공통 1번 — 지수법칙 (정답 ④ 2^{1/2})
+# 칠판 강의 스타일 + 식 전개(derive) 데모
+# 렌더: python -m explainer build projects/2027_sep_q01/project.yaml
+
+meta:
+  id: 2027_sep_q01
+  title: "2027학년도 9월 모의평가 수학 1번"
+  subtitle: "지수법칙 — 밑을 통일하기"
+  voice: ko-KR-InJoonNeural
+  rate: "+4%"
+  resolution: 1080p
+  fps: 30
+  subtitles: burn
+  segment_pad: 0.5
+  style: chalkboard
+  background: "#101614"
+
+layout:
+  chalk:
+    board_color: "#24493a"
+    line_scale: 1.15
+    sections:
+      - {id: title, layout: full}
+      - {id: problem, title: "문제", layout: full}
+      - {id: sol, title: "풀이 · 밑을 2로 통일하고 지수법칙", layout: full}
+      - {id: wrap, title: "확인 · 정리", layout: full}
+
+segments:
+  - id: intro
+    narration: >
+      9월 모의평가 1번, 지수법칙 문제입니다.
+      계산은 짧지만, 어느 법칙을 어느 순서로 쓰는지 한 단계씩 눈으로 따라가 보겠습니다.
+    actions:
+      - {do: title_card, title: "2027학년도 9월 모의평가 수학 1번", subtitle: "지수법칙 — 밑을 통일하기", tag: "수학Ⅰ · 지수"}
+
+  - id: read_problem
+    narration: >
+      문제입니다. 2의 2분의 3제곱, 곱하기, 4의 마이너스 2분의 1제곱의 값은?
+      보기는 2의 마이너스 1제곱, 2의 마이너스 2분의 1제곱, 1, 2의 2분의 1제곱, 그리고 2입니다.
+    actions:
+      - {do: goto, section: problem, run_time: 1.4}
+      - do: problem
+        title: "1. [2점]"
+        scale: 1.0
+        lines:
+          - "$2^{\\frac32}\\times 4^{-\\frac12}$의 값은?"
+        choices: ["2^{-1}", "2^{-\\frac12}", "1", "2^{\\frac12}", "2"]
+      - {do: caption, at: s2, text: "보기가 모두 2의 거듭제곱 → 답도 2의 거듭제곱으로 정리하면 된다"}
+
+  - id: unify_base
+    narration: >
+      밑이 2와 4로 서로 다릅니다.
+      지수법칙은 밑이 같을 때만 쓸 수 있으니, 먼저 4를 2의 제곱으로 바꿔서 밑을 2로 통일합니다.
+      4의 마이너스 2분의 1제곱이, 2의 제곱의 마이너스 2분의 1제곱이 되었습니다.
+    actions:
+      - {do: goto, section: sol, run_time: 1.6}
+      - do: derive
+        id: d
+        steps:
+          - {parts: ["2^{\\frac32}", "\\times", "4^{-\\frac12}"]}
+          - at: s2
+            parts: ["=", "2^{\\frac32}", "\\times", "\\left(2^{2}\\right)^{-\\frac12}"]
+            why: "$4=2^{2}$ 으로 밑을 통일"
+
+  - id: power_of_power
+    narration: >
+      괄호가 있는 거듭제곱은, a의 m제곱의 n제곱은 a의 m 곱하기 n제곱, 이 법칙으로 지수끼리 곱합니다.
+      2 곱하기 마이너스 2분의 1은 마이너스 1. 그래서 2의 마이너스 1제곱이 됩니다.
+    actions:
+      - do: step
+        of: d
+        parts: ["=", "2^{\\frac32}", "\\times", "2^{2\\times\\left(-\\frac12\\right)}"]
+        why: "$(a^{m})^{n}=a^{mn}$"
+      - do: step
+        of: d
+        at: s2
+        parts: ["=", "2^{\\frac32}", "\\times", "2^{-1}"]
+        why: "$2\\times\\left(-\\tfrac12\\right)=-1$"
+
+  - id: add_exponents
+    narration: >
+      이제 밑이 모두 2입니다. 밑이 같은 거듭제곱의 곱은 지수를 더합니다.
+      2분의 3 빼기 1은 2분의 1. 따라서 답은 2의 2분의 1제곱입니다.
+    actions:
+      - do: step
+        of: d
+        parts: ["=", "2^{\\frac32+(-1)}"]
+        why: "$a^{m}\\times a^{n}=a^{m+n}$"
+      - do: step
+        of: d
+        at: s2
+        parts: ["=", "2^{\\frac12}"]
+        why: "$\\tfrac32-1=\\tfrac12$"
+        box: true
+        pulse: true
+
+  - id: check
+    narration: >
+      2의 2분의 1제곱은 루트 2, 약 1.41입니다.
+      1과 2 사이의 값이니 크기도 자연스럽죠.
+      자주 하는 실수 하나. 4의 마이너스 2분의 1제곱을 마이너스 2로 계산하면 안 됩니다. 음의 지수는 역수, 분수 지수는 거듭제곱근이라는 뜻입니다.
+    actions:
+      - {do: goto, section: wrap, run_time: 1.6}
+      - do: derive
+        id: chk
+        steps:
+          - {parts: ["2^{\\frac12}", "=", "\\sqrt{2}", "\\approx", "1.41"]}
+      - {do: write, at: s2, ko: true, tex: "$1<\\sqrt2<2$ — 크기 확인 완료", color: ok}
+      - {do: space, dy: 0.25}
+      - do: derive
+        at: s3
+        id: warn
+        steps:
+          - {parts: ["4^{-\\frac12}", "=", "\\dfrac{1}{4^{\\frac12}}", "=", "\\dfrac{1}{\\sqrt4}", "=", "\\dfrac12"], color: warn}
+      - {do: caption, text: "음의 지수 = 역수,  분수 지수 = 거듭제곱근 (−2가 아니다!)"}
+
+  - id: answer
+    narration: >
+      따라서 정답은 4번, 2의 2분의 1제곱입니다.
+      정리하면, 밑을 통일하고, 거듭제곱의 거듭제곱은 지수를 곱하고, 같은 밑의 곱은 지수를 더한다.
+      이 세 단계가 지수 계산의 기본 순서입니다.
+    actions:
+      - {do: answer, choice: 4, tex: "2^{\\frac12}", caption_text: "정답 ④"}

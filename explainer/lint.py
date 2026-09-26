@@ -44,6 +44,20 @@ def iter_tex_strings(project: Project):
                 for it in p.get("items", []):
                     if it.get("label"):
                         yield seg.id, act.do, "items.label", it["label"], "math"
+            if act.do == "problem":
+                for c in p.get("choices") or []:
+                    yield seg.id, act.do, "choices", str(c), "math"
+            # 식 전개: 조각들을 한 줄로 이어 붙인 식 + (∵ 이유) 주석
+            steps = p.get("steps") or [] if act.do == "derive" else ([p] if act.do == "step" else [])
+            for st in steps:
+                parts = st.get("parts")
+                if parts is None and st.get("tex"):
+                    parts = [st["tex"]]
+                if parts:
+                    yield seg.id, act.do, "parts", " ".join(str(x) for x in parts), "math"
+                if st.get("why"):
+                    why = str(st["why"]).strip()
+                    yield seg.id, act.do, "why", why if why.startswith("(") else rf"($\because$ {why})", "ko"
 
 
 def lint_tex(project: Project, media_dir: str | Path = "output/_cache/lint", log=print) -> list[str]:
