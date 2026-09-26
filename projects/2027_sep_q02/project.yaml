@@ -27,7 +27,8 @@ layout:
       - {id: title, layout: full}
       - {id: problem, title: "문제", layout: full}
       - {id: meaning, title: "풀이 1 · 이 극한은 무엇인가", layout: split, graph_width: 6.6}
-      - {id: compute, title: "풀이 2 · f'(x)를 구해 x = 2 대입", layout: full}
+      - {id: compute, title: "풀이 2 · f'(x) 구하기", layout: full}
+      - {id: substitute, title: "풀이 3 · x = 2 대입", layout: full}
 
 segments:
   - id: intro
@@ -65,9 +66,10 @@ segments:
       - {do: plot, id: f, expr: "2*x**3-x-4", color: q1, label: "y=f(x)", label_at: 2.45, label_dir: LEFT, label_scale: 0.7, x_range: [-0.6, 2.46], run_time: 1.2}
       - do: derive
         id: m
-        scale: 0.95
+        scale: 0.85
         steps:
-          - {parts: ["\\dfrac{f(x)-f(2)}{x-2}"], why: "평균변화율"}
+          - {parts: ["\\dfrac{f(x)-f(2)}{x-2}"]}
+      - {do: caption, text: "분자: y의 변화량,  분모: x의 변화량  → 평균변화율 = 할선의 기울기"}
       - do: custom
         at: s2
         fn: secant_to_tangent
@@ -113,23 +115,29 @@ segments:
     narration: >
       이제 x에 2를 대입합니다. 6 곱하기 2의 제곱 빼기 1.
       2의 제곱은 4, 6 곱하기 4는 24, 24 빼기 1은 23.
-      따라서 f prime of 2는 23입니다.
+      따라서 f prime of 2는 23입니다. 처음의 극한값이 바로 이 23입니다.
     actions:
+      - {do: goto, section: substitute, run_time: 1.5}
+      - do: derive
+        id: e
+        steps:
+          - {parts: ["f'(x)", "=", "6", "x^{2}", "-", "1"]}
       - do: step
-        of: d
+        of: e
         parts: ["f'(2)", "=", "6", "\\cdot", "2^{2}", "-", "1"]
         from: {"f'(2)": "f'(x)", "2^{2}": "x^{2}"}
         why: "$x=2$ 대입"
-        space: 0.15
       - do: step
-        of: d
+        of: e
         at: s2
         parts: ["=", "6", "\\cdot", "4", "-", "1"]
+        run_time: 1.6
       - do: step
-        of: d
+        of: e
         parts: ["=", "24", "-", "1"]
+        run_time: 1.6
       - do: step
-        of: d
+        of: e
         at: s3
         parts: ["=", "23"]
         box: true
@@ -141,5 +149,5 @@ segments:
       정리하면, x가 a로 갈 때 f of x 빼기 f of a, 나누기, x 빼기 a의 꼴은 항상 f prime of a로 읽는다.
       정의를 알아보는 눈이 계산보다 먼저입니다.
     actions:
-      - {do: answer, choice: 3, tex: "f'(2)=23", caption_text: "정답 ③"}
-      - {do: caption, at: s2, text: "lim (f(x) − f(a)) / (x − a)  =  f'(a)  — 미분계수의 정의", position: top}
+      - {do: answer, choice: 3}
+      - {do: caption, at: s2, text: "lim (f(x) − f(a)) / (x − a)  =  f'(a)  — 미분계수의 정의"}

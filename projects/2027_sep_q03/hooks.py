@@ -35,6 +35,7 @@ def term_line(scene, n: int = 10, known: dict | None = None, id: str = "terms", 
             v = known.get(k, known.get(str(k)))
             vm = scene.mtex(str(v), scale=0.8, plain=True, color=known_color).next_to(lab, DOWN, buff=0.12)
             vm.set_color(kcol)
+            vm._term_index = k
             values.add(vm)
     g = VGroup(base, dots, labels, values)
     # 호(hop)가 들어갈 자리를 위에 남겨 둔다
@@ -45,6 +46,7 @@ def term_line(scene, n: int = 10, known: dict | None = None, id: str = "terms", 
     scene._term_pts = [np.array([base.get_left()[0] + 0.3 + x, base.get_center()[1], 0.0]) for x in xs]
     scene._term_dots = dots
     scene._term_labels = labels
+    scene._term_values = values
     scene.play(Create(base), run_time=0.5)
     scene.play(FadeIn(dots, lag_ratio=0.08), Write(labels, lag_ratio=0.08), run_time=1.2)
     if len(values):
@@ -71,8 +73,26 @@ def term_hops(scene, start: int, end: int, label: str = "+d", color: str | None 
         scene._term_dots[k - 1].set_color(col)
     if total:
         a, b = pts[start - 1] + UP * (0.12 + arc_height + 0.25), pts[end - 1] + UP * (0.12 + arc_height + 0.25)
-        big = ArcBetweenPoints(a, b, angle=-PI * 0.3, color=tcol, stroke_width=3.2).set_z_index(6)
+        chord = float(np.linalg.norm(b - a))
+        big = ArcBetweenPoints(a, b, angle=-min(PI * 0.3, 3.6 / max(chord, 1e-6)), color=tcol, stroke_width=3.2).set_z_index(6)
         tl = scene.mtex(total, scale=0.8, plain=True).set_color(tcol).next_to(big, UP, buff=0.08)
         scene.register(f"{id}_total", VGroup(big, tl))
         scene.play(Create(big), run_time=0.6)
         scene.play(handwrite(tl, run_time=0.6))
+
+
+def term_value(scene, index: int, value: str, color: str | None = None, run_time: float = 0.8, **_):
+    """항 아래의 값(예: '?')을 새 값으로 바꾼다 — 구한 답을 그림에 되돌려 놓는다."""
+    from manim import ReplacementTransform, Circumscribe
+    col = scene.color(color, scene.theme.highlight)
+    old = next((v for v in scene._term_values if getattr(v, "_term_index", None) == index), None)
+    new = scene.mtex(str(value), scale=0.8, plain=True).set_color(col)
+    if old is not None:
+        new.move_to(old)
+        scene.play(ReplacementTransform(old, new), run_time=run_time)
+        scene._term_values.remove(old)
+    else:
+        new.next_to(scene._term_labels[index - 1], DOWN, buff=0.12)
+        scene.play(handwrite(new, run_time=run_time))
+    scene._term_values.add(new)
+    scene.play(Circumscribe(new, color=col, buff=0.1), run_time=0.7)

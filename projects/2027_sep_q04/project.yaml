@@ -69,21 +69,26 @@ segments:
       - {do: goto, section: picture, run_time: 1.6}
       - {do: axes, run_time: 0.9, equal_aspect: false}
       - do: custom
+        at: s2
         fn: piecewise_gap
         left_expr: "7*x+a"
         right_expr: "x**2+a*x"
         split: 2
         param: a
-        values: [4, 4, 10]
+        values: [4]
         left_color: q1
         right_color: exp
         left_label: "y=7x+a"
         right_label: "y=x^{2}+ax"
         readout: "a ="
+        readout_at: [0.9, 42]
+        left_label_at: 0.9
+        right_label_at: 2.6
         run_time: 5.0
         pause: 0.5
-        stop_captions: ["a = 4 : 왼쪽 끝점 18, 오른쪽 12 → 틈이 있다 (불연속)", "", "a = 10 : 24 = 24 → 틈이 닫힌다 (연속)"]
-      - {do: write, at: s4, ko: true, tex: "$x=2$에서 (왼쪽 끝) $=$ (오른쪽 끝) 이어야 연속", color: ok, scale: 0.9}
+        stop_captions: ["a = 4 : 왼쪽 끝점 18, 오른쪽 12 → 틈이 있다 (불연속)"]
+      - {do: custom, at: s5, fn: piecewise_sweep, values: [10], run_time: 4.5, caption: "a = 10 : 24 = 24 → 틈이 닫힌다 (연속)"}
+      - {do: write, at: s6, ko: true, tex: "$x=2$에서 (왼쪽 끝) $=$ (오른쪽 끝) 이어야 연속", color: ok, scale: 0.9}
 
   - id: limits
     narration: >
@@ -114,10 +119,10 @@ segments:
         id: s
         steps:
           - {parts: ["14", "+", "a", "=", "4", "+", "2a"], why: "(좌극한) $=$ (우극한) $=f(2)$"}
-          - at: s2
+          - at: s3
             parts: ["14", "-", "4", "=", "2a", "-", "a"]
             why: "이항 — 부호가 바뀐다"
-          - at: s3
+          - at: s5
             parts: ["10", "=", "a"]
             from: {"10": ["14", "4"], "a": ["2a", "a"]}
           - {parts: ["a", "=", "10"], box: true, pulse: true}
@@ -127,5 +132,5 @@ segments:
       정답은 2번, a는 10입니다.
       정리하면, 구간이 나뉜 함수의 연속은 경계 한 점에서, 좌극한, 우극한, 함숫값이 모두 같다는 조건 하나로 결정됩니다.
     actions:
-      - {do: answer, choice: 2, tex: "a=10", caption_text: "정답 ②"}
-      - {do: caption, at: s2, text: "경계 x = 2 에서:  좌극한 = 우극한 = f(2)", position: top}
+      - {do: answer, choice: 2}
+      - {do: caption, at: s2, text: "경계 x = 2 에서:  좌극한 = 우극한 = f(2)"}

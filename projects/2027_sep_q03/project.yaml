@@ -77,6 +77,7 @@ segments:
       이제 a 7을 구합니다. 알고 있는 항은 a 2가 2라는 것.
       a 2에서 a 7까지는 다섯 칸, 공차를 다섯 번 더하면 됩니다.
       a 7은 a 2 더하기 5d. 2 더하기 5 곱하기 3은 2 더하기 15, 17입니다.
+      2에서 출발해 3을 다섯 번 더하면 17, 표에서도 그대로 확인됩니다.
     actions:
       - {do: goto, section: sol2, run_time: 1.6}
       - {do: custom, fn: term_line, n: 10, known: {2: "2", 7: "?"}, id: terms2, height: 2.0}
@@ -89,8 +90,9 @@ segments:
           - parts: ["=", "2", "+", "5\\cdot3"]
             from: {"2": "a_{2}", "5\\cdot3": "5d"}
             why: "$a_{2}=2,\\ d=3$ 대입"
-          - {parts: ["=", "2", "+", "15"]}
-          - {parts: ["=", "17"], box: true, pulse: true}
+          - {parts: ["=", "2", "+", "15"], run_time: 1.6}
+          - {parts: ["=", "17"], box: true, pulse: true, run_time: 1.6}
+      - {do: custom, at: s4, fn: term_value, index: 7, value: "17"}
 
   - id: answer
     narration: >
@@ -98,5 +100,5 @@ segments:
       등차수열에서 a m과 a n의 차는, 항 번호의 차 곱하기 공차. a n은 a m 더하기 n 빼기 m 곱하기 d.
       첫째항을 굳이 구하지 않아도 되는 이유가 여기에 있습니다.
     actions:
-      - {do: answer, choice: 2, tex: "a_7=17", caption_text: "정답 ②"}
-      - {do: caption, at: s2, text: "a_n = a_m + (n − m)d  — 번호 차이 = 공차를 더한 횟수", position: top}
+      - {do: answer, choice: 2}
+      - {do: caption, at: s2, text: "a_n = a_m + (n − m)d  — 번호 차이 = 공차를 더한 횟수"}

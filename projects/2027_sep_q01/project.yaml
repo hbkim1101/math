@@ -120,4 +120,5 @@ segments:
       정리하면, 밑을 통일하고, 거듭제곱의 거듭제곱은 지수를 곱하고, 같은 밑의 곱은 지수를 더한다.
       이 세 단계가 지수 계산의 기본 순서입니다.
     actions:
-      - {do: answer, choice: 4, tex: "2^{\\frac12}", caption_text: "정답 ④"}
+      - {do: answer, choice: 4}
+      - {do: caption, at: s2, text: "① 밑을 통일  ② 거듭제곱의 거듭제곱은 지수를 곱한다  ③ 같은 밑의 곱은 지수를 더한다"}

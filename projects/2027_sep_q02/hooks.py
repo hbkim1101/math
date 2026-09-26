@@ -33,9 +33,23 @@ def secant_to_tangent(scene, func: str, x0, x_from, x_to, color: str | None = No
             return (f(x0 + h) - f(x0 - h)) / (2 * h)
         return (f(x) - f(x0)) / (x - x0)
 
+    yr_lo, yr_hi = scene.axes_ranges[1][0], scene.axes_ranges[1][1]
+
+    def clipped(m, xa, xb):
+        """기울기 m 으로 P 를 지나는 직선의 [xa, xb] 구간을 y 범위 안으로 잘라낸다."""
+        y0 = f(x0)
+        for lim in (yr_lo, yr_hi):
+            if abs(m) > 1e-9:
+                xc = x0 + (lim - y0) / m
+                if xa < xc < x0:
+                    xa = xc
+                if x0 < xc < xb:
+                    xb = xc
+        return xa, xb
+
     def make_secant():
         m = slope()
-        xa, xb = x0 - span * 0.55, x0 + span
+        xa, xb = clipped(m, x0 - span * 0.55, x0 + span)
         return Line(scene.c2p(xa, f(x0) + m * (xa - x0)), scene.c2p(xb, f(x0) + m * (xb - x0)),
                     color=col, stroke_width=stroke_width).set_z_index(6)
 
@@ -77,7 +91,7 @@ def secant_to_tangent(scene, func: str, x0, x_from, x_to, color: str | None = No
     # 마지막: 접선으로 굳히고 기울기를 f'(x0) 값으로 표시
     h = 1e-5
     m_t = (f(x0 + h) - f(x0 - h)) / (2 * h)
-    xa, xb = x0 - span * 0.8, x0 + span
+    xa, xb = clipped(m_t, x0 - span * 0.8, x0 + span)
     tangent = Line(scene.c2p(xa, f(x0) + m_t * (xa - x0)), scene.c2p(xb, f(x0) + m_t * (xb - x0)),
                    color=tcol, stroke_width=stroke_width + 0.6).set_z_index(7)
     scene.play(FadeOut(guides), FadeOut(Q), FadeOut(lq), secant.animate.set_color(tcol), run_time=0.5)
