@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -11,6 +12,18 @@ import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
+
+# ANSI 색/스타일(CSI), 터미널 하이퍼링크(OSC 8), 그 밖의 OSC 시퀀스
+_ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\]8;[^\x1b\x07]*(?:\x1b\\|\x07)|\x1b\][^\x1b\x07]*(?:\x1b\\|\x07)")
+_NOISE = ("libncursesw",)
+
+
+def clean_log(text: str) -> str:
+    """manim(rich)·ffmpeg 가 찍는 ANSI 장식과 알려진 잡음 줄을 걷어낸 사람이 읽을 로그."""
+    text = _ANSI_RE.sub("", text)
+    lines = [ln.rstrip() for ln in text.splitlines() if not any(n in ln for n in _NOISE)]
+    lines = [ln for ln in lines if ln.strip()]
+    return "\n".join(lines) + ("\n" if lines else "")
 
 
 @dataclass
@@ -100,10 +113,8 @@ class JobManager:
         with open(job.log_path, "rb") as f:
             f.seek(offset)
             data = f.read()
-        text = data.decode("utf-8", errors="replace")
-        # manim/ffmpeg 가 찍는 장식 문자·경고 잡음 제거
-        lines = [ln for ln in text.splitlines() if "libncursesw" not in ln]
-        return "\n".join(lines) + ("\n" if lines else ""), offset + len(data)
+        text = clean_log(data.decode("utf-8", errors="replace"))
+        return text, offset + len(data)
 
     def list(self, project_id: str | None = None) -> list[dict[str, Any]]:
         out = [j.to_json() for j in self.jobs.values() if project_id is None or j.project_id == project_id]

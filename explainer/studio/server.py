@@ -132,7 +132,7 @@ def create_app(root: str | Path = ".") -> FastAPI:
                 errors.append({"where": f"segments[{si}]", "msg": "세그먼트는 매핑이어야 합니다"})
                 continue
             sid = seg.get("id", "?")
-            n_sent = len(_split_sentences(str(seg.get("narration") or "")))
+            n_sent = len(_sentences_for(doc, seg, output_dir)["sentences"])
             acts = seg.get("actions") or []
             for ai, act in enumerate(acts):
                 if not isinstance(act, dict) or "do" not in act:
@@ -235,8 +235,25 @@ def create_app(root: str | Path = ".") -> FastAPI:
         if hp.exists():
             hooks = re.findall(r"^def\s+([a-zA-Z_]\w*)\s*\(", hp.read_text(encoding="utf-8"), flags=re.M)
             hooks = [h for h in hooks if not h.startswith("_")]
+        sentences = {}
+        if isinstance(doc, dict):
+            for seg in doc.get("segments") or []:
+                if isinstance(seg, dict) and seg.get("id"):
+                    sentences[str(seg["id"])] = _sentences_for(doc, seg, output_dir)
         return {"id": pid, "yaml": text, "doc": doc, "parse_error": parse_error, "hooks": hooks,
+                "sentences": sentences,
                 "outputs": outputs_for(pid), "job": (jobs.running_for(pid) or _NoJob()).to_json()}
+
+    @app.post("/api/projects/{pid}/sentences")
+    def sentences(pid: str, body: DocBody):
+        """편집 중인 문서의 세그먼트별 문장 경계 (TTS 캐시가 있으면 실제 경계·시각, 없으면 추정)."""
+        project_yaml(pid)
+        doc = body.doc
+        out = {}
+        for seg in doc.get("segments") or []:
+            if isinstance(seg, dict) and seg.get("id"):
+                out[str(seg["id"])] = _sentences_for(doc, seg, output_dir)
+        return out
 
     @app.put("/api/projects/{pid}")
     def save_project(pid: str, body: SaveBody):
@@ -248,7 +265,9 @@ def create_app(root: str | Path = ".") -> FastAPI:
         result = check_doc(doc, tex=False, source=p)
         snapshot(p)
         p.write_text(text, encoding="utf-8")
-        return {"saved": True, "yaml": text, "doc": doc, "check": result}
+        sentences = {str(seg["id"]): _sentences_for(doc, seg, output_dir)
+                     for seg in (doc.get("segments") or []) if isinstance(seg, dict) and seg.get("id")}
+        return {"saved": True, "yaml": text, "doc": doc, "check": result, "sentences": sentences}
 
     @app.post("/api/projects/{pid}/validate")
     def validate_project(pid: str, body: ValidateBody):
@@ -380,6 +399,28 @@ class _NoJob:
 def _split_sentences(text: str) -> list[str]:
     from ..narration.tts import split_sentences
     return split_sentences(text) if text else []
+
+
+def _sentences_for(doc: dict[str, Any], seg: dict[str, Any], output_dir: Path) -> dict[str, Any]:
+    """세그먼트의 문장 목록. TTS 캐시에 같은 내레이션이 있으면 엔진이 실제로 끊어 읽은 경계와 시각(exact=True)을,
+    없으면 문장부호 기준 추정(exact=False)을 돌려준다. `at: sN` 은 실제 경계를 기준으로 하므로 이 구분이 중요하다."""
+    from ..narration.tts import cached_clip
+    text = str(seg.get("narration") or "")
+    meta = doc.get("meta") if isinstance(doc.get("meta"), dict) else {}
+    clip = None
+    if text.strip():
+        try:
+            clip = cached_clip(text, voice=str(seg.get("voice") or meta.get("voice") or "ko-KR-InJoonNeural"),
+                               rate=str(seg.get("rate") or meta.get("rate") or "+0%"),
+                               pitch=str(meta.get("pitch") or "+0Hz"), cache_dir=output_dir / "_cache" / "tts")
+        except Exception:  # noqa: BLE001
+            clip = None
+    if clip is not None:
+        return {"exact": True, "duration": round(clip.duration, 2),
+                "sentences": [{"i": i, "text": s.text, "start": round(s.start, 2), "end": round(s.end, 2)}
+                              for i, s in enumerate(clip.sentences, 1)]}
+    return {"exact": False, "duration": None,
+            "sentences": [{"i": i, "text": t} for i, t in enumerate(_split_sentences(text), 1)]}
 
 
 def _media_url(path: str, output_dir: Path) -> str | None:

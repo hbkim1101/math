@@ -20,6 +20,7 @@
     projects: [], pid: null, doc: null, yamlText: "", yamlDirty: false, dirty: false,
     catalog: [], catalogByName: {}, hooks: [], sel: 0, outputs: null, job: null, logOffset: 0,
     timing: null, pollTimer: null, rawOpen: new Set(),
+    sentences: {},            // seg id → {exact, sentences:[{i,text,start?}], narr}  (서버: TTS 캐시 기준 실제 문장 경계)
   };
 
   // ------------------------------------------------------------------ API
@@ -58,6 +59,20 @@
     return s;
   }
   const splitSentences = (text) => (text || "").trim().split(/(?<=[.?!…])\s+/).filter(Boolean);
+  const normNarr = (t) => (t || "").split(/\s+/).filter(Boolean).join(" ");
+  // 세그먼트의 문장 목록: 같은 내레이션이 TTS 캐시에 있으면 엔진이 실제로 끊어 읽은 경계(exact), 아니면 문장부호 추정
+  function sentencesFor(seg) {
+    const info = state.sentences[seg.id];
+    if (info && info.exact && info.narr === normNarr(seg.narration)) return { exact: true, list: info.sentences };
+    return { exact: false, list: splitSentences(seg.narration).map((t, i) => ({ i: i + 1, text: t })) };
+  }
+  function setSentences(map, doc) {
+    const byId = {};
+    for (const sg of (doc || state.doc || {}).segments || []) byId[sg.id] = sg;
+    for (const [id, info] of Object.entries(map || {})) {
+      state.sentences[id] = { exact: !!info.exact, sentences: info.sentences || [], narr: normNarr((byId[id] || {}).narration) };
+    }
+  }
   const PART_SEP = " | ";
   const joinParts = (parts) => (parts || []).join(PART_SEP);
   const splitParts = (s) => s.split(/\s*\|\s*/).map((x) => x.trim()).filter((x) => x.length);
@@ -78,7 +93,7 @@
     const data = await api(`/api/projects/${pid}`);
     state.pid = pid; state.doc = data.doc; state.yamlText = data.yaml; state.yamlDirty = false;
     state.hooks = data.hooks || []; state.outputs = data.outputs; state.sel = 0; state.timing = null;
-    state.rawOpen.clear();
+    state.rawOpen.clear(); state.sentences = {}; setSentences(data.sentences, data.doc);
     setDirty(false);
     if (data.parse_error) toast("YAML 파싱 오류: " + data.parse_error + " — YAML 탭에서 고치세요", "bad");
     if (!state.doc) { state.doc = { meta: { id: pid, title: pid }, segments: [] }; }
@@ -155,7 +170,11 @@
     const sentBox = el("div", { class: "sentences" });
     const renderSent = (timed) => {
       sentBox.innerHTML = "";
-      const sents = timed || splitSentences(ta.value).map((t, i) => ({ i: i + 1, text: t }));
+      const info = timed ? { exact: true, list: timed } : sentencesFor(seg);
+      const sents = info.list;
+      sentBox.append(el("span", { class: "s-mode " + (info.exact ? "exact" : "guess"),
+        title: info.exact ? "TTS 엔진이 실제로 끊어 읽은 문장 경계입니다 (at: sN 의 기준)" : "문장부호로 추정한 경계입니다. 숫자 뒤의 '.' 등은 TTS 가 다르게 끊을 수 있으니 ▶ 듣기로 확인하세요" },
+        info.exact ? "실제 경계" : "추정"));
       for (const s of sents) {
         sentBox.append(el("span", { class: "s", title: "클릭하면 at 값(sN)을 복사", onclick: () => { navigator.clipboard?.writeText("s" + s.i); toast(`s${s.i} 복사됨`); } },
           el("b", {}, "s" + s.i), s.text.length > 46 ? s.text.slice(0, 46) + "…" : s.text,
@@ -168,7 +187,10 @@
       btnTts.disabled = true; btnTts.textContent = "합성 중…";
       try {
         const r = await api("/api/tts", { method: "POST", body: { text: ta.value, voice: seg.voice || state.doc.meta.voice || "ko-KR-InJoonNeural", rate: seg.rate || state.doc.meta.rate || "+0%" } });
+        state.sentences[seg.id] = { exact: true, sentences: r.sentences, narr: normNarr(ta.value) };
         renderSent(r.sentences); audio.src = r.audio_url; audio.classList.remove("hidden"); audio.play().catch(() => {});
+        const n = sentencesFor(seg).list.length;
+        $$("#segEditor .card").forEach((c, idx) => { const a = seg.actions[idx] || {}; c.classList.toggle("at-warn", typeof a.at === "string" && /^s\d+$/.test(a.at) && Number(a.at.slice(1)) > Math.max(1, n)); });
         toast(`내레이션 ${r.duration.toFixed(1)}초, ${r.sentences.length}문장`);
       } catch (e) { toast(e.message, "bad"); }
       btnTts.disabled = false; btnTts.textContent = "▶ 듣기 · 문장 타이밍";
@@ -219,7 +241,7 @@
   function actionCard(seg, act, i) {
     const spec = state.catalogByName[act.do];
     const card = el("div", { class: "card" });
-    const nSent = splitSentences(seg.narration).length;
+    const nSent = sentencesFor(seg).list.length;
     if (typeof act.at === "string" && /^s\d+$/.test(act.at) && Number(act.at.slice(1)) > Math.max(1, nSent)) card.classList.add("at-warn");
 
     const doSel = el("select", { class: "do" });
@@ -434,6 +456,7 @@
       const body = state.yamlDirty ? { yaml: $("#yamlText").value } : { doc: state.doc };
       const r = await api(`/api/projects/${state.pid}`, { method: "PUT", body });
       state.yamlText = r.yaml; state.doc = r.doc; state.yamlDirty = false; setDirty(false);
+      if (r.sentences) setSentences(r.sentences, r.doc);
       showCheck(r.check);
       toast(r.check.ok ? "저장됨" : `저장됨 — 오류 ${r.check.errors.length}개 (검사 결과 탭)`, r.check.ok ? "ok" : "bad");
       if (!r.check.ok) switchTab("check");

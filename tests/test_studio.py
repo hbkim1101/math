@@ -198,3 +198,51 @@ def test_pipeline_partial_build_filters_segments(tmp_path, monkeypatch):
     with pytest.raises(ValueError):
         pl.build(ROOT / "projects/2027_sep_q03/project.yaml", out_root=tmp_path, preview=True, verify=False,
                  segments=["nope"], log=lambda *_: None)
+
+
+def test_sentences_use_tts_cache_when_available(studio):
+    """숫자 뒤의 '.' 처럼 추정 분리와 TTS 실제 경계가 다를 때, 캐시가 있으면 실제 경계(exact)를 돌려준다."""
+    from explainer.narration.tts import NarrationClip, Sentence, _cache_key
+
+    client, root = studio
+    d = client.get("/api/projects/2027_sep_q03").json()
+    seg = d["doc"]["segments"][0]
+    assert d["sentences"][seg["id"]]["exact"] is False           # 아직 합성한 적 없음 → 추정
+
+    # 캐시에 '엔진이 실제로 끊어 읽은' 경계를 심는다 (문장 2개짜리로)
+    text = " ".join(str(seg["narration"]).split())
+    voice, rate = d["doc"]["meta"]["voice"], d["doc"]["meta"].get("rate", "+0%")
+    cache = root / "output" / "_cache" / "tts"
+    cache.mkdir(parents=True)
+    key = _cache_key(text, voice, rate, "+0Hz")
+    (cache / f"{key}.mp3").write_bytes(b"\0" * 2000)
+    clip = NarrationClip(text=text, audio_path=str(cache / f"{key}.mp3"), duration=9.0,
+                         sentences=[Sentence("앞부분.", 0.0, 4.0), Sentence("뒷부분.", 4.0, 9.0)])
+    (cache / f"{key}.json").write_text(json.dumps(clip.to_json(), ensure_ascii=False), encoding="utf-8")
+
+    d2 = client.get("/api/projects/2027_sep_q03").json()
+    info = d2["sentences"][seg["id"]]
+    assert info["exact"] is True and [s["i"] for s in info["sentences"]] == [1, 2]
+    assert info["sentences"][1]["start"] == 4.0
+
+    # 검사도 실제 경계를 기준으로 경고한다: s3 은 문장 2개를 넘는다
+    doc = json.loads(json.dumps(d2["doc"]))
+    doc["segments"][0]["actions"].append({"do": "caption", "at": "s3", "text": "x"})
+    r = client.post("/api/projects/2027_sep_q03/validate", json={"doc": doc}).json()
+    assert any("문장은 2개" in w["msg"] for w in r["warnings"])
+
+    # 편집 중 문서에 대한 조회
+    r2 = client.post("/api/projects/2027_sep_q03/sentences", json={"doc": doc}).json()
+    assert r2[seg["id"]]["exact"] is True
+
+
+def test_clean_log_strips_ansi_and_noise():
+    from explainer.studio.jobs import clean_log
+
+    raw = ("\x1b[2m[07:22:17]\x1b[0m WARNING  Some options \x1b]8;id=1;file:///x/scene_file_writer.py\x1b\\scene_file_writer.py\x1b]8;;\x1b\\:1018\n"
+           "ffmpeg: /lib/libncursesw.so.6: no version information available\n"
+           "\n"
+           "  [render] output/x.mp4  (52.9 MB)\n")
+    out = clean_log(raw)
+    assert "\x1b" not in out and "libncursesw" not in out
+    assert out.splitlines() == ["[07:22:17] WARNING  Some options scene_file_writer.py:1018", "  [render] output/x.mp4  (52.9 MB)"]

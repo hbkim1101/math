@@ -143,6 +143,23 @@ def _sentences_from_words(text: str, words: list[dict], total: float) -> list[Se
     return result
 
 
+def cached_clip(text: str, voice: str, rate: str = "+0%", pitch: str = "+0Hz",
+                cache_dir: str | Path = "cache/tts") -> Optional[NarrationClip]:
+    """이미 합성된 적이 있으면 캐시의 NarrationClip 을, 없으면 None (네트워크를 쓰지 않는다)."""
+    text = " ".join(text.split())
+    if not text:
+        return None
+    cache_dir = Path(cache_dir)
+    key = _cache_key(text, voice, rate, pitch)
+    mp3, meta = cache_dir / f"{key}.mp3", cache_dir / f"{key}.json"
+    if not (mp3.exists() and meta.exists()):
+        return None
+    try:
+        return NarrationClip.from_json(json.loads(meta.read_text(encoding="utf-8")))
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def synthesize_segment(
     text: str,
     voice: str,
@@ -161,11 +178,10 @@ def synthesize_segment(
     mp3 = cache_dir / f"{key}.mp3"
     meta = cache_dir / f"{key}.json"
 
-    if mp3.exists() and meta.exists() and not force:
-        try:
-            return NarrationClip.from_json(json.loads(meta.read_text(encoding="utf-8")))
-        except Exception:
-            pass
+    if not force:
+        hit = cached_clip(text, voice, rate, pitch, cache_dir)
+        if hit is not None:
+            return hit
 
     marks = asyncio.run(_synthesize_async(text, voice, rate, pitch, mp3))
     if not mp3.exists() or mp3.stat().st_size < 1000:
