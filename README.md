@@ -6,9 +6,13 @@ YAML 시나리오 한 장으로 **3Blue1Brown / 수학도장 스타일의 해설
 YAML 시나리오 ──▶ TTS(문장 타이밍) ──▶ Manim 렌더(내레이션과 동기화) ──▶ ffmpeg 합성(자막·라우드니스) ──▶ 자동 검증 리포트
 ```
 
-데모 (2027학년도 9월 모의평가, 2026.9 시행, 수학 공통):
-- `projects/2027_sep_q22/` — 22번: 지수·로그함수와 직사각형 ABCD (정답 97) — 패널 스타일
-- `projects/2027_sep_q21/` — 21번: 절댓값 함수의 미분가능성, 뾰족점의 상쇄 (정답 12) — **칠판 강의 스타일** (`project_panel.yaml` 은 패널 스타일 버전)
+데모 (2027학년도 9월 모의평가, 2026.9 시행, 수학 공통) — 모두 **칠판 강의 스타일**:
+- `projects/2027_sep_q01/` — 1번: 지수법칙 (정답 ④ 2^{1/2}) — **식 전개(derive) 데모**: 밑 통일 → 지수 곱 → 지수 합
+- `projects/2027_sep_q02/` — 2번: 미분계수의 정의 (정답 ③ 23) — 할선→접선 애니메이션 + 항별 미분 + 대입
+- `projects/2027_sep_q03/` — 3번: 등차수열 (정답 ② 17) — 항 번호 줄에서 공차를 '몇 번' 더하는지 세는 애니메이션
+- `projects/2027_sep_q04/` — 4번: 함수의 연속 (정답 ② 10) — a 를 움직여 틈이 닫히는 순간 + **이항 애니메이션**
+- `projects/2027_sep_q21/` — 21번: 절댓값 함수의 미분가능성, 뾰족점의 상쇄 (정답 12) (`project_panel.yaml` 은 패널 스타일 버전)
+- `projects/2027_sep_q22/` — 22번: 지수·로그함수와 직사각형 ABCD (정답 97) (`project_panel.yaml` 은 패널 스타일 버전)
 
 두 가지 연출 스타일을 지원합니다 (`meta.style`):
 
@@ -77,8 +81,42 @@ segments:
 | 그래프 | `axes`(등축 자동, `equal_aspect: false` 가능), `plot`(y 범위 밖 자동 클리핑, `smooth`), `line`, `vline`, `point`(좌표는 `pos`), `points`, `polygon`, `segment`, `arrow`, `guides`, `label` |
 | 기하 연출 | `translate_copy`(평행이동 복사), `reflect`(직선 대칭이동 + 수선/직각 표시) |
 | 강조 | `highlight`(indicate/flash/circumscribe/pulse), `dim`/`undim`(stroke·fill 원본 비율 유지), `fade`, `answer` |
-| 확장 | `custom` → 프로젝트 폴더의 `hooks.py` 함수 호출 (22번: `sliding_chord`, `ghost_translate` / 21번: `corner_tangents`(좌·우 접선으로 뾰족점 표시), `sweep_param`(매개변수 슬라이더)) |
-| 칠판 전용 | `goto`(섹션으로 카메라 이동 — 도중 살짝 줌아웃, 첫 방문이면 제목 판서), `write`(커서 위치에 손글씨로 한 줄씩; `ko`, `text`, `box`/`underline`, `space`), `camera`(`pos`/`focus`/`ids` 줌인, `sections` 범위 줌아웃, `reset`), `space` |
+| 확장 | `custom` → 프로젝트 폴더의 `hooks.py` 함수 호출 (22번: `sliding_chord`, `ghost_translate` / 21번: `corner_tangents`, `sweep_param` / 2번: `secant_to_tangent`(할선→접선, 기울기 판독) / 3번: `term_line`, `term_hops`, `term_value`(항 번호 줄과 공차 호) / 4번: `piecewise_gap`(a 슬라이더로 틈이 닫히는 순간)) |
+| 칠판 전용 | `goto`(섹션으로 카메라 이동 — 도중 살짝 줌아웃, 첫 방문이면 제목 판서), `write`(커서 위치에 손글씨로 한 줄씩; `ko`, `text`, `box`/`underline`, `space`), `camera`(`pos`/`focus`/`ids` 줌인, `sections` 범위 줌아웃, `reset`), `space`, **`derive` / `step`**(식 전개, 아래) |
+| 5지선다 | `problem` 의 `choices: [...]` 로 ①~⑤ 보기 줄을 쓰고, `answer` 의 `choice: n` 으로 카메라가 문제로 돌아가 보기에 분필 동그라미를 친다 |
+
+### 식 전개 애니메이션 (`derive` / `step`)
+
+학생이 "어느 항이 어디서 왔는지"를 눈으로 따라갈 수 있도록, 식의 각 줄을 **조각(parts)** 으로 쓰고 이전 줄과 조각을 자동으로 짝지어 애니메이션합니다.
+
+```yaml
+- do: derive
+  id: d
+  steps:
+    - {parts: ["2^{\\frac32}", "\\times", "4^{-\\frac12}"]}                          # 첫 줄: 그대로 판서
+    - {parts: ["=", "2^{\\frac32}", "\\times", "\\left(2^{2}\\right)^{-\\frac12}"],  # 같은 줄에 이어 쓰고
+       why: "$4=2^{2}$ 으로 밑을 통일"}                                              # (∵ 이유) 메모
+    - {parts: ["=", "2^{\\frac32}", "\\times", "2^{-1}"], why: "$(a^m)^n=a^{mn}$"}     # 등호를 세로로 맞춰 다음 줄
+    - {parts: ["=", "2^{\\frac12}"], box: true, pulse: true}                           # 결과 상자 + 펄스
+- do: step                                                                        # 나중 세그먼트에서 단계를 더할 때 (내레이션 at 동기화)
+  of: d
+  at: s2
+  parts: ["=", "\\sqrt2"]
+```
+
+| 조각의 운명 | 애니메이션 |
+|---|---|
+| 이전 줄과 **같은 문자열** | 그 자리에서 새 자리로 미끄러져 내려온다 (TransformFromCopy) |
+| 같은 문자열인데 **등호 반대편**으로 갔다 (이항) | 호를 그리며 등호를 건너가고, 새로 생긴 부호(`+`/`-`)는 강조색 |
+| **바뀐 조각** | 이전 줄의 출처가 분필 상자로 강조된 뒤, 그 자리에서 날아와 변형된다 (강조색). 출처가 여럿이면 하나로 합쳐진다 |
+| **완전히 새 조각** | 강조색 손글씨로 쓴다 |
+| `from: {"2^{2}": "x^{2}"}` | 대입처럼 문자열이 다른 조각을 명시적으로 짝짓는다 (한 출처를 여러 자리에 재사용). 값이 목록이면 여러 출처가 한 조각으로 합쳐진다 (`{"10": ["14", "4"]}`) |
+| `focus` / `new` | 자동 매칭을 덮어써 출처/새 조각을 지정 |
+| `cancel: ["a_7", 5]` | 문자열 또는 인덱스로 조각에 취소선 (소거) |
+| `why` | 식 오른쪽의 '이유 칸'에 `(∵ …)` 로 정렬해 적는다 (한글+수식, 자리가 없으면 아래 오른쪽) |
+| `same_line` | `auto`(첫 줄에 `=` 가 없으면 이어 쓰기) / `true` / `false` |
+
+한 단계는 **두 박자**로 움직입니다: (A) 출처에 분필 상자가 그려지고 그대로인 조각이 먼저 미끄러져 내려와 뼈대(`= … × …`)를 만든 뒤, (B) 바뀐 조각이 상자에서 날아와 빈자리에 들어갑니다. 이전 단계의 강조색은 다음 단계에서 기본색으로 돌아가므로 **지금 바뀐 조각만** 색이 있습니다. `= …` 로 이어지는 연쇄 등식에서는 앞줄의 좌변은 출처로 잡지 않습니다. 단계별 `run_time`(기본 2.0)으로 속도를 조절하고, `at: s3` 로 내레이션 문장에 맞춥니다. 매칭 규칙은 순수 함수 `plan_match` 로 분리되어 `tests/test_derive.py` 에서 검사합니다.
 
 ### 칠판 스타일 레이아웃
 
@@ -109,7 +147,7 @@ layout:
 | 스토리보드 | 세그먼트별 대표 프레임 + 내레이션 콘택트 시트 `storyboard.png` (`explainer storyboard out_dir`) |
 | 오디오 | 통합 라우드니스(-16 LUFS 목표), 트루피크(클리핑 없음), 긴 무음 없음 |
 
-수학적 내용은 sympy 로 증명합니다: `tests/test_math_q22.py`(포물선 평행이동 (1,−1), 현 기울기 일차식, 대칭축 y=x−1/4 에 대한 A↔D·B↔C 대칭, 직선 y=x+3/4 와의 교점, a³=81/16, p+q=97), `tests/test_math_q21.py`(f'(s)=(s−r)², g 의 뾰족점은 s 하나·기울기 변화 −8(s−r)², |w| 의 뾰족점 +2|w'(t)|, a∈{1,2,3}, 각 경우의 f(0), h 의 미분가능성, 최댓값×최솟값 = 12).
+수학적 내용은 sympy 로 증명합니다: `tests/test_math_q01_q04.py`(1~4번의 모든 전개 단계가 서로 같은 값인지, 이항·대입 단계, 보기 번호), `tests/test_math_q22.py`(포물선 평행이동 (1,−1), 현 기울기 일차식, 대칭축 y=x−1/4 에 대한 A↔D·B↔C 대칭, 직선 y=x+3/4 와의 교점, a³=81/16, p+q=97), `tests/test_math_q21.py`(f'(s)=(s−r)², g 의 뾰족점은 s 하나·기울기 변화 −8(s−r)², |w| 의 뾰족점 +2|w'(t)|, a∈{1,2,3}, 각 경우의 f(0), h 의 미분가능성, 최댓값×최솟값 = 12).
 
 ## 5. 구조
 
@@ -117,10 +155,11 @@ layout:
 explainer/
   script/    models.py(pydantic DSL) · loader.py(YAML, safe_eval)
   narration/ tts.py(edge-tts, 문장 타이밍, 캐시) · timeline.py
-  render/    theme.py(색·폰트·xelatex 템플릿) · board.py(풀이 보드) · chalk.py(칠판 캔버스·판서·카메라) · scene.py(세그먼트 실행 루프, MovingCamera) · actions.py(액션 라이브러리)
+  render/    theme.py(색·폰트·xelatex 템플릿) · board.py(풀이 보드) · chalk.py(칠판 캔버스·판서·카메라) · derive.py(식 전개: 조각 매칭·이동·변형·이유 메모) · scene.py(세그먼트 실행 루프, MovingCamera) · actions.py(액션 라이브러리)
   compose/   subtitles.py(SRT/ASS, 긴 문장 분할) · mux.py(ffmpeg: 자막 번인, loudnorm, apad)
   verify/    checks.py(자동 검증)
   lint.py · pipeline.py · cli.py
+projects/2027_sep_q01..q04/  project.yaml (· hooks.py)   — 식 전개 중심의 짧은 강의
 projects/2027_sep_q22/  project.yaml · hooks.py
 projects/2027_sep_q21/  project.yaml(칠판) · project_panel.yaml(패널) · hooks.py
 tests/
