@@ -30,9 +30,21 @@ def load_hooks(project: Project) -> dict[str, Callable]:
 
 
 def build(project_path: str | Path, out_root: str | Path = "output", preview: bool = False,
-          force_tts: bool = False, verify: bool = True, log=print) -> tuple[Path, Optional[VerifyReport]]:
+          force_tts: bool = False, verify: bool = True, segments: list[str] | None = None,
+          log=print) -> tuple[Path, Optional[VerifyReport]]:
+    """segments 를 주면 그 세그먼트들만 렌더한다 (편집 중 빠른 확인용; 산출물은 `<id>__part/`)."""
     t0 = time.time()
     project = load_project(project_path)
+    if segments:
+        chosen = [s for s in project.segments if s.id in set(segments)]
+        missing = sorted(set(segments) - {s.id for s in chosen})
+        if missing:
+            raise ValueError(f"없는 세그먼트: {missing}")
+        project = project.model_copy(update={
+            "segments": chosen,
+            "meta": project.meta.model_copy(update={"id": project.meta.id + "__part"}),
+        })
+        log(f"부분 렌더: {[s.id for s in chosen]}")
     out_dir = Path(out_root) / project.meta.id
     out_dir.mkdir(parents=True, exist_ok=True)
     cache_dir = Path(out_root) / "_cache" / "tts"

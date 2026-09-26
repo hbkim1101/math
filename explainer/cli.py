@@ -25,6 +25,7 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("--preview", action="store_true", help="480p/15fps 빠른 렌더")
     b.add_argument("--force-tts", action="store_true", help="TTS 캐시 무시")
     b.add_argument("--no-verify", action="store_true")
+    b.add_argument("--segments", default=None, help="쉼표로 구분한 세그먼트 id 만 렌더 (부분 확인)")
 
     t = sub.add_parser("timing", help="문장별 내레이션 타이밍표 출력")
     t.add_argument("project")
@@ -43,12 +44,19 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("actions", help="액션 목록")
 
+    st = sub.add_parser("studio", help="브라우저 편집기(Studio) 실행")
+    st.add_argument("--host", default="127.0.0.1")
+    st.add_argument("--port", type=int, default=8765)
+    st.add_argument("--root", default=".", help="projects/ 와 output/ 이 있는 작업 폴더")
+    st.add_argument("--no-browser", action="store_true")
+
     args = p.parse_args(argv)
 
     if args.cmd == "build":
         from .pipeline import build
+        segs = [x.strip() for x in args.segments.split(",") if x.strip()] if args.segments else None
         final, report = build(args.project, out_root=args.out, preview=args.preview,
-                              force_tts=args.force_tts, verify=not args.no_verify)
+                              force_tts=args.force_tts, verify=not args.no_verify, segments=segs)
         return 0 if (report is None or report.ok) else 2
 
     if args.cmd == "timing":
@@ -83,6 +91,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "storyboard":
         from .verify.storyboard import build_storyboard
         build_storyboard(args.out_dir, columns=args.columns)
+        return 0
+
+    if args.cmd == "studio":
+        from .studio.server import serve
+        serve(root=args.root, host=args.host, port=args.port, open_browser=not args.no_browser)
         return 0
 
     if args.cmd == "actions":
