@@ -16,7 +16,7 @@ from typing import Any, Optional
 import numpy as np
 from manim import (
     DOWN, LEFT, RIGHT, UP, DL, DR, UR, PI,
-    AnimationGroup, Circumscribe, Create, FadeOut, Line, MathTex, Mobject, RoundedRectangle,
+    AnimationGroup, Circumscribe, Create, DrawBorderThenFill, FadeOut, Line, MathTex, Mobject, RoundedRectangle,
     TransformFromCopy, VGroup,
 )
 
@@ -271,11 +271,13 @@ class Derivation:
         if prev is not None and src_idx:
             for j in src_idx:
                 sp = prev.part_mobs[j]
-                r = RoundedRectangle(corner_radius=0.08, width=sp.width + 0.16, height=sp.height + 0.16,
-                                     stroke_color=self.accent, stroke_width=2.2, fill_opacity=0).move_to(sp)
-                r.set_z_index(5)
+                # 형광펜처럼 옅게 채운 상자: 글자 뒤(z<0)에 깔려 출처가 멀리서도 눈에 띈다
+                r = RoundedRectangle(corner_radius=0.08, width=sp.width + 0.2, height=sp.height + 0.2,
+                                     stroke_color=self.accent, stroke_width=3.0,
+                                     fill_color=self.accent, fill_opacity=0.16).move_to(sp)
+                r.set_z_index(-1)
                 hl_rects.append(r)
-            scene.play(*[Create(r) for r in hl_rects], *revert, run_time=0.55 * rt_scale)
+            scene.play(*[DrawBorderThenFill(r) for r in hl_rects], *revert, run_time=0.6 * rt_scale)
             revert = []
         elif revert:
             scene.play(*revert, run_time=0.3)
