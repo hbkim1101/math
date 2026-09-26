@@ -60,11 +60,37 @@ pytest                                                                      # �
 ## 3. Explainer Studio — 브라우저 편집기
 
 ```bash
-python -m explainer studio                 # http://127.0.0.1:8765 를 브라우저로 연다
+python -m explainer studio                 # http://localhost:8765 를 브라우저로 연다 (bind 0.0.0.0)
+python -m explainer studio --host 127.0.0.1   # 본인 PC에서만 들을 때
 python -m explainer studio --port 9000 --root /path/to/repo --no-browser
 ```
 
 YAML 을 직접 쓰지 않고도 위 파이프라인으로 영상을 **만들고 고치는** 로컬 프로그램입니다 (FastAPI + 순수 JS, 외부 CDN 없음).
+
+### 내 PC에서 열기
+
+**A. Cursor Cloud Agent 가 이미 Studio 를 띄운 경우 (가장 빠름)**  
+Cursor Desktop → Agents Window에서 이 에이전트 탭을 연 뒤, 에디터 패널 **오른쪽 위 플러그(Forwarded Ports)** 아이콘을 누르세요. 포트 `8765` 가 Detected 되면 포워딩(또는 Auto-Forward)하고 **Open in internal browser** / 내 PC 브라우저에서 `http://localhost:8765/` 를 엽니다. (모바일 웹만 쓰면 포트 포워딩이 안 되니 Desktop 을 쓰거나 B를 따르세요.)
+
+**B. 내 PC에 받아서 직접 실행**
+
+```bash
+git clone https://github.com/hbkim1101/math.git
+cd math
+git checkout cursor/explainer-video-studio-6877
+
+# macOS / Linux
+./scripts/run_studio.sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -File .\scripts\run_studio.ps1
+```
+
+첫 실행 때 venv 생성 + `pip install -e .` 가 자동으로 돌아갑니다. 끝나면 브라우저에서 `http://localhost:8765/` → 프로젝트 `2026_suneung_q22` 선택.  
+시스템 의존성(ffmpeg, TeX, 한글 폰트)은 [§1 설치](#1-설치)를 한 번 맞춰 두면 렌더까지 됩니다. 편집·검사·YAML만 보려면 Studio 기동만으로도 충분합니다.
+
+**C. 완성된 영상만 보기**  
+PR [#10](https://github.com/hbkim1101/math/pull/10) 의 아티팩트, 또는 clone 후 `output/2026_suneung_q22/2026_suneung_q22.mp4` 를 로컬 플레이어로 여세요.
 
 | 영역 | 기능 |
 |---|---|

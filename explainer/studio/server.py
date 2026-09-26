@@ -431,11 +431,14 @@ def _media_url(path: str, output_dir: Path) -> str | None:
     return "/output/" + rel.as_posix()
 
 
-def serve(root: str | Path = ".", host: str = "127.0.0.1", port: int = 8765, open_browser: bool = True) -> None:
+def serve(root: str | Path = ".", host: str = "0.0.0.0", port: int = 8765, open_browser: bool = True) -> None:
     import uvicorn
     app = create_app(root)
-    url = f"http://{host}:{port}/"
-    print(f"Explainer Studio → {url}   (작업 폴더: {app.state.root})")
+    # 브라우저로 열 주소는 localhost 로 안내 (0.0.0.0 은 바인드용)
+    browse = f"http://127.0.0.1:{port}/" if host in ("0.0.0.0", "::") else f"http://{host}:{port}/"
+    print(f"Explainer Studio → {browse}   (bind {host}:{port}, 작업 폴더: {app.state.root})")
+    print("  Cursor Cloud Agent 이면 Agents Window 오른쪽 위 플러그(Forwarded Ports)에서")
+    print(f"  포트 {port} 을 연 뒤 내 PC 브라우저로 http://localhost:{port}/ 를 여세요.")
     if open_browser:
-        threading.Timer(1.0, lambda: webbrowser.open(url)).start()
+        threading.Timer(1.0, lambda: webbrowser.open(browse)).start()
     uvicorn.run(app, host=host, port=port, log_level="warning")

@@ -45,7 +45,9 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("actions", help="액션 목록")
 
     st = sub.add_parser("studio", help="브라우저 편집기(Studio) 실행")
-    st.add_argument("--host", default="127.0.0.1")
+    # 0.0.0.0: Cursor Cloud Agent 포트 포워딩·같은 LAN 의 PC 브라우저에서 열 수 있게 한다.
+    # 본인 PC에서만 쓰려면 --host 127.0.0.1
+    st.add_argument("--host", default="0.0.0.0")
     st.add_argument("--port", type=int, default=8765)
     st.add_argument("--root", default=".", help="projects/ 와 output/ 이 있는 작업 폴더")
     st.add_argument("--no-browser", action="store_true")
