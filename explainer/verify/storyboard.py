@@ -8,16 +8,26 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+import os
+
 FONT_CANDIDATES = [
     "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
     "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
+    # Windows: 맑은 고딕 / 사용자 폴더의 나눔 폰트
+    r"C:\Windows\Fonts\malgun.ttf",
+    os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Windows\Fonts\NanumBarunpenR.ttf"),
+    # macOS
+    "/System/Library/Fonts/AppleSDGothicNeo.ttc",
 ]
 
 
 def _font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     for p in FONT_CANDIDATES:
         if Path(p).exists():
-            return ImageFont.truetype(p, size)
+            try:
+                return ImageFont.truetype(p, size)
+            except OSError:
+                continue
     return ImageFont.load_default()
 
 
