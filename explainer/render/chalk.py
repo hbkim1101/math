@@ -22,8 +22,21 @@ from PIL import Image
 
 from .theme import Theme
 
-CHALK_FONT = "NanumBarunpen"          # 한글 손글씨(펜) 폰트 — Pango Text 용
-CHALK_TITLE_FONT = "Nanum Pen Script"  # 제목/캡션용 더 자유로운 손글씨
+def installed_font(*candidates: str) -> str:
+    """설치된 폰트 중 앞에서부터 처음 찾은 것. (Windows 등 다른 PC 에서 나눔 폰트가 없어도 렌더가 죽지 않게)"""
+    try:
+        import manimpango
+        fonts = set(manimpango.list_fonts())
+    except Exception:  # noqa: BLE001
+        return candidates[0]
+    for c in candidates:
+        if c in fonts:
+            return c
+    return candidates[0]
+
+
+CHALK_FONT = installed_font("NanumBarunpen", "Nanum Pen Script", "Nanum Pen", "Noto Sans CJK KR", "Noto Sans KR", "Malgun Gothic")  # 한글 손글씨(펜) 폰트 — Pango Text 용
+CHALK_TITLE_FONT = installed_font("Nanum Pen Script", "Nanum Pen", "NanumBarunpen", "Noto Sans CJK KR", "Noto Sans KR", "Malgun Gothic")  # 제목/캡션용 더 자유로운 손글씨
 
 CHALK_KO_TEX_TEMPLATE = TexTemplate(
     tex_compiler="xelatex",
@@ -33,13 +46,13 @@ CHALK_KO_TEX_TEMPLATE = TexTemplate(
 \usepackage{amsmath,amssymb,mathtools}
 \usepackage{fontspec}
 \usepackage{kotex}
-\setmainhangulfont{NanumBarunpen}
-\setsanshangulfont{NanumBarunpen}
+\setmainhangulfont{__FONT__}
+\setsanshangulfont{__FONT__}
 \setlength{\parindent}{0pt}
 % 한글 어절 중간에서 줄이 바뀌지 않게 (xetexko 기본은 글자 단위 줄바꿈 허용)
 \XeTeXlinebreakpenalty=10000
 \emergencystretch=3em
-""",
+""".replace("__FONT__", CHALK_FONT),
 )
 
 BOARD_FRAME_COLOR = "#8a6a48"   # 칠판 테두리(나무)

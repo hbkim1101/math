@@ -1,0 +1,300 @@
+# 2026학년도 대학수학능력시험 (2025.11 시행) 수학 미적분 30번 — 역함수의 그래프로 교점 개수 g(m) 읽기 (정답 11)
+# Explainer Studio 로 작성 · 제작 과정 가이드: docs/guide_suneung_calc30.md
+# 렌더: python -m explainer build projects/2026_suneung_calc30/project.yaml
+
+meta:
+  id: 2026_suneung_calc30
+  title: "2026학년도 수능 미적분 30번"
+  subtitle: "역함수의 그래프에서 교점의 개수 g(m) 읽기"
+  voice: ko-KR-InJoonNeural
+  rate: "+4%"
+  resolution: 1080p
+  fps: 30
+  subtitles: burn
+  segment_pad: 1.0
+  style: chalkboard
+  background: "#101614"
+
+params:
+  k_b: "2.34575"            # k ln k = 2 의 해 (접하는 순간의 역함수 쪽 기울기)
+  b: "1/k_b"                # 원함수 쪽 기울기 m = 1/k  → 불연속점 b ≈ 0.4263
+  t: "-1-log(k_b)"          # 접점의 x좌표 (x < -1)  ≈ -1.853
+
+layout:
+  graph:
+    x_range: [-3.5, 3.5, 1]
+    y_range: [-4.5, 4.5, 1]
+    grid: false
+  chalk:
+    board_color: "#24493a"
+    line_scale: 0.7
+    sections:
+      - {id: title, layout: full}
+      - {id: problem, title: "문제", layout: full}
+      - {id: inv, title: "역함수의 그래프 · 후보 그리기", layout: split}
+      - {id: pick2, title: "증가하는 가지만 고르기", layout: split}
+      - {id: why, title: "왜 역함수로 볼까 · 직선도 함께 뒤집기", layout: split}
+      - {id: sweep, title: "기울기를 움직이며 교점 세기", layout: split}
+      - {id: tangent, title: "접하는 순간 · 방정식", layout: full}
+      - {id: gm, title: "g(m)의 그래프와 불연속점", layout: split}
+      - {id: final, title: "정답", layout: full}
+      - {id: wrap, title: "정리", layout: full}
+
+segments:
+  # ───────────────────────────── 0. 인트로
+  - id: intro
+    narration: >
+      2026학년도 수능 미적분 30번입니다.
+      함수 f의 식은 주어지지 않고 역함수의 조건만 주어지는데요, 역함수의 그래프를 정확히 그린 뒤 직선도 함께 뒤집어서, 기울기에 따라 교점이 몇 개인지 세는 문제입니다.
+      함께 풀어 보겠습니다.
+    actions:
+      - {do: title_card, title: "2026학년도 수능 미적분 30번", subtitle: "역함수의 그래프에서 교점의 개수 g(m) 읽기", tag: "역함수 · 접선 · 교점의 개수"}
+
+  # ───────────────────────────── 1. 문제 읽기
+  - id: read_problem
+    narration: >
+      문제를 읽어 보겠습니다.
+      실수 전체의 집합에서 증가하는 연속함수 f의 역함수가 다음 조건을 만족시킵니다.
+      가, 절댓값 x가 1 이하일 때, 4 곱하기 역함수 값의 제곱은 x제곱 곱하기 x제곱 빼기 5의 제곱입니다.
+      나, 절댓값 x가 1보다 클 때, 역함수 값의 절댓값은 e의 절댓값 x 빼기 1제곱 더하기 1입니다.
+      기울기가 m이고 점 1, 0을 지나는 직선이 곡선 y는 f x와 만나는 점의 개수를 g m이라 할 때, g가 m은 a, m은 b에서 불연속이면, g a 곱하기 a에서의 우극한, 더하기 g b 곱하기 로그 b 나누기 b의 제곱의 값을 구하는 문제입니다.
+    actions:
+      - {do: goto, section: problem, run_time: 1.6}
+      - do: problem
+        title: "30. [4점]"
+        scale: 0.86
+        line_buff: 0.36
+        lines:
+          - "실수 전체의 집합에서 증가하는 연속함수 $f(x)$의 역함수 $f^{-1}(x)$가 다음 조건을 만족시킨다."
+          - "(가) $|x|\\le 1$일 때, $4\\times\\left(f^{-1}(x)\\right)^{2}=x^{2}\\left(x^{2}-5\\right)^{2}$이다."
+          - "(나) $|x|>1$일 때, $\\left|f^{-1}(x)\\right|=e^{|x|-1}+1$이다."
+          - "실수 $m$에 대하여 기울기가 $m$이고 점 $(1,\\,0)$을 지나는 직선이 곡선 $y=f(x)$와 만나는 점의 개수를 $g(m)$이라 하자."
+          - "함수 $g(m)$이 $m=a,\\ m=b\\ (a<b)$에서 불연속일 때, $g(a)\\times\\left(\\lim\\limits_{m\\to a+}g(m)\\right)+g(b)\\times\\left(\\dfrac{\\ln b}{b}\\right)^{2}$의 값을 구하시오. $\\left(\\text{단, }\\lim\\limits_{x\\to\\infty}\\dfrac{\\ln x}{x}=0\\right)$"
+      - {do: problem_focus, at: s2, index: 0}
+      - {do: problem_focus, at: s3, index: 1}
+      - {do: problem_focus, at: s4, index: 2}
+      - {do: problem_focus, at: s5, index: 3}
+      - {do: problem_focus, at: 38.0, index: 4}
+
+  # ───────────────────────────── 2. 역함수 후보 그리기
+  - id: candidates
+    narration: >
+      먼저 조건을 풀어서 역함수의 그래프 후보를 모두 그려 봅니다.
+      조건 가의 양변에 제곱근을 씌우면 2 곱하기 역함수 값은 플러스 마이너스 x 곱하기 x제곱 빼기 5. 삼차식 두 개가 후보입니다.
+      조건 나의 절댓값을 벗기면 역함수 값은 플러스 마이너스, e의 절댓값 x 빼기 1제곱 더하기 1. 위아래로 두 개의 지수함수 곡선이 후보입니다.
+      이렇게 그리면 x 모양으로 겹치는 후보 곡선들이 나옵니다. 이 중에서 진짜 역함수를 골라내야 합니다.
+    actions:
+      - {do: goto, section: inv}
+      - {do: axes, run_time: 1.0}
+      - {do: plot, at: s2, id: c_plus, expr: "x*(x**2-5)/2", x_range: [-1, 1], color: guide, dashed: true, run_time: 1.0}
+      - {do: plot, id: c_minus, expr: "-x*(x**2-5)/2", x_range: [-1, 1], color: guide, dashed: true, run_time: 1.0}
+      - do: derive
+        id: d1
+        steps:
+          - {parts: ["4\\left(f^{-1}(x)\\right)^{2}", "=", "x^{2}(x^{2}-5)^{2}"], why: "조건 (가), $|x|\\le1$"}
+          - {parts: ["2f^{-1}(x)", "=", "\\pm x(x^{2}-5)"], why: "양변에 제곱근", box: true, run_time: 1.6}
+      - {do: plot, at: s3, id: e_pos, expr: "exp(abs(x)-1)+1", color: guide, dashed: true, run_time: 1.0}
+      - {do: plot, id: e_neg, expr: "-(exp(abs(x)-1)+1)", color: guide, dashed: true, run_time: 1.0}
+      - do: derive
+        id: d2
+        steps:
+          - {parts: ["\\left|f^{-1}(x)\\right|", "=", "e^{|x|-1}+1"], why: "조건 (나), $|x|>1$"}
+          - {parts: ["f^{-1}(x)", "=", "\\pm\\left(e^{|x|-1}+1\\right)"], why: "절댓값을 벗긴다", box: true, run_time: 1.6}
+      - {do: highlight, at: s4, ids: [c_plus, c_minus, e_pos, e_neg], mode: indicate, color: guide, run_time: 1.0}
+      - {do: caption, at: s5, text: "후보 곡선들 — 이 중 ‘증가하는 하나의 곡선’만 진짜 y = f⁻¹(x)"}
+
+  # ───────────────────────────── 3. 증가하는 가지만 고르기
+  - id: pick
+    narration: >
+      핵심은 f가 실수 전체에서 증가한다는 것입니다. 원함수와 역함수는 직선 y는 x에 대칭이므로, 역함수도 증가해야 합니다.
+      가운데 구간에서 x 곱하기 x제곱 빼기 5는 감소하는 삼차식이므로, 마이너스를 붙인 마이너스 2분의 1, x 곱하기 x제곱 빼기 5만이 증가합니다. 이 곡선은 마이너스 1에서 마이너스 2, 1에서 2를 지납니다.
+      바깥 구간은 이 두 점과 이어지도록 골라야 합니다. x가 1보다 크면 플러스 부호, x가 마이너스 1보다 작으면 마이너스 부호를 택하면 연속이면서 계속 증가합니다.
+      게다가 이 세 조각은 x는 마이너스 1과 1에서 기울기가 모두 1로 같아서, 매끄럽게 이어집니다. 이렇게 역함수의 그래프가 정해졌습니다.
+    actions:
+      - {do: goto, section: pick2, run_time: 1.4}
+      - {do: axes, run_time: 0.7}
+      - {do: plot, id: c_plus, expr: "x*(x**2-5)/2", x_range: [-1, 1], color: guide, dashed: true, run_time: 0.4}
+      - {do: plot, id: c_minus, expr: "-x*(x**2-5)/2", x_range: [-1, 1], color: guide, dashed: true, run_time: 0.4}
+      - {do: plot, id: e_pos, expr: "exp(abs(x)-1)+1", color: guide, dashed: true, run_time: 0.4}
+      - {do: plot, id: e_neg, expr: "-(exp(abs(x)-1)+1)", color: guide, dashed: true, run_time: 0.4}
+      - {do: write, at: s2, ko: true, tex: "$f$ 증가 $\\Rightarrow$ $f^{-1}$ 도 증가 ($y=x$ 대칭)", color: ok}
+      - {do: fade, at: s3, ids: [c_plus], run_time: 0.5}
+      - {do: plot, id: h_mid, expr: "-x*(x**2-5)/2", x_range: [-1, 1], color: exp, run_time: 1.2}
+      - do: points
+        at: s4
+        items:
+          - {id: P1, at: [-1, -2], label: "(-1,-2)", label_dir: DR, label_scale: 0.6}
+          - {id: P2, at: [1, 2], label: "(1,2)", label_dir: UL, label_scale: 0.6}
+      - {do: write, ko: true, tex: "$|x|\\le1$: $x(x^2-5)$ 는 감소 $\\Rightarrow$ $f^{-1}(x)=-\\tfrac12x(x^2-5)$"}
+      - {do: fade, at: s5, ids: [e_pos, e_neg], run_time: 0.5}
+      - {do: plot, at: s6, id: h_right, expr: "exp(x-1)+1", x_range: [1, 3.5], color: exp, run_time: 1.0}
+      - {do: plot, id: h_left, expr: "-exp(-x-1)-1", x_range: [-3.5, -1], color: exp, label: "y=f^{-1}(x)", label_at: -2.0, label_dir: LEFT, label_scale: 0.7, run_time: 1.0}
+      - do: write
+        lines:
+          - "f^{-1}(x)=\\begin{cases}-e^{-x-1}-1 & (x<-1)\\\\[2pt] -\\tfrac12x(x^{2}-5) & (-1\\le x\\le1)\\\\[2pt] e^{x-1}+1 & (x>1)\\end{cases}"
+        plain: true
+        run_time: 2.0
+      - {do: write, at: s7, ko: true, tex: "$(f^{-1})'(\\pm1)=1$: 세 조각이 매끄럽게 이어진다", color: ok}
+      - {do: highlight, at: s8, ids: [P1, P2], mode: flash, color: point, run_time: 0.8}
+      - {do: caption, text: "증가하는 하나의 곡선으로 확정 — (−1, −2), (1, 2) 에서 기울기 1"}
+
+  # ───────────────────────────── 4. 왜 역함수로 보나 — 직선도 함께 뒤집기
+  - id: why
+    narration: >
+      문제는 원함수 f와 직선의 교점을 묻지만, f의 식은 알 수 없습니다. 그래서 그림 전체를 직선 y는 x에 대해 뒤집어 역함수 쪽에서 셉니다.
+      점 1, 0을 지나고 기울기가 m인 직선을 뒤집으면, 점 0, 1을 지나고 기울기가 m분의 1인 직선이 됩니다.
+      대칭이동은 교점을 교점으로 보내므로, 두 그림에서 교점의 개수는 정확히 같습니다.
+      그러니까 g m은, 점 0, 1을 지나고 기울기가 k는 m분의 1인 직선이 역함수의 그래프와 만나는 점의 개수입니다. 이제부터는 이 그림만 보면 됩니다.
+    actions:
+      - {do: goto, section: why}
+      - {do: axes, run_time: 0.9}
+      - {do: plot, id: h, expr: "(-exp(-x-1)-1) if x < -1 else ((-x*(x**2-5)/2) if x <= 1 else (exp(x-1)+1))", color: exp, label: "y=f^{-1}(x)", label_at: -2.0, label_dir: LEFT, label_scale: 0.65, run_time: 1.2}
+      - {do: custom, fn: inverse_curve, source: h, id: f, color: log, label: "y=f(x)", label_at: 3.0, label_dir: DOWN, label_scale: 0.65, run_time: 1.4}
+      - {do: line, at: s3, id: L, slope: 2, intercept: -2, color: point, dashed: false, label: "y=m(x-1)", label_at: 2.2, label_dir: RIGHT, label_scale: 0.6, run_time: 0.9}
+      - do: points
+        items:
+          - {id: Q, at: [1, 0], label: "(1,0)", label_dir: DR, label_scale: 0.6}
+      - {do: line, id: Lr, slope: "1/2", intercept: 1, color: q2, dashed: false, label: "y=\\tfrac{1}{m}x+1", label_at: -2.6, label_dir: UP, label_scale: 0.6, run_time: 0.9}
+      - do: points
+        items:
+          - {id: R, at: [0, 1], label: "(0,1)", label_dir: UL, label_scale: 0.6, color: q2}
+      - {do: write, tex: "y=m(x-1)\\ \\xleftrightarrow{\\ y=x\\ }\\ y=\\tfrac{1}{m}x+1", plain: true}
+      - {do: highlight, at: s4, ids: [L, Lr], mode: pulse, color: point, run_time: 1.0}
+      - {do: write, ko: true, tex: "대칭이동은 교점을 교점으로 $\\Rightarrow$ 교점의 개수가 같다", color: ok}
+      - {do: write, at: s5, ko: true, tex: "$g(m)=$ (점 $(0,1)$, 기울기 $k=\\tfrac1m$ 인 직선) $\\cap$ $y=f^{-1}(x)$ 의 개수", color: ok, box: true}
+      - {do: caption, at: s6, text: "m ↔ k = 1/m : 원함수 쪽 기울기 m 은 역함수 쪽 기울기 1/m"}
+
+  # ───────────────────────────── 5. 기울기를 움직이며 교점 세기
+  - id: sweep
+    narration: >
+      이제 점 0, 1을 지나는 직선의 기울기 k를 움직이면서 교점을 세어 봅시다.
+      k가 음수이면 직선은 오른쪽으로 내려가고 곡선은 올라가므로, 교점은 항상 1개입니다.
+      k가 0보다 크고 작을 때도 교점은 1개입니다. k가 1이 되면 직선이 점 1, 2를 지나면서 그곳에서 곡선에 접하는데, 이 점은 변곡점이어서 직선이 곡선을 뚫고 지나갑니다. 그래서 여전히 1개입니다.
+      k를 더 키우면 직선이 왼쪽 아래 지수함수 부분에 가까워지다가, 어느 순간 접합니다. 이때 교점은 2개.
+      그보다 더 커지면 왼쪽에서 두 번 만나서 모두 3개가 됩니다.
+      그러니까 교점의 개수가 바뀌는 곳은 k가 0을 지날 때와, 왼쪽에서 접하는 순간 두 곳입니다.
+    actions:
+      - {do: goto, section: sweep}
+      - {do: axes, run_time: 0.9}
+      - {do: plot, id: h3, expr: "(-exp(-x-1)-1) if x < -1 else ((-x*(x**2-5)/2) if x <= 1 else (exp(x-1)+1))", color: exp, label: "y=f^{-1}(x)", label_at: -2.0, label_dir: LEFT, label_scale: 0.65, run_time: 1.0}
+      - do: points
+        items:
+          - {id: A1, at: [-1, -2], radius: 0.06}
+          - {id: A2, at: [1, 2], radius: 0.06}
+      - {do: custom, fn: slope_sweep, func: h3, point: [0, 1], k_from: -1.6, k_to: -0.35, id: sw, color: point, dot_color: warn, run_time: 2.4, at: s2, caption: "k < 0 : 직선은 내려가고 곡선은 올라간다 → 항상 1개"}
+      - {do: write, ko: true, tex: "$k<0$: 교점 $1$개"}
+      - {do: custom, fn: sweep_to, k: 0.6, run_time: 2.0, at: s3, caption: "0 < k < 1 : 1개"}
+      - {do: custom, fn: sweep_to, k: 1, run_time: 1.6, caption: "k = 1 : (1, 2) 에서 접하지만 변곡점 — 뚫고 지나가 1개"}
+      - {do: write, at: s5, ko: true, tex: "$0<k\\le1$: 교점 $1$개 ($k=1$: 변곡점 $(1,2)$ 에서 접함)"}
+      - {do: custom, fn: sweep_to, k: k_b, run_time: 2.6, at: s6, caption: "k = k_b : 왼쪽 지수 부분에서 접한다 → 2개"}
+      - {do: write, at: s7, ko: true, tex: "$k=k_b$: 왼쪽에서 접함 $\\Rightarrow$ 교점 $2$개", color: warn}
+      - {do: custom, fn: sweep_to, k: 3.4, run_time: 2.0, at: s8, caption: "k > k_b : 왼쪽에서 두 번 + 오른쪽 한 번 → 3개", finish: true}
+      - {do: write, ko: true, tex: "$k>k_b$: 교점 $3$개"}
+      - {do: write, at: s9, ko: true, tex: "개수가 바뀌는 곳: $k=0$ (직선이 세로선을 지나는 순간), $k=k_b$ (접하는 순간)", color: ok, box: true}
+
+  # ───────────────────────────── 6. 접하는 순간의 방정식
+  - id: tangent
+    narration: >
+      접하는 순간의 기울기 k b를 구해 봅시다. 접점의 x좌표를 t라 하면, t는 마이너스 1보다 작고, 접점은 t, 마이너스 e의 마이너스 t 빼기 1제곱, 빼기 1입니다.
+      점 0, 1과 접점을 이은 기울기가 그 점에서의 미분계수 e의 마이너스 t 빼기 1제곱과 같아야 합니다.
+      정리하면 마이너스 t 빼기 1, 곱하기 e의 마이너스 t 빼기 1제곱은 2.
+      여기서 k b는 e의 마이너스 t 빼기 1제곱이므로, 마이너스 t 빼기 1은 로그 k b. 따라서 k b 곱하기 로그 k b는 2입니다. t의 값을 구하지 않아도 이 관계식만으로 충분합니다.
+    actions:
+      - {do: goto, section: tangent}
+      - do: derive
+        id: e
+        steps:
+          - {at: s2, parts: ["P", "=", "(t,\\ -e^{-t-1}-1)"], why: "접점 $P$ ($t<-1$): $x<-1$ 에서 $f^{-1}(x)=-e^{-x-1}-1$"}
+          - {at: s3, parts: ["\\dfrac{-e^{-t-1}-1-1}{t-0}", "=", "e^{-t-1}"], why: "$(0,1)$ 과 잇는 기울기 $=$ 접선의 기울기 $(f^{-1})'(t)$", same_line: false, new: ["\\dfrac{-e^{-t-1}-1-1}{t-0}", "e^{-t-1}"], run_time: 1.8}
+          - {parts: ["-e^{-t-1}-2", "=", "te^{-t-1}"], why: "양변에 $t$ 를 곱한다", run_time: 1.6}
+          - {at: s4, parts: ["(-t-1)e^{-t-1}", "=", "2"], why: "$e^{-t-1}$ 항을 왼쪽으로 모아 묶는다", box: true, run_time: 1.8}
+      - do: derive
+        id: e2
+        at: 31.0
+        steps:
+          - {parts: ["k_b", "=", "e^{-t-1}"], why: "접하는 순간의 기울기"}
+          - {parts: ["-t-1", "=", "\\ln k_b"], why: "양변에 자연로그", run_time: 1.6}
+          - {parts: ["k_b\\ln k_b", "=", "2"], why: "위 식에 대입", box: true, pulse: true, run_time: 1.8}
+      - {do: caption, at: s5, text: "t 를 구하지 않아도 k_b ln k_b = 2 만으로 충분하다"}
+
+  # ───────────────────────────── 7. g(m) 의 그래프
+  - id: gm
+    narration: >
+      이제 역함수 쪽 기울기 k를 원함수 쪽 기울기 m은 k분의 1로 바꿔 g m을 정리합니다.
+      k가 음수이면 m도 음수이고 교점 1개. m이 0이면 직선 y는 0이 f와 만나는 점은 f x는 0, 즉 x는 0 한 점이므로 1개.
+      k가 아주 크면 m은 0에 가까운 양수이고 교점 3개. k가 k b이면 m은 b는 k b분의 1이고 교점 2개. k가 k b보다 작은 양수이면 m은 b보다 크고 교점 1개.
+      그래프로 그리면 g는 m은 0에서 1에서 3으로 튀고, m은 b에서 3에서 2, 다시 1로 떨어집니다. 불연속인 곳은 a는 0, b는 k b분의 1, 이렇게 두 곳입니다.
+    actions:
+      - {do: goto, section: gm}
+      - {do: axes, x_range: [-1.2, 1.4, 0.5], y_range: [0, 4, 1], equal_aspect: false, numbers: false, labels: false, run_time: 0.9}
+      - {do: write, ko: true, tex: "$m=\\tfrac1k$ 로 바꿔 읽기"}
+      - do: custom
+        fn: step_graph
+        at: s2
+        id: g_left
+        pieces:
+          - {x: [-1.2, 0], y: 1, open: [false, true]}
+          - {x: 0, y: 1}
+        color: q1
+        run_time: 1.2
+      - {do: write, at: s3, ko: true, tex: "$m<0$: $1$개, $\\;m=0$: $f(x)=0 \\Leftrightarrow x=0$ 이므로 $1$개"}
+      - do: custom
+        fn: step_graph
+        at: s4
+        id: g_right
+        pieces:
+          - {x: [0, b], y: 3, open: [true, true]}
+          - {x: b, y: 2}
+          - {x: [b, 1.4], y: 1, open: [true, false]}
+        color: q1
+        run_time: 1.6
+      - {do: vline, at: s5, id: vb, x: b, color: guide, run_time: 0.5}
+      - do: points
+        items:
+          - {id: Ma, at: [0, 0], label: "a=0", label_dir: DOWN, label_scale: 0.6}
+          - {id: Mb, at: [b, 0], label: "b=\\tfrac{1}{k_b}", label_dir: DOWN, label_scale: 0.6}
+      - {do: write, at: s6, ko: true, tex: "$0<m<b$: $3$개, $\\;m=b$: $2$개, $\\;m>b$: $1$개"}
+      - {do: write, at: s8, ko: true, tex: "불연속점: $a=0$, $\\;b=\\tfrac{1}{k_b}$", color: ok, box: true}
+      - {do: caption, at: s7, text: "g(m) 은 m = 0 에서 1 → 3, m = b 에서 3 → 2 → 1"}
+
+  # ───────────────────────────── 8. 정답
+  - id: answer
+    narration: >
+      값을 계산합니다. g a는 1, a에서의 우극한은 3, g b는 2.
+      로그 b 나누기 b는, b가 k b분의 1이므로 마이너스 로그 k b 곱하기 k b. 제곱하면 k b 로그 k b의 제곱, 곧 2의 제곱 4입니다.
+      따라서 1 곱하기 3 더하기 2 곱하기 4는 11. 정답은 11입니다.
+    actions:
+      - {do: goto, section: final}
+      - {do: write, tex: "g(a)=1,\\quad \\lim_{m\\to a+}g(m)=3,\\quad g(b)=2", plain: true}
+      - do: derive
+        id: r
+        at: 7.0
+        steps:
+          - {parts: ["\\dfrac{\\ln b}{b}", "=", "k_b\\ln\\dfrac{1}{k_b}"], why: "$b=\\tfrac{1}{k_b}$"}
+          - {parts: ["=", "-k_b\\ln k_b"], run_time: 1.4}
+          - {parts: ["=", "-2"], why: "$k_b\\ln k_b=2$", run_time: 1.4}
+          - {parts: ["\\left(\\dfrac{\\ln b}{b}\\right)^{2}", "=", "4"], box: true, run_time: 1.6}
+      - do: derive
+        id: fin
+        at: s3
+        steps:
+          - {parts: ["g(a)\\times\\lim_{m\\to a+}g(m)+g(b)\\times\\left(\\dfrac{\\ln b}{b}\\right)^{2}", "=", "1\\times3", "+", "2\\times4"]}
+          - {parts: ["=", "11"], box: true, pulse: true, run_time: 1.6}
+      - {do: answer, at: s4, tex: "11", caption_text: "정답", run_time: 1.0}
+      - {do: wait, seconds: 1.5}
+
+  # ───────────────────────────── 9. 정리
+  - id: outro
+    narration: >
+      정리하면, 조건의 제곱과 절댓값을 벗겨 후보 곡선을 모두 그린 뒤 증가하는 하나의 곡선을 고르고, 직선까지 함께 y는 x에 뒤집어 역함수 쪽에서 교점을 세었습니다.
+      기울기를 움직여 보면 개수가 바뀌는 곳은 k가 0을 지날 때와 접하는 순간 두 곳뿐이고, 접하는 조건 k b 로그 k b는 2가 마지막 계산의 열쇠였습니다.
+      정답은 11입니다. 시청해 주셔서 감사합니다.
+    actions:
+      - {do: goto, section: wrap, run_time: 1.4}
+      - do: end_card
+        title: "정리 · 정답 11"
+        lines:
+          - "① 제곱·절댓값을 벗겨 후보 4개 → ‘증가’ 조건으로 f⁻¹ 확정: −e^(−x−1)−1 / −x(x²−5)/2 / e^(x−1)+1 (x=±1 에서 기울기 1)"
+          - "② 점 (1,0)·기울기 m 직선 ↔ 점 (0,1)·기울기 1/m 직선 : 교점 개수 같다 → 역함수 그림에서 세기"
+          - "③ 개수 1 → 3 (k 가 0 을 지날 때), 3 → 2 → 1 (왼쪽 접선 k_b ln k_b = 2) → a = 0, b = 1/k_b → 1×3 + 2×4 = 11"
+      - {do: camera, at: s2, sections: [inv, wrap], run_time: 2.4}

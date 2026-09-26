@@ -6,7 +6,16 @@ from dataclasses import dataclass, field
 
 from manim import TexTemplate
 
-KOREAN_FONT = "Noto Sans CJK KR"
+def _installed_font(*candidates: str) -> str:
+    try:
+        import manimpango
+        fonts = set(manimpango.list_fonts())
+    except Exception:  # noqa: BLE001
+        return candidates[0]
+    return next((c for c in candidates if c in fonts), candidates[0])
+
+
+KOREAN_FONT = _installed_font("Noto Sans CJK KR", "Noto Sans KR", "NanumGothic", "Malgun Gothic")
 
 # xelatex + kotex: 한글과 수식을 한 문장에 섞어 조판한다.
 KO_TEX_TEMPLATE = TexTemplate(
@@ -17,13 +26,13 @@ KO_TEX_TEMPLATE = TexTemplate(
 \usepackage{amsmath,amssymb,mathtools}
 \usepackage{fontspec}
 \usepackage{kotex}
-\setmainhangulfont{Noto Sans CJK KR}
-\setsanshangulfont{Noto Sans CJK KR}
+\setmainhangulfont{__FONT__}
+\setsanshangulfont{__FONT__}
 \setlength{\parindent}{0pt}
 % 한글 어절 중간에서 줄이 바뀌지 않게 (xetexko 기본은 글자 단위 줄바꿈 허용)
 \XeTeXlinebreakpenalty=10000
 \emergencystretch=3em
-""",
+""".replace("__FONT__", KOREAN_FONT),
 )
 
 # 수식 전용(pdflatex, 빠름). Manim 기본 템플릿에 몇 개 패키지를 추가.
