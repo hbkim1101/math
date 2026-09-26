@@ -87,7 +87,8 @@ segments:
         run_time: 5.0
         pause: 0.5
         stop_captions: ["a = 4 : 왼쪽 끝점 18, 오른쪽 12 → 틈이 있다 (불연속)"]
-      - {do: custom, at: s5, fn: piecewise_sweep, values: [10], run_time: 4.5, caption: "a = 10 : 24 = 24 → 틈이 닫힌다 (연속)"}
+      - {do: write, at: s3, ko: true, tex: "왼쪽 끝 $7\\cdot2+a$,  오른쪽 끝 $4+2a$", scale: 0.9}
+      - {do: custom, at: s4, fn: piecewise_sweep, values: [10], run_time: 8.0, caption: "a = 10 : 24 = 24 → 틈이 닫힌다 (연속)"}
       - {do: write, at: s6, ko: true, tex: "$x=2$에서 (왼쪽 끝) $=$ (오른쪽 끝) 이어야 연속", color: ok, scale: 0.9}
 
   - id: limits

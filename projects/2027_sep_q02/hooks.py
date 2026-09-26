@@ -16,8 +16,11 @@ from explainer.render.actions import caption as caption_action
 def secant_to_tangent(scene, func: str, x0, x_from, x_to, color: str | None = None, tangent_color: str | None = None,
                       run_time: float = 4.0, id: str = "secant", readout: str = "기울기 =", readout_at: list | None = None,
                       span: float = 1.1, label_p: str = "\\mathrm{P}", label_q: str = "\\mathrm{Q}",
-                      final_caption: str = "", keep: bool = True, stroke_width: float = 3.2, **_):
-    """P(x0, f(x0)) 는 고정, Q(x, f(x)) 의 x 를 x_from → x_to 로 움직인다. 할선의 기울기 = 평균변화율."""
+                      final_caption: str = "", keep: bool = True, stroke_width: float = 3.2,
+                      sweep_at=None, **_):
+    """P(x0, f(x0)) 는 고정, Q(x, f(x)) 의 x 를 x_from → x_to 로 움직인다. 할선의 기울기 = 평균변화율.
+
+    sweep_at: 할선을 먼저 그려 놓고, 이 내레이션 표식(예: s3)까지 기다린 뒤 Q 를 움직인다."""
     f = scene.funcs[func]
     x0 = scene.eval(x0)
     x_from, x_to = scene.eval(x_from), scene.eval(x_to)
@@ -85,6 +88,8 @@ def secant_to_tangent(scene, func: str, x0, x_from, x_to, color: str | None = No
     scene.play(FadeIn(P), FadeIn(lp), run_time=0.4)
     scene.add(guides, secant, Q, lq, box)
     scene.play(FadeIn(guides), Create(secant), FadeIn(Q), FadeIn(lq), FadeIn(box), run_time=0.8)
+    if sweep_at is not None and scene.current_segment is not None:
+        scene.wait_until(scene.current_segment.resolve_at(sweep_at))
     scene.play(t.animate.set_value(x_to), run_time=run_time, rate_func=rate_functions.ease_in_out_sine)
     for m in (secant, Q, lq, guides, value):
         m.clear_updaters()

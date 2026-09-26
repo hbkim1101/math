@@ -1144,6 +1144,8 @@ def _run_step(scene, d: Derivation, st: dict, run_time: float | None) -> None:
     at = st.pop("at", None)
     if at is not None and scene.current_segment is not None:
         scene.wait_until(scene.current_segment.resolve_at(at))
+    hold = _hold_until(scene, st.pop("hold", None))
+    cancel_hold = _hold_until(scene, st.pop("cancel_at", None))
     parts = st.pop("parts", None)
     if parts is None:
         parts = [st.pop("tex")]
@@ -1164,7 +1166,17 @@ def _run_step(scene, d: Derivation, st: dict, run_time: float | None) -> None:
         color=st.get("color"),
         pulse=bool(st.get("pulse", False)),
         space=float(st.get("space", 0.0)),
+        hold=hold,
+        cancel_hold=cancel_hold,
     )
+
+
+def _hold_until(scene, marker):
+    """내레이션 표식(s3, 초 등)까지 기다리는 콜러블을 만든다. 표식이 없으면 None."""
+    if marker is None or scene.current_segment is None:
+        return None
+    seg = scene.current_segment
+    return lambda: scene.wait_until(seg.resolve_at(marker))
 
 
 @action("space")

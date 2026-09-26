@@ -59,6 +59,7 @@ segments:
         steps:
           - {parts: ["2^{\\frac32}", "\\times", "4^{-\\frac12}"]}
           - at: s2
+            hold: s3
             parts: ["=", "2^{\\frac32}", "\\times", "\\left(2^{2}\\right)^{-\\frac12}"]
             why: "$4=2^{2}$ 으로 밑을 통일"
 
@@ -110,8 +111,10 @@ segments:
       - do: derive
         at: s3
         id: warn
+        color: warn
         steps:
-          - {parts: ["4^{-\\frac12}", "=", "\\dfrac{1}{4^{\\frac12}}", "=", "\\dfrac{1}{\\sqrt4}", "=", "\\dfrac12"], color: warn}
+          - {parts: ["4^{-\\frac12}", "=", "\\dfrac{1}{4^{\\frac12}}"], why: "음의 지수 $=$ 역수"}
+          - {parts: ["=", "\\dfrac{1}{\\sqrt4}", "=", "\\dfrac12"], at: s4, why: "분수 지수 $=$ 거듭제곱근"}
       - {do: caption, text: "음의 지수 = 역수,  분수 지수 = 거듭제곱근 (−2가 아니다!)"}
 
   - id: answer

@@ -77,6 +77,7 @@ segments:
         x0: 2
         x_from: 2.42
         x_to: 2.003
+        sweep_at: s3
         color: point
         tangent_color: ok
         readout: "할선의 기울기 ="
@@ -102,11 +103,13 @@ segments:
         steps:
           - {parts: ["f(x)", "=", "2x^{3}", "-", "x", "-", "4"]}
           - at: s2
+            hold: s3
             parts: ["f'(x)", "=", "2\\cdot3x^{2}", "-", "1", "-", "0"]
             from: {"f'(x)": "f(x)", "2\\cdot3x^{2}": "2x^{3}", "1": "x", "0": "4"}
             why: "$(x^{n})'=nx^{n-1}$, 상수의 미분은 $0$"
             cancel: [5, 6]
-          - at: s4
+            cancel_at: s5
+          - at: s6
             parts: ["f'(x)", "=", "6", "x^{2}", "-", "1"]
             focus: ["2\\cdot3x^{2}"]
             new: ["6", "x^{2}"]

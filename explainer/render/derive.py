@@ -240,7 +240,8 @@ class Derivation:
              new: list[str] | None = None, from_map: dict[str, str] | None = None, why: str | None = None,
              box: bool = False, underline: bool = False, cancel: list[str] | None = None,
              run_time: float | None = None, indent: float = 0.0, color: str | None = None,
-             pulse: bool = False, space: float = 0.0) -> DerivLine:
+             pulse: bool = False, space: float = 0.0, hold=None, cancel_hold=None) -> DerivLine:
+        """hold: 출처 상자를 그린 뒤 호출되는 콜러블(예: 다음 문장까지 대기). 짚어 주기와 움직이기를 내레이션에 따로 맞춘다."""
         scene = self.scene
         cv = scene.chalk
         sec = self.sec
@@ -279,6 +280,8 @@ class Derivation:
                 hl_rects.append(r)
             scene.play(*[DrawBorderThenFill(r) for r in hl_rects], *revert, run_time=0.6 * rt_scale)
             revert = []
+            if hold is not None:
+                hold()
         elif revert:
             scene.play(*revert, run_time=0.3)
 
@@ -355,6 +358,8 @@ class Derivation:
 
         # 5) 소거(취소선)
         if cancel:
+            if cancel_hold is not None:
+                cancel_hold()
             strikes = []
             for i, s in enumerate(parts):
                 if s in cancel or i in cancel:
