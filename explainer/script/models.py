@@ -33,6 +33,24 @@ class Meta(BaseModel):
     intro_silence: float = 0.6
     outro_silence: float = 1.0
     loudnorm: bool = True
+    # panel: 그래프 + 오른쪽 보드 패널(지우고 다시 쓰는 방식)
+    # chalkboard: 하나의 큰 칠판에 계속 써 나가며 카메라가 줌인/아웃으로 따라가는 강의 방식
+    style: Literal["panel", "chalkboard"] = "panel"
+
+
+class ChalkLayout(BaseModel):
+    """chalkboard 스타일에서 칠판(캔버스) 섹션 배치."""
+
+    board_color: str = "#24493a"
+    section_width: float = 14.2   # 한 섹션 = 카메라가 꽉 차게 보는 폭 (16:9 → 높이 약 8)
+    section_height: float = 8.0
+    gap: float = 1.6              # 섹션 사이 간격
+    graph_width: float = 7.2      # split 섹션에서 왼쪽 그림 영역 폭
+    margin: float = 0.55
+    line_gap: float = 0.26
+    line_scale: float = 0.72
+    texture: bool = True
+    sections: list[dict[str, Any]] = Field(default_factory=list)  # [{id, title, layout: split|full, graph_width}]
 
 
 class GraphLayout(BaseModel):
@@ -60,6 +78,7 @@ class BoardLayout(BaseModel):
 class Layout(BaseModel):
     graph: GraphLayout = Field(default_factory=GraphLayout)
     board: BoardLayout = Field(default_factory=BoardLayout)
+    chalk: ChalkLayout = Field(default_factory=ChalkLayout)
 
 
 class Action(BaseModel):

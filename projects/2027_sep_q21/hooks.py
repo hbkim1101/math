@@ -46,7 +46,7 @@ def corner_tangents(scene, func: str, x0, length: float = 0.7, color: str | None
             continue
         lab = scene.mtex(text, color=color, scale=label_scale, plain=True)
         lab.next_to(ln.get_center(), scene.direction(d), buff=0.12)
-        lab.add_background_rectangle(color=scene.theme.background, opacity=0.8, buff=0.05)
+        scene.bg_rect(lab, opacity=0.8, buff=0.05)
         lab.set_z_index(8)
         parts.append(lab)
         anims.append(FadeIn(lab, shift=scene.direction(d) * 0.1))
@@ -102,7 +102,7 @@ def sweep_param(scene, expr: str, param: str, values: list, id: str = "sweep", c
     box = VGroup(label, value)
     label.move_to(scene.c2p(*[scene.eval(v) for v in anchor]))
     value.next_to(label, RIGHT, buff=0.12)
-    label.add_background_rectangle(color=scene.theme.background, opacity=0.85, buff=0.06)
+    scene.bg_rect(label, opacity=0.85, buff=0.06)
     box.set_z_index(9)
 
     scene.add(curve, root_dots, box)

@@ -50,7 +50,7 @@ def sliding_chord(scene, func: str = "q1", gap: float = 0.75, t_from: float = -0
 
     readout.add_updater(place_readout)
     place_readout(readout)
-    slope_lab.add_background_rectangle(color=scene.theme.background, opacity=0.8, buff=0.04)
+    scene.bg_rect(slope_lab, opacity=0.8, buff=0.04)
 
     scene.add(chord, readout)
     scene.play(FadeIn(chord), FadeIn(readout), run_time=0.4)

@@ -10,14 +10,15 @@ from typing import Any, Callable, Optional
 import numpy as np
 from manim import (
     DOWN, LEFT, RIGHT, UP, UL, UR, DL, DR, ORIGIN,
-    Axes, Dot, MathTex, Mobject, NumberPlane, Scene, Tex, Text, VGroup, config, tempconfig,
+    Axes, Dot, MathTex, Mobject, MovingCameraScene, NumberPlane, Tex, Text, VGroup, config, tempconfig,
 )
 
 from ..narration.timeline import SegmentTiming, Timeline
 from ..script.loader import make_function, resolve_params, safe_eval
 from ..script.models import Project
 from .board import Board
-from .theme import KO_TEX_TEMPLATE, KOREAN_FONT, MATH_TEX_TEMPLATE, Theme
+from .chalk import Canvas, ChalkCamera, chalk_theme, chalkify
+from .theme import MATH_TEX_TEMPLATE, Theme
 
 DIRECTIONS = {
     "UP": UP, "DOWN": DOWN, "LEFT": LEFT, "RIGHT": RIGHT,
@@ -34,28 +35,40 @@ RESOLUTIONS = {
 }
 
 
-class ExplainerScene(Scene):
-    """프로젝트 + 타임라인을 받아 영상을 구성하는 범용 씬."""
+class ExplainerScene(MovingCameraScene):
+    """프로젝트 + 타임라인을 받아 영상을 구성하는 범용 씬.
+
+    style=panel 이면 카메라는 고정되어 있고, style=chalkboard 면 큰 칠판 캔버스 위를 카메라가 옮겨 다닌다.
+    """
 
     project: Project
     timeline: Timeline
 
     def __init__(self, project: Project, timeline: Timeline, theme: Optional[Theme] = None,
-                 hooks: Optional[dict[str, Callable]] = None, **kwargs):
+                 hooks: Optional[dict[str, Callable]] = None, cache_dir: Optional[Path] = None, **kwargs):
         self.project = project
         self.timeline = timeline
-        self.theme = theme or Theme(background=project.meta.background)
+        self.is_chalk = project.meta.style == "chalkboard"
+        if theme is not None:
+            self.theme = theme
+        elif self.is_chalk:
+            self.theme = chalk_theme(project.layout.chalk.board_color)
+        else:
+            self.theme = Theme(background=project.meta.background)
         self.hooks = hooks or {}
+        self.cache_dir = Path(cache_dir) if cache_dir else Path(".cache")
         self.params: dict[str, float] = resolve_params(project.params)
         self.objs: dict[str, Mobject] = {}
         self.coords: dict[str, tuple[float, float]] = {}
         self.funcs: dict[str, Callable[[float], float]] = {}
         self.axes: Optional[Axes] = None
         self.board: Optional[Board] = None
+        self.chalk: Optional[Canvas] = None
         self.caption: Optional[Mobject] = None
         self.current_segment: Optional[SegmentTiming] = None
         self._segment_start = 0.0
         self.log: list[dict[str, Any]] = []
+        kwargs.setdefault("camera_class", ChalkCamera)
         super().__init__(**kwargs)
 
     # ------------------------------------------------------------------ 시간
@@ -76,6 +89,12 @@ class ExplainerScene(Scene):
 
         meta = self.project.meta
         self.camera.background_color = meta.background
+        if self.is_chalk:
+            lay = self.project.layout.chalk
+            self.chalk = Canvas(self, lay)
+            self.chalk.build_background(self.cache_dir / "chalk", texture=lay.texture)
+            # 첫 섹션을 바로 보여준다 (goto 액션이 나오기 전이라도 카메라가 칠판 위에 있어야 한다)
+            self.chalk.goto(self.chalk.sections[0].id, write_title=False)
         if meta.intro_silence > 0:
             self.wait(meta.intro_silence)
 
@@ -154,7 +173,7 @@ class ExplainerScene(Scene):
         m = MathTex(tex, **kwargs)
         if color:
             m.set_color(self.color(color))
-        return m.scale(scale)
+        return self.finish_text(m.scale(scale))
 
     # 실측: \parbox{10cm} → 약 14.1 Manim 단위 (scale 1 기준)
     CM_PER_UNIT = 10.0 / 14.1
@@ -163,16 +182,36 @@ class ExplainerScene(Scene):
         """한글+수식 혼합 문장(xelatex). width 는 최종 표시 폭(Manim 단위)이며 자동 줄바꿈된다."""
         if width is not None:
             cm = width / scale * self.CM_PER_UNIT
-            body = rf"\parbox{{{cm:.2f}cm}}{{\setlength{{\baselineskip}}{{1.35\baselineskip}}{tex}}}"
+            # raggedright: 줄이 바뀌어도 단어 사이가 늘어나지 않는다 (판서 느낌, 가독성)
+            body = rf"\parbox{{{cm:.2f}cm}}{{\raggedright\setlength{{\baselineskip}}{{1.35\baselineskip}}{tex}}}"
         else:
             body = tex
-        m = Tex(body, tex_template=KO_TEX_TEMPLATE)
+        m = Tex(body, tex_template=self.theme.ko_template)
         m.set_color(self.color(color, self.theme.text))
-        return m.scale(scale)
+        return self.finish_text(m.scale(scale))
 
-    def ktext(self, text: str, size: int = 30, color: str | None = None, weight: str = "NORMAL") -> Text:
-        return Text(text, font=KOREAN_FONT, font_size=size, weight=weight,
-                    color=self.color(color, self.theme.text))
+    def ktext(self, text: str, size: int = 30, color: str | None = None, weight: str = "NORMAL",
+              font: str | None = None) -> Text:
+        m = Text(text, font=font or self.theme.font, font_size=size, weight=weight,
+                 color=self.color(color, self.theme.text))
+        return self.finish_text(m)
+
+    def finish_text(self, mob: Mobject) -> Mobject:
+        """테마별 후처리: 칠판 테마는 글자에 분필 질감(얇은 외곽선)을 준다."""
+        if self.theme.chalk:
+            chalkify(mob)
+        return mob
+
+    def bg_rect(self, mob: Mobject, opacity: float = 0.75, buff: float = 0.05) -> Mobject:
+        """라벨 뒤의 가림 사각형. 칠판 테마에서는 질감 위에 평면 사각형이 보이므로 넣지 않는다."""
+        if not self.theme.chalk:
+            mob.add_background_rectangle(color=self.theme.background, opacity=opacity, buff=buff)
+        return mob
+
+    @property
+    def view_center(self) -> np.ndarray:
+        """현재 카메라가 보는 중심 (panel 스타일은 원점)."""
+        return self.camera.frame.get_center().copy()
 
     def register(self, oid: str | None, mob: Mobject, coord: tuple[float, float] | None = None) -> None:
         if oid:
@@ -233,7 +272,7 @@ def render_project(project: Project, timeline: Timeline, out_dir: str | Path, pr
             "write_to_movie": True,
         }
     ):
-        scene = ExplainerScene(project, timeline, hooks=hooks)
+        scene = ExplainerScene(project, timeline, hooks=hooks, cache_dir=media_dir / "cache")
         scene.render()
         movie = Path(scene.renderer.file_writer.movie_file_path)
 

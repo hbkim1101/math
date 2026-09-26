@@ -21,7 +21,7 @@ from manim import (
 
 from ..script.models import Action
 from .board import Board
-from .theme import KOREAN_FONT
+from .chalk import handwrite, handwrite_time, pin_to_frame
 
 Handler = Callable[..., None]
 REGISTRY: dict[str, Handler] = {}
@@ -53,15 +53,17 @@ def _rt(params_rt: float | None, default: float) -> float:
 def title_card(scene, title: str, subtitle: str = "", run_time: float | None = None, tag: str = "",
                id: str = "title_card", **_):
     rt = _rt(run_time, 1.6)
-    t = scene.ktext(title, size=58, weight="BOLD")
+    chalk = scene.theme.chalk
+    t = scene.ktext(title, size=58 if not chalk else 66, weight="BOLD" if not chalk else "NORMAL",
+                    font=scene.theme.title_font)
     parts = [t]
     if subtitle:
-        s = scene.ktext(subtitle, size=32, color=scene.theme.muted)
+        s = scene.ktext(subtitle, size=32 if not chalk else 38, color=scene.theme.muted, font=scene.theme.title_font)
         parts.append(s)
     if tag:
-        g = scene.ktext(tag, size=22, color=scene.theme.accent)
+        g = scene.ktext(tag, size=22 if not chalk else 30, color=scene.theme.accent, font=scene.theme.title_font)
         parts.append(g)
-    group = VGroup(*parts).arrange(DOWN, buff=0.4).move_to(ORIGIN)
+    group = VGroup(*parts).arrange(DOWN, buff=0.4).move_to(scene.view_center)
     underline = Line(LEFT * 2.2, RIGHT * 2.2, stroke_width=3, color=scene.theme.accent)
     underline.next_to(t, DOWN, buff=0.25)
     if subtitle:
@@ -70,22 +72,47 @@ def title_card(scene, title: str, subtitle: str = "", run_time: float | None = N
             group[2].next_to(group[1], DOWN, buff=0.35)
     full = VGroup(group, underline)
     scene.register(id, full)
+    if chalk:
+        # 칠판에 직접 손으로 써 내려가는 타이틀
+        scene.play(handwrite(t, run_time=max(rt * 0.6, 1.2)))
+        scene.play(Create(underline, run_time=0.35))
+        for p in parts[1:]:
+            scene.play(handwrite(p, run_time=min(1.4, handwrite_time(p))))
+        return
     scene.play(FadeIn(t, shift=UP * 0.3), run_time=rt * 0.5)
     scene.play(Create(underline), *(FadeIn(p, shift=UP * 0.2) for p in parts[1:]), run_time=rt * 0.5)
 
 
 @action("end_card")
-def end_card(scene, title: str, subtitle: str = "", run_time: float | None = None, id: str = "end_card", **_):
+def end_card(scene, title: str, subtitle: str = "", run_time: float | None = None, id: str = "end_card",
+             lines: list[str] | None = None, **_):
+    """마무리 카드. chalkboard 스타일에서는 현재 섹션에 손글씨로 정리 문장(lines)을 써 내려간다."""
     rt = _rt(run_time, 1.4)
-    t = scene.ktext(title, size=54, weight="BOLD")
+    chalk = scene.theme.chalk
+    t = scene.ktext(title, size=54 if not chalk else 50, weight="BOLD" if not chalk else "NORMAL",
+                    font=scene.theme.title_font)
     items = [t]
     if subtitle:
-        s = scene.ktext(subtitle, size=30, color=scene.theme.muted)
+        s = scene.ktext(subtitle, size=30 if not chalk else 32, color=scene.theme.muted, font=scene.theme.title_font)
         if s.width > 12.5:
             s.scale_to_fit_width(12.5)
         items.append(s)
-    g = VGroup(*items).arrange(DOWN, buff=0.4).move_to(ORIGIN)
+    for ln in lines or []:
+        items.append(scene.ktext(ln, size=30 if not chalk else 32, color=scene.theme.muted,
+                                 font=scene.theme.title_font))
+    g = VGroup(*items).arrange(DOWN, buff=0.4).move_to(scene.view_center)
+    if g.width > 12.5:
+        g.scale_to_fit_width(12.5)
     scene.register(id, g)
+    if chalk:
+        if scene.chalk is not None:
+            # 칠판: 현재 섹션의 판서 커서 아래에 왼쪽 정렬로 이어 쓴다
+            g.arrange(DOWN, buff=0.3, aligned_edge=LEFT)
+            scene.chalk.place_line(g, space=0.4)
+        scene.play(handwrite(t, run_time=max(1.0, rt * 0.7)))
+        for m in items[1:]:
+            scene.play(handwrite(m, run_time=min(1.6, handwrite_time(m))))
+        return
     scene.play(FadeIn(g, shift=UP * 0.2), run_time=rt)
 
 
@@ -104,6 +131,10 @@ def clear(scene, ids: list[str] | None = None, keep: list[str] | None = None, ru
         protected = set()
         if scene.board is not None and not board:
             protected.update(id(m) for m in scene.board.all_mobjects())
+        if scene.chalk is not None:
+            # 칠판 자체(질감·테두리)와 섹션 제목은 지우지 않는다
+            protected.update(id(m) for m in getattr(scene.chalk, "background_parts", []))
+            protected.update(id(s.title_mob) for s in scene.chalk.sections if s.title_mob is not None)
         for k in keep:
             if k in scene.objs:
                 protected.add(id(scene.objs[k]))
@@ -157,6 +188,11 @@ def problem(scene, tex: str | None = None, lines: list[str] | None = None, width
     `lines` 로 주면 줄(문장)별로 따로 렌더되어 `problem_focus` 로 읽는 위치를 따라갈 수 있다.
     """
     rt = _rt(run_time, 1.8)
+    chalk = scene.theme.chalk and scene.chalk is not None
+    if chalk:
+        # 칠판: 현재 섹션 판서 폭에 맞춰 줄마다 손글씨로 써 내려간다
+        sec = scene.chalk.section()
+        width = min(width, sec.notes_width)
     line_mobs: list[Mobject] = []
     if lines:
         line_mobs = [scene.ktex(s, width=width, scale=scale) for s in lines]
@@ -166,18 +202,31 @@ def problem(scene, tex: str | None = None, lines: list[str] | None = None, width
         body = scene.ktex(tex, width=width, scale=scale)
     items = []
     if title:
-        items.append(scene.ktext(title, size=30, weight="BOLD", color=scene.theme.accent))
+        items.append(scene.ktext(title, size=30 if not chalk else 36, weight="BOLD" if not chalk else "NORMAL",
+                                 color=scene.theme.accent, font=scene.theme.title_font))
     items.append(body)
     g = VGroup(*items).arrange(DOWN, buff=0.35, aligned_edge=LEFT)
-    if g.width > 12.8:
-        g.scale_to_fit_width(12.8)
-    if g.height > 5.9:
-        g.scale_to_fit_height(5.9)
-    g.move_to([0, 0.55, 0])  # 하단 자막 영역을 피해 약간 위에 배치
+    if not chalk:
+        if g.width > 12.8:
+            g.scale_to_fit_width(12.8)
+        if g.height > 5.9:
+            g.scale_to_fit_height(5.9)
+        g.move_to([0, 0.55, 0])  # 하단 자막 영역을 피해 약간 위에 배치
+    else:
+        avail_h = sec.cursor_y - (sec.bottom + scene.chalk.margin)
+        if g.height > avail_h:
+            g.scale_to_fit_height(avail_h)
+        g.move_to([sec.notes_left, sec.cursor_y, 0], aligned_edge=UL)
+        sec.cursor_y = g.get_bottom()[1] - scene.chalk.line_gap
     scene.register(id, g)
     scene.problem_lines = line_mobs
     for i, m in enumerate(line_mobs):
         scene.register(f"{id}_line_{i}", m)
+    if chalk:
+        pieces = ([items[0]] if title else []) + (line_mobs or [body])
+        for m in pieces:
+            scene.play(handwrite(m, run_time=min(2.4, handwrite_time(m, per_glyph=0.03))))
+        return
     scene.play(FadeIn(g, shift=UP * 0.2), run_time=rt)
 
 
@@ -318,6 +367,14 @@ def axes(scene, id: str = "axes", x_range: list | None = None, y_range: list | N
         yr.append(1)
     w = width or lay.width
     h = height or lay.height
+    sec = None
+    if scene.chalk is not None:
+        # 칠판: 현재 섹션의 그림 영역에 맞춘다 (YAML 에서 width/height/center 를 주면 그 값이 우선)
+        sec = scene.chalk.section()
+        if width is None:
+            w = sec.graph_width - 0.5
+        if height is None:
+            h = sec.graph_height - 0.6
     if equal_aspect:
         unit = min(w / (xr[1] - xr[0]), h / (yr[1] - yr[0]))
         w = unit * (xr[1] - xr[0])
@@ -345,7 +402,12 @@ def axes(scene, id: str = "axes", x_range: list | None = None, y_range: list | N
         )
     else:
         ax = Axes(x_range=xr, y_range=yr, x_length=w, y_length=h, axis_config=axis_cfg, tips=True)
-    c = center or lay.center
+    if center is not None:
+        c = center
+    elif sec is not None:
+        c = sec.graph_center
+    else:
+        c = lay.center
     ax.move_to([float(c[0]), float(c[1]), 0])
     scene.axes = ax
     scene.axes_ranges = (xr, yr)
@@ -353,8 +415,11 @@ def axes(scene, id: str = "axes", x_range: list | None = None, y_range: list | N
     anims = [Create(ax)]
     if labels:
         lab = ax.get_axis_labels(MathTex("x").scale(0.8), MathTex("y").scale(0.8)).set_color(scene.theme.muted)
+        scene.finish_text(lab)
         scene.register(f"{id}_labels", lab)
         anims.append(FadeIn(lab))
+    if scene.theme.chalk:
+        scene.finish_text(ax)  # 축 눈금 숫자도 분필 질감
     scene.play(*anims, run_time=rt)
 
 
@@ -394,7 +459,7 @@ def plot(scene, id: str, expr: str, color: str | None = None, x_range: list | No
             lab.next_to(scene.c2p(x, f(x)), scene.direction(label_dir), buff=0.12)
         else:
             lab.next_to(group, scene.direction(label_dir), buff=0.1)
-        lab.add_background_rectangle(color=scene.theme.background, opacity=0.7, buff=0.05)
+        scene.bg_rect(lab, opacity=0.7, buff=0.05)
         lab.set_z_index(6)
         scene.register(f"{id}_label", lab)
         anims.append(FadeIn(lab, shift=UP * 0.1))
@@ -430,7 +495,7 @@ def line(scene, id: str, slope: Any = None, intercept: Any = None, expr: str | N
         xr, _ = scene.axes_ranges
         x = scene.eval(label_at) if label_at is not None else xr[1] - 0.6
         lab.next_to(scene.c2p(x, f(x)), scene.direction(label_dir), buff=0.1)
-        lab.add_background_rectangle(color=scene.theme.background, opacity=0.7, buff=0.05)
+        scene.bg_rect(lab, opacity=0.7, buff=0.05)
         lab.set_z_index(6)
         scene.register(f"{id}_label", lab)
         anims.append(FadeIn(lab))
@@ -555,7 +620,7 @@ def arrow(scene, id: str, a: Any, b: Any, color: str | None = None, label: str |
     if label:
         lab = scene.mtex(label, color=color, scale=label_scale, plain=True)
         lab.next_to(ar.get_center(), scene.direction(label_dir), buff=0.1).set_z_index(6)
-        lab.add_background_rectangle(color=scene.theme.background, opacity=0.75, buff=0.05)
+        scene.bg_rect(lab, opacity=0.75, buff=0.05)
         scene.register(f"{id}_label", lab)
         anims.append(FadeIn(lab))
     scene.play(*anims, run_time=rt)
@@ -575,12 +640,12 @@ def guides(scene, point: str, color: str | None = None, x_label: str | None = No
     anims = [Create(v), Create(h)]
     if x_label:
         xl = scene.mtex(x_label, color=color, scale=label_scale, plain=True).next_to(scene.c2p(x, 0), DOWN, buff=0.12)
-        xl.add_background_rectangle(color=scene.theme.background, opacity=0.8, buff=0.04)
+        scene.bg_rect(xl, opacity=0.8, buff=0.04)
         g.add(xl)
         anims.append(FadeIn(xl))
     if y_label:
         yl = scene.mtex(y_label, color=color, scale=label_scale, plain=True).next_to(scene.c2p(0, y), LEFT, buff=0.12)
-        yl.add_background_rectangle(color=scene.theme.background, opacity=0.8, buff=0.04)
+        scene.bg_rect(yl, opacity=0.8, buff=0.04)
         g.add(yl)
         anims.append(FadeIn(yl))
     scene.register(id or f"guides_{point}", g)
@@ -614,7 +679,7 @@ def translate_copy(scene, source: str, dx: Any, dy: Any, id: str, color: str | N
         anims.append(GrowArrow(ar))
         if arrow_label:
             al = scene.mtex(arrow_label, scale=0.65, plain=True, color=color).next_to(ar.get_center(), UR, buff=0.08)
-            al.add_background_rectangle(color=scene.theme.background, opacity=0.75, buff=0.04)
+            scene.bg_rect(al, opacity=0.75, buff=0.04)
             scene.register(f"{id}_arrow_label", al)
             anims.append(FadeIn(al))
     scene.play(copy.animate.shift(shift_vec), *anims, run_time=rt)
@@ -718,7 +783,7 @@ def label(scene, id: str, tex: str, near: str | None = None, pos: Any = None, di
     elif pos is not None:
         lab.move_to(scene.c2p(*scene.resolve_coord(pos))).shift(scene.direction(dir) * buff)
     if bg:
-        lab.add_background_rectangle(color=scene.theme.background, opacity=0.75, buff=0.05)
+        scene.bg_rect(lab, opacity=0.75, buff=0.05)
     lab.set_z_index(7)
     scene.register(id, lab)
     scene.play(FadeIn(lab, shift=scene.direction(dir) * 0.1), run_time=rt)
@@ -735,6 +800,9 @@ def caption(scene, text: str = "", tex: str | None = None, color: str | None = N
             scene.play(FadeOut(old), run_time=rt)
             scene.caption = None
             scene.objs.pop(id, None)
+        return
+    if scene.theme.chalk:
+        _chalk_caption(scene, text, tex, color, rt, id, position, old)
         return
     if tex is not None:
         body = scene.ktex(tex, scale=0.78, color=color)
@@ -771,6 +839,32 @@ def caption(scene, text: str = "", tex: str | None = None, color: str | None = N
         scene.play(FadeOut(old, shift=DOWN * 0.15), FadeIn(g, shift=UP * 0.15), run_time=rt)
     else:
         scene.play(FadeIn(g, shift=UP * 0.15), run_time=rt)
+
+
+def _chalk_caption(scene, text, tex, color, rt, id, position, old):
+    """칠판 스타일 캡션: 화면(카메라 프레임)에 고정된 손글씨 메모. 반투명 띠 위에 얹어 어떤 배경에서도 읽힌다."""
+    accent = scene.color(color, scene.theme.accent)
+    if tex is not None:
+        body = scene.ktex(tex, scale=0.8, color=color or scene.theme.accent)
+    else:
+        body = scene.ktext(text, size=34, color=accent, font=scene.theme.title_font)
+    if body.width > 12.0:
+        body.scale_to_fit_width(12.0)
+    band = RoundedRectangle(corner_radius=0.12, width=body.width + 0.7, height=body.height + 0.34,
+                            fill_color="#0d1a14", fill_opacity=0.55, stroke_width=0)
+    body.move_to(band)
+    g = VGroup(band, body).set_z_index(40)
+    pin_to_frame(scene, g, anchor=UP if position == "top" else DOWN, buff=0.25 if position == "top" else 1.35)
+    scene.caption = g
+    scene.register(id, g)
+    anims = [FadeIn(band, run_time=rt), handwrite(body, run_time=max(rt, min(1.4, handwrite_time(body, per_glyph=0.035))))]
+    if old is not None:
+        old.clear_updaters()
+        anims.append(FadeOut(old, shift=DOWN * 0.15, run_time=rt))
+    scene.play(*anims)
+    # 애니메이션은 band/body 를 개별로 씬에 넣는다. 업데이터(프레임 고정)는 그룹에 있으므로 그룹으로 다시 묶는다.
+    scene.remove(band, body)
+    scene.add(g)
 
 
 @action("fade")
@@ -849,8 +943,22 @@ def answer(scene, tex: str, run_time: float | None = None, id: str = "answer", c
     m = scene.mtex(tex, scale=1.4, plain=True).set_color(scene.theme.text)
     items = [m]
     if caption_text:
-        items.insert(0, scene.ktext(caption_text, size=28, color=scene.theme.muted))
+        items.insert(0, scene.ktext(caption_text, size=28 if not scene.theme.chalk else 40, color=scene.theme.muted,
+                                    font=scene.theme.title_font))
     g = VGroup(*items).arrange(DOWN, buff=0.3)
+    if scene.theme.chalk and scene.chalk is not None:
+        # 칠판: 판서 커서 위치에 크게 쓰고 분필로 상자를 두른다 (채우기 없음)
+        g.arrange(RIGHT if caption_text else DOWN, buff=0.5)
+        scene.chalk.place_line(g, indent=0.3, space=0.35)
+        scene.chalk.advance(0.3)
+        box = RoundedRectangle(corner_radius=0.12, width=g.width + 0.7, height=g.height + 0.5,
+                               fill_opacity=0, stroke_color=col, stroke_width=4).move_to(g)
+        full = VGroup(g, box).set_z_index(20)
+        scene.register(id, full)
+        scene.play(handwrite(g, run_time=rt))
+        scene.play(Create(box, run_time=0.7))
+        scene.play(Circumscribe(box, color=col, buff=0.08), run_time=0.8)
+        return
     box = RoundedRectangle(corner_radius=0.16, width=g.width + 0.9, height=g.height + 0.7,
                            fill_color=scene.theme.panel, fill_opacity=0.96, stroke_color=col, stroke_width=3)
     full = VGroup(box, g).set_z_index(20)
@@ -859,6 +967,127 @@ def answer(scene, tex: str, run_time: float | None = None, id: str = "answer", c
     scene.register(id, full)
     scene.play(FadeIn(box, scale=0.9), Write(g), run_time=rt)
     scene.play(Circumscribe(box, color=col, buff=0.05), run_time=0.8)
+
+
+# ====================================================================== 칠판(chalkboard) 전용
+def _need_chalk(scene, name: str):
+    if scene.chalk is None:
+        raise RuntimeError(f"{name} 액션은 meta.style: chalkboard 에서만 사용할 수 있습니다")
+    return scene.chalk
+
+
+@action("goto")
+def goto(scene, section: str, run_time: float | None = None, overview: bool = True, title: bool = True, **_):
+    """카메라를 다른 섹션으로 옮긴다. 도중에 살짝 줌아웃해 칠판 전체 흐름이 보이고, 처음 방문이면 제목을 판서한다."""
+    cv = _need_chalk(scene, "goto")
+    if scene.caption is not None:
+        # 이전 섹션의 메모(캡션)는 새 섹션으로 가기 전에 지운다
+        scene.caption.clear_updaters()
+        scene.play(FadeOut(scene.caption), run_time=0.3)
+        scene.objs.pop("caption", None)
+        scene.caption = None
+    cv.goto(section, run_time=_rt(run_time, 1.8), overview=overview, write_title=title)
+
+
+@action("write")
+def write(scene, lines: list[str] | None = None, tex: str | None = None, text: str | None = None,
+          color: str | None = None, ko: bool = False, scale: float | None = None, run_time: float | None = None,
+          indent: float = 0.0, t2c: dict | None = None, plain: bool = False, id: str | None = None,
+          box: bool = False, underline: bool = False, space: float = 0.0, section: str | None = None,
+          width: float | None = None, **_):
+    """칠판 판서: 현재(또는 지정) 섹션의 커서 위치에 한 줄씩 손글씨로 적는다.
+
+    - tex/lines: 수식(pdflatex). ko: true 면 한글+수식 혼합(xelatex, 판서 폭에 맞춰 자동 줄바꿈)
+    - text: Pango 손글씨 폰트로 쓴 한글 메모
+    - box/underline: 마지막 줄을 분필 상자/밑줄로 강조 (지우지 않고 남는다)
+    """
+    cv = _need_chalk(scene, "write")
+    sec = cv.section(section)
+    items: list[tuple[str, str]] = [("tex", s) for s in (lines or [])]
+    if tex is not None:
+        items.append(("tex", tex))
+    if text is not None:
+        items.append(("text", text))
+    sc = scale if scale is not None else scene.project.layout.chalk.line_scale
+    col = scene.color(color, scene.theme.text)
+    last = None
+    for i, (kind, s) in enumerate(items):
+        if kind == "text":
+            mob = scene.ktext(s, size=int(44 * sc), color=col)
+        elif ko:
+            w = width if width is not None else sec.notes_width - indent
+            mob = scene.ktex(s, scale=sc, color=color, width=w)
+        else:
+            mob = scene.mtex(s, color=color, scale=sc, t2c=t2c, plain=plain)
+        cv.place_line(mob, indent=indent, sec=sec, space=space if i == 0 else 0.0)
+        rt = run_time if run_time is not None and len(items) == 1 else None
+        if run_time is not None and len(items) > 1:
+            rt = float(run_time) / len(items)
+        scene.play(handwrite(mob, run_time=rt))
+        if id:
+            scene.register(f"{id}_{i}" if len(items) > 1 else id, mob)
+        last = mob
+    if last is not None and id and len(items) > 1:
+        scene.register(id, last)
+    if last is not None and (box or underline):
+        hl = scene.color(None, scene.theme.highlight) if color is None else col
+        if box:
+            mark = RoundedRectangle(corner_radius=0.1, width=last.width + 0.4, height=last.height + 0.3,
+                                    fill_opacity=0, stroke_color=hl, stroke_width=3).move_to(last)
+            cv.advance(0.18, sec)
+        else:
+            mark = Line(last.get_corner(DL) + DOWN * 0.08, last.get_corner(DR) + DOWN * 0.08,
+                        stroke_color=hl, stroke_width=3)
+            cv.advance(0.1, sec)
+        mark.set_z_index(3)
+        if id:
+            scene.register(f"{id}_mark", mark)
+        scene.play(Create(mark), run_time=0.5)
+
+
+@action("space")
+def space(scene, dy: float = 0.3, section: str | None = None, **_):
+    """판서 커서를 dy 만큼 아래로 내린다 (문단 사이 여백)."""
+    cv = _need_chalk(scene, "space")
+    cv.advance(float(dy), cv.section(section))
+
+
+@action("camera")
+def camera(scene, focus: Any = None, pos: Any = None, width: float = 6.0, run_time: float | None = None,
+           reset: bool = False, ids: list[str] | None = None, pad: float = 1.2, sections: list[str] | None = None,
+           **_):
+    """카메라 줌.
+
+    - pos: 그래프 좌표로 줌인 / focus: 객체 id(또는 섹션 id) / ids: 여러 객체가 모두 보이게
+    - sections: [첫 섹션, 끝 섹션] 범위가 모두 보이게 줌아웃 (칠판 전체를 훑어보는 마무리 등)
+    - reset: 현재 섹션 뷰로 복귀
+    """
+    cv = _need_chalk(scene, "camera")
+    rt = _rt(run_time, 1.2)
+    if reset:
+        cv.reset_view(run_time=rt)
+        return
+    if sections:
+        a, b = cv.section(sections[0]), cv.section(sections[-1])
+        left, right = min(a.left, b.left) - 0.4, max(a.right, b.right) + 0.4
+        cv.focus([(left + right) / 2, 0.0], right - left, run_time=rt)
+        return
+    if ids:
+        g = VGroup(*(scene.get(i) for i in ids))
+        c = g.get_center()
+        w = max(float(width), g.width + pad, (g.height + pad) * 16 / 9)
+        cv.focus(c, w, run_time=rt)
+        return
+    if pos is not None:
+        c = scene.c2p(*scene.resolve_coord(pos))
+    elif isinstance(focus, str) and scene.chalk is not None and focus in cv.by_id:
+        cv.goto(focus, run_time=rt, overview=False)
+        return
+    elif focus is not None:
+        c = scene.get(focus).get_center()
+    else:
+        raise ValueError("camera 액션에는 focus, pos, ids 또는 reset 이 필요합니다")
+    cv.focus(c, float(width), run_time=rt)
 
 
 @action("custom")

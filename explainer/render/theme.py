@@ -20,6 +20,9 @@ KO_TEX_TEMPLATE = TexTemplate(
 \setmainhangulfont{Noto Sans CJK KR}
 \setsanshangulfont{Noto Sans CJK KR}
 \setlength{\parindent}{0pt}
+% 한글 어절 중간에서 줄이 바뀌지 않게 (xetexko 기본은 글자 단위 줄바꿈 허용)
+\XeTeXlinebreakpenalty=10000
+\emergencystretch=3em
 """,
 )
 
@@ -54,6 +57,12 @@ class Theme:
             "warn": "#fb7185",
         }
     )
+
+    # 폰트/조판 템플릿 (칠판 테마는 손글씨 폰트로 바꾼다)
+    font: str = KOREAN_FONT
+    title_font: str = KOREAN_FONT
+    ko_template: TexTemplate = field(default_factory=lambda: KO_TEX_TEMPLATE)
+    chalk: bool = False  # True 면 배경 사각형/패널 없이 분필 느낌으로 그린다
 
     _ATTR_COLORS = ("text", "muted", "axis", "grid", "panel", "accent", "highlight", "background")
 

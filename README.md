@@ -7,8 +7,15 @@ YAML 시나리오 ──▶ TTS(문장 타이밍) ──▶ Manim 렌더(내레�
 ```
 
 데모 (2027학년도 9월 모의평가, 2026.9 시행, 수학 공통):
-- `projects/2027_sep_q22/` — 22번: 지수·로그함수와 직사각형 ABCD (정답 97)
-- `projects/2027_sep_q21/` — 21번: 절댓값 함수의 미분가능성, 뾰족점의 상쇄 (정답 12)
+- `projects/2027_sep_q22/` — 22번: 지수·로그함수와 직사각형 ABCD (정답 97) — 패널 스타일
+- `projects/2027_sep_q21/` — 21번: 절댓값 함수의 미분가능성, 뾰족점의 상쇄 (정답 12) — **칠판 강의 스타일** (`project_panel.yaml` 은 패널 스타일 버전)
+
+두 가지 연출 스타일을 지원합니다 (`meta.style`):
+
+| 스타일 | 설명 |
+|---|---|
+| `panel` | 왼쪽 그래프 + 오른쪽 풀이 보드 패널. 보드는 지우고 다시 쓴다. 카메라 고정. |
+| `chalkboard` | **하나의 큰 칠판**에 지우지 않고 계속 써 나가고, 카메라가 **줌인/아웃**으로 따라간다. 질감 있는 초록 칠판, 색분필 팔레트, 손글씨 폰트(나눔바른펜/나눔손글씨 펜)로 **판서(Write) 애니메이션**. 핵심 메모(캡션)는 화면에 고정. 실제 강의 영상의 판서 흐름 + 영상만의 애니메이션(그래프 생성, 매개변수 슬라이더, 확대 뷰)을 함께 유지. |
 
 ---
 
@@ -71,6 +78,25 @@ segments:
 | 기하 연출 | `translate_copy`(평행이동 복사), `reflect`(직선 대칭이동 + 수선/직각 표시) |
 | 강조 | `highlight`(indicate/flash/circumscribe/pulse), `dim`/`undim`(stroke·fill 원본 비율 유지), `fade`, `answer` |
 | 확장 | `custom` → 프로젝트 폴더의 `hooks.py` 함수 호출 (22번: `sliding_chord`, `ghost_translate` / 21번: `corner_tangents`(좌·우 접선으로 뾰족점 표시), `sweep_param`(매개변수 슬라이더)) |
+| 칠판 전용 | `goto`(섹션으로 카메라 이동 — 도중 살짝 줌아웃, 첫 방문이면 제목 판서), `write`(커서 위치에 손글씨로 한 줄씩; `ko`, `text`, `box`/`underline`, `space`), `camera`(`pos`/`focus`/`ids` 줌인, `sections` 범위 줌아웃, `reset`), `space` |
+
+### 칠판 스타일 레이아웃
+
+```yaml
+meta:   { style: chalkboard, background: "#101614" }
+layout:
+  chalk:
+    board_color: "#24493a"
+    line_scale: 0.7
+    sections:                                  # 왼쪽→오른쪽으로 이어지는 칠판 칸
+      - {id: title,   layout: full}
+      - {id: problem, layout: full,  title: "문제"}
+      - {id: sol1,    layout: split, title: "풀이 1 · 조건 (가)"}   # split = 왼쪽 그림 + 오른쪽 판서
+```
+
+- 섹션 한 칸이 카메라 뷰 하나(폭 14.2 ≒ 16:9 프레임). `axes` 는 현재 섹션의 그림 영역에 자동 배치되고, `write`/`problem`/`answer`/`end_card` 는 판서 커서를 따라 아래로 이어 쓴다.
+- `caption` 은 카메라 프레임에 고정된 손글씨 메모(줌인 중에도 같은 자리), `goto` 시 자동으로 지워진다.
+- 칠판 질감은 PIL 로 생성해 캐시하고 섹션별 타일로 얹는다. 카메라 줌 시 타일의 보이는 부분만 리샘플링하도록 `ChalkCamera` 가 이미지 렌더링을 최적화한다.
 
 ## 4. 자동 검증 (`explainer verify`)
 
@@ -91,12 +117,12 @@ segments:
 explainer/
   script/    models.py(pydantic DSL) · loader.py(YAML, safe_eval)
   narration/ tts.py(edge-tts, 문장 타이밍, 캐시) · timeline.py
-  render/    theme.py(색·폰트·xelatex 템플릿) · board.py(풀이 보드) · scene.py(세그먼트 실행 루프) · actions.py(액션 라이브러리)
+  render/    theme.py(색·폰트·xelatex 템플릿) · board.py(풀이 보드) · chalk.py(칠판 캔버스·판서·카메라) · scene.py(세그먼트 실행 루프, MovingCamera) · actions.py(액션 라이브러리)
   compose/   subtitles.py(SRT/ASS, 긴 문장 분할) · mux.py(ffmpeg: 자막 번인, loudnorm, apad)
   verify/    checks.py(자동 검증)
   lint.py · pipeline.py · cli.py
 projects/2027_sep_q22/  project.yaml · hooks.py
-projects/2027_sep_q21/  project.yaml · hooks.py
+projects/2027_sep_q21/  project.yaml(칠판) · project_panel.yaml(패널) · hooks.py
 tests/
 ```
 
