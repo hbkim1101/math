@@ -883,7 +883,7 @@ def _chalk_caption(scene, text, tex, color, rt, id, position, old):
                             fill_color="#0d1a14", fill_opacity=0.55, stroke_width=0)
     body.move_to(band)
     g = VGroup(band, body).set_z_index(40)
-    pin_to_frame(scene, g, anchor=UP if position == "top" else DOWN, buff=0.25 if position == "top" else 1.35)
+    pin_to_frame(scene, g, anchor=UP if position == "top" else DOWN, buff=0.25 if position == "top" else 1.6)
     scene.caption = g
     scene.register(id, g)
     anims = [FadeIn(band, run_time=rt), handwrite(body, run_time=max(rt, min(1.4, handwrite_time(body, per_glyph=0.035))))]
@@ -1015,7 +1015,7 @@ def _circle_choice(scene, n: int, col: str, id: str = "answer") -> None:
     ring = Ellipse(width=part.width + 0.55, height=part.height + 0.26, stroke_color=col, stroke_width=4,
                    fill_opacity=0).move_to(part).set_z_index(6)
     # 분필 동그라미: 시작점을 살짝 위쪽으로, 끝이 조금 겹치게
-    ring.rotate(PI * 0.55)
+    ring.rotate(PI)
     scene.register(f"{id}_choice", ring)
     if scene.chalk is not None:
         cv = scene.chalk

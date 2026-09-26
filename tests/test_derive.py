@@ -74,6 +74,17 @@ def test_same_string_twice_uses_nearest_unused_source():
     assert sorted(p.new) == [2] and p.ops == [1]
 
 
+def test_chained_equality_does_not_use_left_side_as_source():
+    # a_7 = a_2 + 5d  →  = 2 + 5·3 : 좌변 a_7 은 그대로이므로 출처(상자)가 되지 않아야 한다
+    prev = _line(["a_{7}", "=", "a_{2}", "+", "5d"])
+    p = plan_match(prev, ["=", "2", "+", "5\\cdot3"], from_map={"2": "a_{2}", "5\\cdot3": "5d"})
+    assert sorted(p.morph) == [(2, 1), (4, 3)]
+    assert all(j != 0 for j, _ in p.morph) and p.sources == []
+    # from 없이 자동 짝짓기를 해도 마찬가지
+    p2 = plan_match(prev, ["=", "2", "+", "15"])
+    assert all(j != 0 for j, _ in p2.morph)
+
+
 def test_operator_set():
     assert is_operator("=") and is_operator("\\times") and is_operator(" + ")
     assert not is_operator("x") and not is_operator("2^{-1}")

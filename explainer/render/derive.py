@@ -23,6 +23,9 @@ from manim import (
 from .chalk import handwrite, handwrite_time
 from .theme import MATH_TEX_TEMPLATE
 
+# 바뀐 조각의 강조색: 칠판의 흰 분필과 뚜렷이 구분되는 진한 노란 분필
+DERIVE_ACCENT = "#ffd23f"
+
 # 매칭에서 '내용'으로 취급하지 않는 조각(연산자·괄호). 이들은 그대로면 슬라이드, 새로 생기면 빠르게 쓴다.
 OPERATORS = {
     "=", "+", "-", "\\times", "\\cdot", "(", ")", "\\left(", "\\right)", ",", "\\Rightarrow", "\\therefore",
@@ -117,6 +120,9 @@ def plan_match(prev: Optional[DerivLine], parts: list[str], from_map: dict[str, 
         src = [j for j, q in enumerate(pparts) if q in focus and j not in used_prev]
     else:
         src = [j for j, q in enumerate(pparts) if j not in used_prev and not is_operator(q)]
+        # 연쇄 등식("= …"로 이어지는 줄)은 앞줄의 우변만 바뀐 것이므로 좌변은 출처로 삼지 않는다
+        if _eq_index(parts) == 0 and prev.eq_index is not None:
+            src = [j for j in src if prev.side_of(j) == 1]
     if new is not None:
         tgt = [i for i, s in enumerate(parts) if s in new and i not in assigned]
     else:
@@ -164,7 +170,7 @@ class Derivation:
         self.id = did
         self.scale = scale
         self.base_color = scene.color(color, scene.theme.text)
-        self.accent = scene.color(accent, scene.theme.accent)
+        self.accent = scene.color(accent, DERIVE_ACCENT)
         self.why_color = scene.color(why_color, scene.theme.palette.get("log", scene.theme.muted))
         self.keep_color = keep_color
         self.indent = indent
@@ -269,21 +275,33 @@ class Derivation:
                                      stroke_color=self.accent, stroke_width=2.2, fill_opacity=0).move_to(sp)
                 r.set_z_index(5)
                 hl_rects.append(r)
-            scene.play(*[Create(r) for r in hl_rects], *revert, run_time=0.45 * rt_scale)
+            scene.play(*[Create(r) for r in hl_rects], *revert, run_time=0.55 * rt_scale)
             revert = []
         elif revert:
             scene.play(*revert, run_time=0.3)
 
-        # 2) 조각 이동/변형/판서 — 동시에
-        anims = []
+        # 2) 두 단계로 움직인다: (A) 그대로인 조각이 먼저 미끄러져 내려와 뼈대를 만들고,
+        #    (B) 강조된 조각이 출처에서 날아와 빈자리에 들어간다 → 바뀐 곳이 한눈에 보인다
+        phase_a = []
         for j, i in plan.slide:
-            anims.append(TransformFromCopy(prev.part_mobs[j], pm[i], run_time=0.7 * rt_scale))
+            phase_a.append(TransformFromCopy(prev.part_mobs[j], pm[i], run_time=0.9 * rt_scale))
+        for i in plan.ops:
+            # 새 부호: 이항으로 생긴 부호(+/-)면 강조색으로 (B) 단계에서, 아니면 기본색으로 (A) 단계에서 쓴다
+            if any(abs(i - k) == 1 for _, k in plan.move):
+                pm[i].set_color(self.accent)
+                pm[i]._deriv_accent = True
+            else:
+                phase_a.append(handwrite(pm[i], run_time=0.4 * rt_scale))
+        phase_b = []
         for j, i in plan.move:
             pm[i].set_color(self.accent)
             pm[i]._deriv_accent = True
             dx = pm[i].get_center()[0] - prev.part_mobs[j].get_center()[0]
-            anims.append(TransformFromCopy(prev.part_mobs[j], pm[i], path_arc=-PI / 2.2 if dx > 0 else PI / 2.2,
-                                           run_time=0.95 * rt_scale))
+            phase_b.append(TransformFromCopy(prev.part_mobs[j], pm[i], path_arc=-PI / 2.2 if dx > 0 else PI / 2.2,
+                                             run_time=1.3 * rt_scale))
+        for i in plan.ops:
+            if getattr(pm[i], "_deriv_accent", False):
+                phase_b.append(handwrite(pm[i], run_time=0.4 * rt_scale))
         ghosts: list[Mobject] = []
         morph_targets: set[int] = set()
         for j, i in plan.morph:
@@ -294,33 +312,31 @@ class Derivation:
                 # (같은 mobject 에 Transform 을 두 번 걸면 점 데이터가 깨진다)
                 ghost = pm[i].copy().set_opacity(0.85)
                 ghosts.append(ghost)
-                anims.append(TransformFromCopy(prev.part_mobs[j], ghost, path_arc=-PI / 6, run_time=0.9 * rt_scale))
+                phase_b.append(TransformFromCopy(prev.part_mobs[j], ghost, path_arc=-PI / 6, run_time=1.2 * rt_scale))
                 continue
             morph_targets.add(i)
-            anims.append(TransformFromCopy(prev.part_mobs[j], pm[i], path_arc=-PI / 6, run_time=0.9 * rt_scale))
+            phase_b.append(TransformFromCopy(prev.part_mobs[j], pm[i], path_arc=-PI / 6, run_time=1.2 * rt_scale))
         for i in plan.new:
             pm[i].set_color(self.accent)
             pm[i]._deriv_accent = True
-            anims.append(handwrite(pm[i], run_time=max(0.5, handwrite_time(pm[i], per_glyph=0.06, hi=2.2)) * rt_scale))
-        for i in plan.ops:
-            # 새 부호: 이항으로 생긴 부호(+/-)면 강조, 아니면 기본색
-            moved_neighbors = any(abs(i - k) == 1 for _, k in plan.move)
-            if moved_neighbors:
-                pm[i].set_color(self.accent)
-                pm[i]._deriv_accent = True
-            anims.append(handwrite(pm[i], run_time=0.35 * rt_scale))
+            phase_b.append(handwrite(pm[i], run_time=max(0.6, handwrite_time(pm[i], per_glyph=0.07, hi=2.4)) * rt_scale))
         if prev is None:
             # 첫 줄은 통째로 판서 (강조 없음)
             for i in plan.new + plan.ops:
                 pm[i].set_color(self.base_color if color is None else scene.color(color))
                 pm[i]._deriv_accent = False
             scene.play(handwrite(mob, run_time=run_time if run_time is not None else handwrite_time(mob, per_glyph=0.05, hi=2.6)))
-        elif anims:
-            scene.play(AnimationGroup(*anims, lag_ratio=0.08))
+        else:
+            if phase_a:
+                scene.play(AnimationGroup(*phase_a, lag_ratio=0.05))
+            if phase_b:
+                if hl_rects:
+                    scene.wait(0.2 * rt_scale)   # 출처 상자를 잠깐 보여 준 뒤 날린다
+                scene.play(AnimationGroup(*phase_b, lag_ratio=0.1))
         # 3) 출처 상자 정리 (조각은 씬에 개별로 들어갔으므로 줄 단위로 다시 묶는다)
         scene.remove(*pm, mob, *ghosts)
         scene.add(mob)
-        after = [FadeOut(r, run_time=0.3) for r in hl_rects]
+        after = [FadeOut(r, run_time=0.4) for r in hl_rects]
         self.lines.append(line)
         self.group.add(mob)
         scene.register(f"{self.id}_{len(self.lines) - 1}", mob)
