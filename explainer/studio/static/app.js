@@ -242,14 +242,141 @@
   }
   function playRange(seg) {
     const r = renderedRange(seg); if (!r) return;
+    playSpan(r.url, r.start, r.end);
+  }
+  /** 오른쪽 영상 패널에서 [start, end] 구간만 재생. */
+  function playSpan(url, start, end) {
     const video = $("#video"); const vs = $("#videoSource");
-    const opt = [...vs.options].find((o) => o.dataset.url === r.url);
-    if (opt && vs.value !== opt.value) { vs.value = opt.value; video.src = r.url; }
+    const opt = [...vs.options].find((o) => o.dataset.url === url);
+    if (opt && vs.value !== opt.value) { vs.value = opt.value; video.src = url; }
     switchTab("video");
-    const go = () => { video.currentTime = r.start; video.play().catch(() => {}); };
+    const go = () => { video.currentTime = Math.max(0, start); video.play().catch(() => {}); };
     if (video.readyState >= 1) go(); else video.addEventListener("loadedmetadata", go, { once: true });
-    const stop = () => { if (video.currentTime >= r.end - 0.05) { video.pause(); video.removeEventListener("timeupdate", stop); } };
+    if (video._stopSpan) video.removeEventListener("timeupdate", video._stopSpan);
+    const stop = () => { if (video.currentTime >= end - 0.05) { video.pause(); video.removeEventListener("timeupdate", stop); } };
+    video._stopSpan = stop;
     video.addEventListener("timeupdate", stop);
+  }
+
+  // ------------------------------------------------------------------ 액션 하나가 영상의 어느 구간인지 (렌더 로그가 있으면 정확, 없으면 at·run_time 으로 추정)
+  const DEFAULT_DUR = {
+    goto: 1.8, title_card: 1.6, end_card: 2.4, problem: 2.0, problem_focus: 0.6, problem_dock: 1.0, write: 1.2, caption: 0.5,
+    step: 2.0, axes: 1.2, plot: 1.2, line: 0.9, vline: 0.5, point: 0.6, points: 1.0, polygon: 1.0, segment: 0.9, arrow: 0.9,
+    guides: 0.8, reflect: 1.6, translate_copy: 1.8, highlight: 0.9, dim: 0.5, undim: 0.5, fade: 0.6, camera: 1.2, custom: 2.5,
+    answer: 1.2, label: 0.6, clear: 0.8, section: 1.0, space: 0.0, board_init: 1.0, board_write: 1.0, board_replace: 1.0,
+    board_highlight: 0.8, board_clear: 0.6, board_title: 0.8,
+  };
+  function actionDuration(a) {
+    if (a.do === "wait") return Number(a.seconds ?? 1);
+    if (a.do === "derive") { const st = a.steps || []; return st.reduce((s, x) => s + Number(x.run_time ?? a.run_time ?? 2.0), 0) + 0.4; }
+    return Number(a.run_time ?? DEFAULT_DUR[a.do] ?? 1.0);
+  }
+  /** seg 의 각 액션이 영상에서 차지하는 [start, end] (절대 초). 렌더 결과가 없거나 내레이션이 바뀌었으면 null. */
+  function actionSpans(seg) {
+    const rr = renderedRange(seg); if (!rr || rr.stale) return null;
+    const src = renderedSource();
+    const o = state.outputs || {}; const bag = src.kind === "partial" ? (o.partial || {}) : (o.full || {});
+    const log = Array.isArray(bag.actions_log) ? bag.actions_log.filter((x) => x.segment === seg.id) : [];
+    if (log.length === seg.actions.length && log.every((x, k) => x.action === seg.actions[k].do)) {
+      return { url: rr.url, exact: true, spans: log.map((x) => ({ start: x.start, end: x.end })) };
+    }
+    const info = sentencesFor(seg); if (!info.exact) return null;
+    const S = rr.start, E = rr.end;
+    const resolveAt = (at) => {
+      if (typeof at === "number") return S + at;
+      if (typeof at === "string" && /^s\d+$/.test(at)) { const s = info.list[Number(at.slice(1)) - 1]; return s ? S + s.start : null; }
+      return null;
+    };
+    let t = S; const spans = [];
+    for (const a of seg.actions) {
+      let start = t;
+      const atT = resolveAt(a.at);
+      if (atT !== null) start = Math.max(t, atT);
+      start = Math.min(start, E);
+      let end;
+      if (a.do === "derive" && (a.steps || []).length) {
+        // 단계마다 at 이 있을 수 있다: 각 단계는 (자기 at 또는 앞 단계 끝)에서 시작
+        let ts = start;
+        for (const st of a.steps) { const sa = resolveAt(st.at); if (sa !== null) ts = Math.max(ts, sa); ts = Math.min(E, ts + Number(st.run_time ?? a.run_time ?? 2.0)); }
+        end = Math.min(E, ts + 0.3);
+      } else end = Math.min(E, start + actionDuration(a));
+      spans.push({ start, end }); t = end;
+    }
+    return { url: rr.url, exact: false, spans };
+  }
+  /** 이 액션이 실행될 때 카메라가 보는 칸 id (goto 는 그 이전 칸). */
+  function sectionBefore(segIndex, actIndex) {
+    let cur = null;
+    for (let i = 0; i < segIndex; i++) for (const a of state.doc.segments[i]?.actions || []) if (a.do === "goto" && a.section) cur = a.section;
+    const acts = state.doc.segments[segIndex]?.actions || [];
+    for (let k = 0; k < actIndex; k++) if (acts[k].do === "goto" && acts[k].section) cur = acts[k].section;
+    return cur ?? (state.doc.layout?.chalk?.sections?.[0]?.id ?? null);
+  }
+  /** 칠판 칸들을 한 줄로 그린 약도. from → to 를 강조. */
+  function boardMap(fromId, toId, extraIds = []) {
+    const secs = state.doc.layout?.chalk?.sections || [];
+    if (!secs.length) return null;
+    const map = el("div", { class: "boardmap" });
+    secs.forEach((s) => {
+      const isTo = s.id === toId, isFrom = s.id === fromId && !isTo, isExtra = extraIds.includes(s.id);
+      const inner = s.layout === "split"
+        ? el("div", { class: "bm-split" }, el("i", { class: "bm-graph" }), el("i", { class: "bm-lines" }))
+        : el("div", { class: "bm-full" }, el("i", { class: "bm-lines" }));
+      map.append(el("div", { class: "bsec" + (isTo ? " to" : "") + (isFrom ? " from" : "") + (isExtra ? " extra" : ""), title: `${s.id}${s.title ? " — " + s.title : ""} (${s.layout || "full"})` },
+        el("div", { class: "bm-title" }, s.title || s.id), inner,
+        el("div", { class: "bm-id" }, s.id),
+        isTo ? el("div", { class: "bm-tag" }, fromId && fromId !== toId ? "→ 여기로" : "여기") : isFrom ? el("div", { class: "bm-tag from" }, "지금") : null));
+    });
+    return map;
+  }
+  /** 펼친 카드 맨 위: 이 액션이 화면에서 무엇을 하는지 — 실행 전/후 프레임, 실행 시각, (goto/camera) 칠판 약도. */
+  function actionPreview(seg, act, i) {
+    const box = el("div", { class: "apreview" });
+    const segIndex = state.doc.segments.indexOf(seg);
+    const sp = actionSpans(seg);
+    const info = sentencesFor(seg);
+    // 시각 설명
+    let when;
+    if (typeof act.at === "string" && /^s\d+$/.test(act.at)) {
+      const s = info.list[Number(act.at.slice(1)) - 1];
+      when = s ? `문장 ${act.at} 이 시작될 때${s.start !== undefined ? ` (${s.start.toFixed(1)}s)` : ""}: “${short(s.text, 40)}”` : `문장 ${act.at} — 이 세그먼트에는 그런 문장이 없습니다`;
+    } else if (typeof act.at === "number") when = `세그먼트 시작 ${act.at}초 뒤`;
+    else when = i === 0 ? "세그먼트가 시작되자마자" : `앞 액션(${actLabel(seg.actions[i - 1].do)})이 끝난 직후 이어서`;
+    const dur = sp ? sp.spans[i].end - sp.spans[i].start : actionDuration(act);
+    box.append(el("div", { class: "when" }, el("b", {}, "언제"), ` ${when}`, el("span", { class: "hint" }, ` · 약 ${dur.toFixed(1)}s 동안${!sp && act.run_time === undefined && act.do !== "wait" ? " (기본값)" : ""}`)));
+
+    // 실행 전 → 후 프레임
+    if (sp) {
+      const { start, end } = sp.spans[i];
+      const before = el("img", { class: "frame", alt: "" }), after = el("img", { class: "frame", alt: "" });
+      const rr = renderedRange(seg);
+      grabFrame(sp.url, Math.max(rr.start, start - 0.08)).then((d) => { if (d) before.src = d; });
+      grabFrame(sp.url, Math.min(rr.end - 0.05, end + 0.15)).then((d) => { if (d) after.src = d; });
+      box.append(el("div", { class: "frames2" },
+        el("figure", { onclick: () => playSpan(sp.url, Math.max(rr.start, start - 0.3), end + 0.4), title: "이 액션 구간 재생" }, before, el("figcaption", {}, `실행 전 ${fmtClock(start)}`)),
+        el("span", { class: "arr" }, "➜"),
+        el("figure", { onclick: () => playSpan(sp.url, Math.max(rr.start, start - 0.3), end + 0.4), title: "이 액션 구간 재생" }, after, el("figcaption", {}, `실행 후 ${fmtClock(end)}`)),
+        el("div", { class: "side" },
+          el("button", { class: "mini", onclick: () => playSpan(sp.url, Math.max(rr.start, start - 0.3), end + 0.4) }, "▶ 이 액션만 재생"),
+          el("span", { class: "hint" }, sp.exact ? "렌더 로그 기준 정확한 구간" : "at·run_time 으로 추정한 구간 (렌더 로그가 있으면 정확)"))));
+    } else {
+      const rr = renderedRange(seg);
+      box.append(el("p", { class: "hint" }, rr && rr.stale ? "내레이션이 바뀐 뒤 아직 렌더하지 않아 실행 전/후 화면을 보여 줄 수 없습니다. ‘이 구간만 다시 렌더’ 를 누르세요."
+        : rr ? "문장 시각 정보가 없어 실행 전/후 화면을 잡을 수 없습니다 (▶ 듣기 · 문장 타이밍)."
+        : "아직 렌더한 적이 없어 실행 전/후 화면이 없습니다. 위의 ‘이 구간만 렌더’ 를 누르면 여기에 나타납니다."));
+    }
+
+    // goto / camera: 칠판 약도
+    if (act.do === "goto" || (act.do === "camera" && (act.sections || act.reset || act.focus))) {
+      const from = sectionBefore(segIndex, i);
+      const to = act.do === "goto" ? act.section : act.reset ? from : (typeof act.focus === "string" ? act.focus : null);
+      const extra = act.do === "camera" && Array.isArray(act.sections) ? act.sections : [];
+      const map = boardMap(from, to, extra);
+      if (map) box.append(el("div", { class: "mapwrap" },
+        el("div", { class: "hint" }, act.do === "goto" ? `카메라가 ‘${from ?? "?"}’ 칸에서 ‘${to ?? "?"}’ 칸으로 옮겨 갑니다. 칠판은 왼쪽→오른쪽으로 이어진 칸들입니다.` : act.reset ? "카메라를 현재 칸 전체가 보이는 기본 뷰로 되돌립니다." : extra.length ? `칸 ${extra.join(" ~ ")} 가 모두 보이게 줌아웃합니다.` : "카메라 이동"),
+        map));
+    }
+    return box;
   }
 
   // ------------------------------------------------------------------ 세그먼트 목록
@@ -530,6 +657,7 @@
 
     // ---- 펼친 본문
     const body = el("div", { class: "body" });
+    body.append(actionPreview(seg, act, i));
 
     // 종류 / 시각 / 길이
     const doSel = el("select", { class: "do" });
