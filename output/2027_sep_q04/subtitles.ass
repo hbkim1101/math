@@ -1,0 +1,41 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Noto Sans CJK KR,45,&H00F5F7FA,&H000000FF,&H00000000,&H8C0A0E17,-1,0,0,0,100,100,0.5,0,3,9,0,2,80,80,37,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.60,0:00:05.51,Default,,0,0,0,,9월 모의평가 4번, 함수의 연속 문제입니다.
+Dialogue: 0,0:00:05.56,0:00:12.25,Default,,0,0,0,,식이 두 조각으로 나뉜 함수는, 조각이\N바뀌는 경계에서만 연속을 따져 보면 됩니다.
+Dialogue: 0,0:00:12.30,0:00:17.73,Default,,0,0,0,,경계에서 왼쪽 조각과 오른쪽 조각이\N딱 만나는 조건을 식으로 세우고,
+Dialogue: 0,0:00:17.73,0:00:20.74,Default,,0,0,0,,이항까지 한 단계씩 따라가 보겠습니다.
+Dialogue: 0,0:00:21.24,0:00:23.42,Default,,0,0,0,,문제입니다.
+Dialogue: 0,0:00:23.47,0:00:29.06,Default,,0,0,0,,함수 f of x는, x가 2\N이하일 때 7x 더하기 a,
+Dialogue: 0,0:00:29.06,0:00:32.85,Default,,0,0,0,,x가 2보다 클 때 x제곱 더하기 ax.
+Dialogue: 0,0:00:32.90,0:00:38.60,Default,,0,0,0,,이 함수가 실수 전체의 집합에서\N연속일 때, 상수 a의 값은?
+Dialogue: 0,0:00:38.65,0:00:45.50,Default,,0,0,0,,보기는 9, 10, 11, 12, 13입니다.
+Dialogue: 0,0:00:45.97,0:00:52.40,Default,,0,0,0,,각 조각은 일차함수와 이차함수,\N그 자체로는 어디서나 연속입니다.
+Dialogue: 0,0:00:52.45,0:00:56.26,Default,,0,0,0,,문제는 조각이 바뀌는 x가 2인 지점.
+Dialogue: 0,0:00:56.31,0:01:00.47,Default,,0,0,0,,왼쪽 조각의 끝점은 7 곱하기 2 더하기 a,
+Dialogue: 0,0:01:00.47,0:01:05.08,Default,,0,0,0,,오른쪽 조각이 다가가는\N값은 4 더하기 2a입니다.
+Dialogue: 0,0:01:05.13,0:01:11.74,Default,,0,0,0,,a가 작으면 이렇게 틈이 벌어져 있고,\Na를 키우면 두 끝점이 서로 다가갑니다.
+Dialogue: 0,0:01:11.79,0:01:17.57,Default,,0,0,0,,a가 10이 되는 순간 틈이 닫히고,\N그래프가 한 줄로 이어집니다.
+Dialogue: 0,0:01:17.62,0:01:21.11,Default,,0,0,0,,이 순간을 식으로 잡아내면 됩니다.
+Dialogue: 0,0:01:21.61,0:01:23.84,Default,,0,0,0,,식으로 씁니다.
+Dialogue: 0,0:01:23.89,0:01:30.62,Default,,0,0,0,,x가 2일 때의 함숫값과 좌극한은 왼쪽\N조각에서 나오니 7 곱하기 2 더하기 a,
+Dialogue: 0,0:01:30.62,0:01:37.79,Default,,0,0,0,,14 더하기 a. 우극한은 오른쪽 조각에\N2를 넣어서 2의 제곱 더하기 a 곱하기 2,
+Dialogue: 0,0:01:37.79,0:01:39.58,Default,,0,0,0,,4 더하기 2a입니다.
+Dialogue: 0,0:01:40.07,0:01:43.98,Default,,0,0,0,,연속이려면 이 두 값이 같아야 합니다.
+Dialogue: 0,0:01:44.03,0:01:48.02,Default,,0,0,0,,14 더하기 a는 4 더하기 2a.
+Dialogue: 0,0:01:48.07,0:01:53.16,Default,,0,0,0,,a가 있는 항은 오른쪽으로,\N숫자는 왼쪽으로 이항합니다.
+Dialogue: 0,0:01:53.21,0:01:56.13,Default,,0,0,0,,이항하면 부호가 바뀌죠.
+Dialogue: 0,0:01:56.18,0:02:04.29,Default,,0,0,0,,14 빼기 4는 2a 빼기 a. 왼쪽은\N10, 오른쪽은 a. 따라서 a는 10입니다.
+Dialogue: 0,0:02:04.77,0:02:08.56,Default,,0,0,0,,정답은 2번, a는 10입니다.
+Dialogue: 0,0:02:08.61,0:02:15.06,Default,,0,0,0,,정리하면, 구간이 나뉜 함수의 연속은\N경계 한 점에서, 좌극한, 우극한,
+Dialogue: 0,0:02:15.06,0:02:19.10,Default,,0,0,0,,함숫값이 모두 같다는 조건 하나로 결정됩니다.

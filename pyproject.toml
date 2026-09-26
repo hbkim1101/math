@@ -1,0 +1,37 @@
+[project]
+name = "explainer-studio"
+version = "0.1.0"
+description = "YAML 시나리오로 만드는 고품질 수학 해설 영상 (Manim + TTS + 자동 검증)"
+requires-python = ">=3.11"
+dependencies = [
+  "manim>=0.19",
+  "edge-tts>=7.0",
+  "pyyaml>=6.0",
+  "pydantic>=2.0",
+  "mutagen>=1.47",
+  "pillow>=10",
+  "numpy>=1.26",
+  "sympy>=1.12",
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.27",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+explainer = "explainer.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["explainer*"]
+
+[tool.setuptools.package-data]
+"explainer.studio" = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

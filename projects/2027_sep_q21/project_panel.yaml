@@ -1,0 +1,326 @@
+# 2027학년도 9월 모의평가 (2026.9 시행) 수학 공통 21번 — 절댓값 함수의 미분가능성 (뾰족점의 상쇄)
+# 렌더: python -m explainer build projects/2027_sep_q21/project.yaml
+
+meta:
+  id: 2027_sep_q21
+  title: "2027학년도 9월 모의평가 수학 21번"
+  subtitle: "절댓값 함수의 미분가능성 — 뾰족점의 상쇄"
+  voice: ko-KR-InJoonNeural
+  rate: "+4%"
+  resolution: 1080p
+  fps: 30
+  subtitles: burn
+  segment_pad: 0.7
+
+params:
+  r: "1/2"        # 시각화용 중근 (a=2 인 경우의 해 중 하나)
+  s: "1"          # 시각화용 단순근
+  a: "2"
+  a0: "1/2"       # 세 근이 모두 다른 예시 (근: 1/2, 1, 7/2)
+
+layout:
+  graph:
+    x_range: [-1, 5, 1]
+    y_range: [-3, 3, 1]
+    width: 7.3
+    center: [-3.0, 0.35]
+  board:
+    title: "풀이"
+    line_scale: 0.7
+
+segments:
+  # ───────────────────────────── 0. 인트로
+  - id: intro
+    narration: >
+      이번 9월 모의평가 21번은 미분 단원에서 출제된 최고난도 문항 중 하나입니다.
+      절댓값이 붙은 함수가 어디에서 꺾이는지, 그리고 두 함수의 꺾임이 어떻게 서로를 지워 줄 수 있는지를 알아내면, 복잡해 보이는 조건이 한 줄의 식으로 정리됩니다.
+      함께 풀어 보겠습니다.
+    actions:
+      - {do: title_card, title: "2027학년도 9월 모의평가 수학 21번", subtitle: "절댓값 함수의 미분가능성 — 뾰족점의 상쇄", tag: "삼차함수 · 중근과 단순근 · 좌우 미분계수"}
+
+  # ───────────────────────────── 1. 문제 읽기
+  - id: read_problem
+    narration: >
+      문제를 읽어 보겠습니다.
+      최고차항의 계수가 1인 삼차함수 f가 다음 조건을 만족시킬 때, f(0)의 최댓값과 최솟값의 곱을 구하는 문제입니다.
+      조건 가, 방정식 f(x)는 0의 서로 다른 실근의 개수는 2입니다.
+      조건 나, f가 0 이상인 곳에서는 마이너스 f, f가 음수인 곳에서는 7f로 정의된 함수 g에 대하여, 어떤 실수 a가 존재해서, h(x)는 g(x) 더하기, x 빼기 1, x 빼기 a, x 빼기 4 더하기 a의 곱의 절댓값이 실수 전체의 집합에서 미분가능합니다.
+    actions:
+      - {do: clear, run_time: 0.5}
+      - do: problem
+        title: "21. [4점]"
+        width: 11.5
+        scale: 0.9
+        line_buff: 0.45
+        lines:
+          - "최고차항의 계수가 $1$인 삼차함수 $f(x)$가 다음 조건을 만족시킬 때, $f(0)$의 최댓값과 최솟값의 곱을 구하시오."
+          - "(가) 방정식 $f(x)=0$의 서로 다른 실근의 개수는 $2$이다."
+          - "(나) $g(x)=\\begin{cases} -f(x) & (f(x)\\ge 0)\\\\ \\;\\;7f(x) & (f(x)<0)\\end{cases}$ 일 때, 어떤 실수 $a$에 대하여 함수 $h(x)=g(x)+\\bigl|(x-1)(x-a)(x-4+a)\\bigr|$ 가 실수 전체의 집합에서 미분가능하다."
+      - {do: problem_focus, at: s2, index: 0}
+      - {do: problem_focus, at: s3, index: 1}
+      - {do: problem_focus, at: s4, index: 2}
+
+  # ───────────────────────────── 2. 조건 (가): f = (x-r)^2 (x-s)
+  - id: setup_f
+    narration: >
+      먼저 조건 가입니다.
+      최고차항의 계수가 1인 삼차함수의 서로 다른 실근이 두 개이려면, 한 근은 중근이고 다른 한 근은 단순근이어야 합니다.
+      중근을 r, 단순근을 s라 하면 f(x)는 x 빼기 r의 제곱, 곱하기 x 빼기 s입니다.
+      그래프는 중근 r에서 x축에 닿았다가 되돌아가고, 단순근 s에서는 x축을 뚫고 지나가며 부호가 바뀝니다.
+    actions:
+      - {do: board, run_time: 0.5}
+      - do: problem_dock
+        scale: 0.5
+        tex: >
+          $f$: 최고차항 계수 $1$인 삼차, 서로 다른 실근 $2$개\\[0.2em]
+          $g=\begin{cases}-f&(f\ge0)\\ \;7f&(f<0)\end{cases}$\\[0.2em]
+          $w=(x-1)(x-a)(x-4+a)$\\[0.2em]
+          $h=g+|w|$ 가 실수 전체에서 미분가능\\[0.2em]
+          $f(0)$의 최댓값 $\times$ 최솟값 $=?$
+      - {do: board_title, text: "풀이 1 · 조건 (가): 중근과 단순근"}
+      - {do: axes, run_time: 1.0, equal_aspect: false}
+      - {do: board_write, at: s2, ko: true, tex: "서로 다른 실근 $2$개 $\\Rightarrow$ 중근 $r$ 하나 + 단순근 $s$ 하나"}
+      - {do: plot, at: s3, id: f, expr: "(x-r)**2*(x-s)", color: exp, label: "y=f(x)", label_at: 1.9, label_dir: RIGHT, run_time: 1.4}
+      - {do: board_write, tex: "f(x)=(x-r)^2(x-s)\\quad (r\\ne s)", plain: true, color: ok}
+      - do: points
+        at: s4
+        items:
+          - {id: rpt, at: ["r", 0], label: "r", label_dir: DOWN, color: exp}
+          - {id: spt, at: ["s", 0], label: "s", label_dir: DR, color: exp}
+      - {do: caption, text: "중근 r: x축에 닿기만 함 · 단순근 s: x축을 통과 (그림은 r = 1/2, s = 1)"}
+
+  # ───────────────────────────── 3. g 만들기
+  - id: build_g
+    narration: >
+      이제 함수 g를 봅시다.
+      f가 0 이상인 부분은 x축에 대해 뒤집고, f가 음수인 부분은 7배로 늘린 것이 g입니다.
+      그러면 g는 어디에서 미분가능하지 않을까요.
+      중근 r 근처에서는 f의 부호가 바뀌지 않으므로 g는 f의 상수배이고, 따라서 매끄럽게 이어집니다.
+      하지만 단순근 s에서는 왼쪽은 7f, 오른쪽은 마이너스 f로 서로 다른 식이 만나기 때문에 뾰족한 점이 생깁니다.
+    actions:
+      - {do: board_title, text: "풀이 1 · g의 뾰족점은 어디인가"}
+      - {do: dim, at: s2, ids: [f, f_label], opacity: 0.35, run_time: 0.5}
+      - do: plot
+        id: g
+        expr: "-f(x) if f(x) >= 0 else 7*f(x)"
+        smooth: false
+        color: log
+        label: "y=g(x)"
+        label_at: 1.7
+        label_dir: DR
+        run_time: 1.6
+      - {do: board_write, tex: "g(x)=\\begin{cases}-f(x) & (f(x)\\ge 0)\\\\ \\;7f(x) & (f(x)<0)\\end{cases}", plain: true}
+      - {do: highlight, at: s4, ids: [rpt], mode: flash, color: exp, run_time: 0.6}
+      - {do: board_write, ko: true, tex: "$x=r$ 근처: 부호 불변 $\\Rightarrow$ $g=c\\,f$, 매끄럽다"}
+      - {do: caption, text: "중근 r 근처에서는 g가 f의 상수배 → 미분가능"}
+      - do: custom
+        at: s5
+        fn: corner_tangents
+        func: g
+        x0: "s"
+        length: 0.75
+        color: highlight
+        left_label: "7f'(s)"
+        right_label: "-f'(s)"
+        left_dir: DL
+        right_dir: UR
+        id: corner_g
+        run_time: 1.2
+      - {do: board_write, ko: true, tex: "$x=s$: $7f$ 와 $-f$ 가 만남 $\\Rightarrow$ 뾰족점", color: warn}
+      - {do: caption, text: "단순근 s: 왼쪽 7f, 오른쪽 −f 가 만나 뾰족점"}
+
+  # ───────────────────────────── 4. 꺾임의 크기
+  - id: slope_jump
+    narration: >
+      꺾임의 크기를 계산해 봅시다.
+      f를 미분하면 2 곱하기 x 빼기 r 곱하기 x 빼기 s, 더하기 x 빼기 r의 제곱이고, x에 s를 대입하면 첫 항이 사라져 f프라임 s는 s 빼기 r의 제곱입니다.
+      따라서 s에서 g의 왼쪽 기울기는 7 곱하기 s 빼기 r의 제곱, 오른쪽 기울기는 마이너스 s 빼기 r의 제곱입니다.
+      왼쪽에서 오른쪽으로 넘어가면서 기울기가 8 곱하기 s 빼기 r의 제곱만큼 뚝 떨어지는, 아래로 꺾인 뾰족점입니다.
+    actions:
+      - {do: board_clear}
+      - {do: board_title, text: "풀이 1 · g의 뾰족점: 기울기 변화"}
+      - {do: board_write, at: s2, lines: ["f'(x)=2(x-r)(x-s)+(x-r)^2", "f'(s)=(s-r)^2"], plain: true, run_time: 1.8}
+      - {do: highlight, at: s3, ids: [corner_g_left], mode: indicate, color: highlight, run_time: 0.8}
+      - {do: board_write, tex: "g'(s^-)=7(s-r)^2", plain: true}
+      - {do: highlight, ids: [corner_g_right], mode: indicate, color: highlight, run_time: 0.8}
+      - {do: board_write, tex: "g'(s^+)=-(s-r)^2", plain: true}
+      - {do: board_write, at: s4, ko: true, tex: "기울기 변화: $-(s-r)^2-7(s-r)^2=-8(s-r)^2$ (아래로 꺾임)", color: warn}
+      - {do: caption, text: "g의 뾰족점은 s 하나뿐 · 기울기가 8(s−r)² 만큼 떨어진다"}
+
+  # ───────────────────────────── 5. 절댓값 함수 |w|
+  - id: abs_cubic
+    narration: >
+      다음은 절댓값 함수입니다.
+      w(x)를 x 빼기 1, x 빼기 a, x 빼기 4 더하기 a의 곱이라 하면, w는 세 근 1, a, 4 빼기 a를 가지는 삼차함수입니다.
+      절댓값을 씌우면 x축 아래로 내려간 부분이 위로 접혀 올라오고, 부호가 바뀌는 단순근마다 위로 꺾인 뾰족점이 생깁니다.
+      그 점에서 기울기 변화의 크기는 w프라임의 절댓값의 2배입니다.
+      반대로 중근에서는 부호가 바뀌지 않아 접히는 부분이 없으므로 뾰족점이 생기지 않습니다.
+    actions:
+      - {do: board_clear}
+      - {do: board_title, text: "풀이 2 · 절댓값 함수의 뾰족점"}
+      - {do: fade, ids: [f, f_label, g_label, rpt, rpt_label, spt, spt_label, caption], run_time: 0.5}
+      - {do: dim, ids: [g, corner_g], opacity: 0.12, run_time: 0.4}
+      - {do: plot, at: s2, id: w0, expr: "(x-1)*(x-a0)*(x-4+a0)", color: guide, dashed: true, stroke_width: 2.4, label: "y=w(x)", label_at: 4.4, label_dir: DL, label_scale: 0.6, run_time: 1.2}
+      - {do: board_write, tex: "w(x)=(x-1)(x-a)(x-4+a)", plain: true}
+      - {do: caption, text: "예: a = 1/2 → 근 1/2, 1, 7/2 (세 근이 모두 다른 경우)"}
+      - {do: plot, at: s3, id: absw, expr: "abs(w0(x))", smooth: false, color: q1, label: "y=|w(x)|", label_at: 1.9, label_dir: RIGHT, run_time: 1.4}
+      - do: points
+        items:
+          - {id: t1, at: ["a0", 0], color: q1, radius: 0.07}
+          - {id: t2, at: [1, 0], color: q1, radius: 0.07}
+          - {id: t3, at: ["4-a0", 0], color: q1, radius: 0.07}
+      - {do: board_write, ko: true, tex: "단순근마다 위로 꺾인 뾰족점 (부호가 바뀌어 접힘)"}
+      - do: custom
+        at: s4
+        fn: corner_tangents
+        func: absw
+        x0: 1
+        length: 0.6
+        color: highlight
+        left_label: "-|w'(t)|"
+        right_label: "|w'(t)|"
+        left_dir: UL
+        right_dir: UR
+        id: corner_w
+        run_time: 1.0
+      - {do: board_write, ko: true, tex: "단순근 $t$에서 $|w|$의 기울기 변화: $+2|w'(t)|$ (위로 꺾임)", color: ok}
+      - {do: board_write, at: s5, ko: true, tex: "중근에서는 접히는 부분이 없다 $\\Rightarrow$ 뾰족점 없음"}
+      - {do: caption, text: "단순근: 위로 꺾임 +2|w′(t)| · 중근: 뾰족점 없음"}
+
+  # ───────────────────────────── 6. a 를 움직여 보기
+  - id: sweep
+    narration: >
+      h가 실수 전체에서 미분가능하려면, g의 아래로 꺾인 뾰족점과 절댓값 함수의 위로 꺾인 뾰족점이 정확히 같은 위치에서 서로 상쇄되어야 합니다.
+      그런데 g의 뾰족점은 s 하나뿐입니다.
+      절댓값 함수의 세 근이 모두 다르면 뾰족점이 세 개 생기므로, 하나를 지워도 두 개가 남습니다.
+      a를 움직여 보면, 두 근이 겹치는 순간 그 자리의 뾰족점이 사라져 뾰족점이 하나로 줄어드는 것을 볼 수 있습니다.
+      세 근이 모두 같을 수는 없으므로, a는 1, 2, 3 중 하나여야 합니다.
+    actions:
+      - {do: board_clear}
+      - {do: board_title, text: "풀이 3 · 뾰족점은 정확히 상쇄되어야 한다"}
+      - {do: board_write, ko: true, tex: "$h=g+|w|$ 미분가능 $\\Leftrightarrow$ 아래 꺾임과 위 꺾임이 같은 위치에서 상쇄"}
+      - {do: board_write, at: s2, ko: true, tex: "$g$의 뾰족점: $x=s$ 하나뿐"}
+      - {do: highlight, at: s3, ids: [t1, t2, t3], mode: flash, color: q1, run_time: 0.7}
+      - {do: board_write, ko: true, tex: "$|w|$의 뾰족점이 $2$개 이상이면 불가능", color: warn}
+      - {do: fade, at: s4, ids: [absw, absw_label, w0, w0_label, corner_w, t1, t2, t3, caption], run_time: 0.4}
+      - do: custom
+        fn: sweep_param
+        expr: "abs((x-1)*(x-a)*(x-4+a))"
+        param: a
+        values: ["1/2", 1, 2]
+        roots: ["1", "a", "4-a"]
+        color: q1
+        id: sweep
+        readout: "a ="
+        readout_at: [4.3, -1.2]
+        stop_captions:
+          - "a = 0.5 : 근 0.5, 1, 3.5 → 뾰족점 3개"
+          - "a = 1 : 근 1, 1, 3 → 중근 1, 뾰족점은 x = 3 하나"
+          - "a = 2 : 근 1, 2, 2 → 중근 2, 뾰족점은 x = 1 하나"
+        run_time: 6.0
+        pause: 0.9
+      - {do: board_write, at: s5, ko: true, tex: "세 근 $1,\\ a,\\ 4-a$ 중 두 근이 같아야 함 (삼중근은 불가능)"}
+      - {do: board_write, tex: "a=1,\\ 2,\\ 3", plain: true, color: ok}
+
+  # ───────────────────────────── 7. 조건 정리
+  - id: condition
+    narration: >
+      이제 조건을 식으로 정리합니다.
+      첫째, 절댓값 함수의 단순근이 g의 뾰족점 s와 같은 위치여야 합니다.
+      둘째, 그 점에서 위로 꺾이는 크기 2 곱하기 w프라임 s의 절댓값이, 아래로 꺾이는 크기 8 곱하기 s 빼기 r의 제곱과 같아야 합니다.
+      즉, w프라임 s의 절댓값은 4 곱하기 s 빼기 r의 제곱입니다.
+    actions:
+      - {do: board_clear}
+      - {do: board_title, text: "풀이 3 · 상쇄 조건을 식으로"}
+      - {do: undim, ids: [g, corner_g], run_time: 0.5}
+      - {do: caption, text: "a = 2, r = 1/2, s = 1 인 경우: |w| 의 단순근 1 = g 의 뾰족점 s"}
+      - {do: highlight, at: s2, ids: [corner_g], mode: indicate, color: highlight, run_time: 0.8}
+      - {do: board_write, ko: true, tex: "① $|w|$의 단순근 $=$ $g$의 뾰족점 $s$"}
+      - do: custom
+        at: s3
+        fn: corner_tangents
+        func: sweep
+        x0: "s"
+        length: 0.6
+        color: q1
+        id: corner_w2
+        run_time: 1.0
+      - {do: board_write, ko: true, tex: "② 위 꺾임 $2|w'(s)|$ $=$ 아래 꺾임 $8(s-r)^2$", scale: 0.62}
+      - {do: board_write, at: s4, tex: "|w'(s)|=4(s-r)^2", plain: true, color: ok}
+      - {do: board_highlight, index: -1, box: true, color: ok, run_time: 0.8}
+
+  # ───────────────────────────── 8. a = 1 또는 3
+  - id: case_a1
+    narration: >
+      먼저 a가 1 또는 3인 경우입니다.
+      이때 w는 x 빼기 1의 제곱, 곱하기 x 빼기 3이므로 단순근은 3이고, 따라서 s는 3이어야 합니다.
+      w프라임 3은 3 빼기 1의 제곱, 즉 4이므로, 조건은 4는 4 곱하기 3 빼기 r의 제곱, 곧 3 빼기 r의 제곱은 1입니다.
+      r는 2 또는 4이고, f(0)은 마이너스 3 r제곱이므로 마이너스 12 또는 마이너스 48입니다.
+    actions:
+      - {do: board_clear}
+      - {do: board_title, text: "풀이 4 · a = 1 또는 a = 3"}
+      - {do: fade, ids: [sweep, sweep_roots, sweep_readout, corner_w2, corner_g, caption], run_time: 0.5}
+      - {do: dim, ids: [g], opacity: 0.08, run_time: 0.4}
+      - {do: plot, at: s2, id: absw1, expr: "abs((x-1)**2*(x-3))", smooth: false, color: q1, label: "y=|(x-1)^2(x-3)|", label_at: 2.3, label_dir: UR, label_scale: 0.62, run_time: 1.4}
+      - {do: point, id: s3pt, pos: [3, 0], color: q1, label: "s=3", label_dir: DR, label_scale: 0.7}
+      - {do: board_write, tex: "w(x)=(x-1)^2(x-3),\\quad s=3", plain: true}
+      - {do: board_write, at: s3, lines: ["|w'(3)|=(3-1)^2=4", "4=4(3-r)^2\\ \\Rightarrow\\ (3-r)^2=1"], plain: true, run_time: 1.8}
+      - {do: plot, at: s4, id: f2, expr: "(x-2)**2*(x-3)", color: exp, dashed: true, stroke_width: 3, label: "r=2", label_at: 1.25, label_dir: LEFT, label_scale: 0.62, run_time: 1.0}
+      - {do: plot, id: f4, expr: "(x-4)**2*(x-3)", color: log, dashed: true, stroke_width: 3, label: "r=4", label_at: 4.25, label_dir: UP, label_scale: 0.62, run_time: 1.0}
+      - {do: board_write, lines: ["r=2\\ \\text{or}\\ 4", "f(0)=-3r^2=-12,\\ -48"], plain: true, color: ok, run_time: 1.4}
+      - {do: caption, text: "s = 3 에서 (3−r)² = 1 → r = 2 또는 4"}
+
+  # ───────────────────────────── 9. a = 2
+  - id: case_a2
+    narration: >
+      다음은 a가 2인 경우입니다.
+      w는 x 빼기 1, 곱하기 x 빼기 2의 제곱이므로 단순근은 1, 즉 s는 1입니다.
+      w프라임 1은 1 빼기 2의 제곱, 즉 1이므로, 1은 4 곱하기 1 빼기 r의 제곱, 곧 1 빼기 r의 제곱은 4분의 1입니다.
+      r는 2분의 1 또는 2분의 3이고, f(0)은 마이너스 r제곱이므로 마이너스 4분의 1 또는 마이너스 4분의 9입니다.
+      실제로 r가 2분의 1일 때 g와 절댓값 함수를 더한 h를 그려 보면, x는 1에서 뾰족점이 사라지고 매끄럽게 이어지는 것을 확인할 수 있습니다.
+    actions:
+      - {do: board_clear}
+      - {do: board_title, text: "풀이 5 · a = 2"}
+      - {do: fade, ids: [absw1, absw1_label, s3pt, s3pt_label, f2, f2_label, f4, f4_label, caption], run_time: 0.5}
+      - {do: plot, at: s2, id: absw2, expr: "abs((x-1)*(x-2)**2)", smooth: false, color: q1, label: "y=|(x-1)(x-2)^2|", label_at: 3.0, label_dir: UL, label_scale: 0.62, run_time: 1.4}
+      - {do: point, id: s1pt, pos: [1, 0], color: q1, label: "s=1", label_dir: DOWN, label_scale: 0.7}
+      - {do: board_write, tex: "w(x)=(x-1)(x-2)^2,\\quad s=1", plain: true}
+      - {do: board_write, at: s3, lines: ["|w'(1)|=(1-2)^2=1", "1=4(1-r)^2\\ \\Rightarrow\\ (1-r)^2=\\tfrac14"], plain: true, run_time: 1.8}
+      - {do: board_write, at: s4, lines: ["r=\\tfrac12\\ \\text{or}\\ \\tfrac32", "f(0)=-r^2=-\\tfrac14,\\ -\\tfrac94"], plain: true, color: ok, run_time: 1.4}
+      - {do: undim, at: s5, ids: [g], run_time: 0.5}
+      - {do: plot, id: h, expr: "g(x)+absw2(x)", smooth: false, color: axis_sym, stroke_width: 5, label: "y=h(x)", label_at: 2.0, label_dir: RIGHT, label_scale: 0.62, run_time: 1.6}
+      - do: custom
+        fn: corner_tangents
+        func: h
+        x0: 1
+        length: 0.7
+        color: highlight
+        right_label: "h'(1^-)=h'(1^+)=\\tfrac34"
+        right_dir: UR
+        id: corner_h
+        run_time: 1.0
+      - {do: caption, text: "x = 1: 아래 꺾임 −2 + 위 꺾임 +2 = 0 → h 는 매끄럽다"}
+
+  # ───────────────────────────── 10. 정답
+  - id: answer
+    narration: >
+      가능한 f(0)의 값은 마이너스 48, 마이너스 12, 마이너스 4분의 9, 마이너스 4분의 1입니다.
+      최댓값은 마이너스 4분의 1, 최솟값은 마이너스 48이므로 두 값의 곱은 12입니다.
+      정답은 12입니다.
+    actions:
+      - {do: board_clear}
+      - {do: board_title, text: "풀이 6 · 정답"}
+      - {do: fade, ids: [corner_h, caption], run_time: 0.4}
+      - {do: board_write, tex: "f(0)\\in\\left\\{-48,\\ -12,\\ -\\tfrac94,\\ -\\tfrac14\\right\\}", plain: true}
+      - {do: board_write, at: s2, tex: "\\max=-\\tfrac14,\\qquad \\min=-48", plain: true}
+      - {do: board_write, tex: "\\left(-\\tfrac14\\right)\\times(-48)=12", plain: true, color: ok}
+      - {do: answer, at: s3, tex: "\\left(-\\tfrac14\\right)\\times(-48)=12", caption_text: "정답", run_time: 1.2}
+
+  # ───────────────────────────── 11. 정리
+  - id: outro
+    narration: >
+      정리하면, 서로 다른 두 실근 조건에서 f를 중근과 단순근으로 나타내고, g의 유일한 뾰족점을 절댓값 함수의 뾰족점이 정확히 지워야 한다는 관점에서 a와 r를 결정하는 문제였습니다.
+      정답은 12입니다. 시청해 주셔서 감사합니다.
+    actions:
+      - {do: clear, board: true, run_time: 0.8}
+      - {do: end_card, title: "정답  12", subtitle: "f = (x−r)²(x−s) → g의 뾰족점은 s 하나 → |w|의 뾰족점과 상쇄: 2|w′(s)| = 8(s−r)² → a = 1, 2, 3"}

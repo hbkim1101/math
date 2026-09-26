@@ -1,0 +1,40 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Noto Sans CJK KR,45,&H00F5F7FA,&H000000FF,&H00000000,&H8C0A0E17,-1,0,0,0,100,100,0.5,0,3,9,0,2,80,80,37,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.60,0:00:06.38,Default,,0,0,0,,9월 모의평가 2번, 미분계수의\N정의를 묻는 문제입니다.
+Dialogue: 0,0:00:06.43,0:00:09.68,Default,,0,0,0,,극한 기호가 보이면 계산부터 하지 말고,
+Dialogue: 0,0:00:09.68,0:00:15.00,Default,,0,0,0,,이 극한이 무엇을 뜻하는지 먼저\N읽어 내는 연습을 해 보겠습니다.
+Dialogue: 0,0:00:15.50,0:00:17.69,Default,,0,0,0,,문제입니다.
+Dialogue: 0,0:00:17.74,0:00:25.07,Default,,0,0,0,,함수 f of x는 2x의 세제곱 빼기\Nx 빼기 4에 대하여, x가 2로 갈 때,
+Dialogue: 0,0:00:25.07,0:00:30.90,Default,,0,0,0,,f of x 빼기 f of 2,\N나누기, x 빼기 2의 극한값은?
+Dialogue: 0,0:00:30.95,0:00:38.08,Default,,0,0,0,,보기는 19, 21, 23, 25, 27입니다.
+Dialogue: 0,0:00:38.56,0:00:41.91,Default,,0,0,0,,분자는 f of x 빼기 f of 2,
+Dialogue: 0,0:00:41.91,0:00:49.70,Default,,0,0,0,,분모는 x 빼기 2. 두 점 사이 y의 변화량을\Nx의 변화량으로 나눈, 평균변화율입니다.
+Dialogue: 0,0:00:49.75,0:00:55.89,Default,,0,0,0,,그래프에서 보면 점 P, 2,\Nf of 2와 점 Q, x,
+Dialogue: 0,0:00:55.89,0:00:59.69,Default,,0,0,0,,f of x를 잇는 할선의 기울기죠.
+Dialogue: 0,0:00:59.74,0:01:06.55,Default,,0,0,0,,x를 2로 보내면 점 Q가 점 P로 다가가고,\N할선은 점 P에서의 접선으로 수렴합니다.
+Dialogue: 0,0:01:06.60,0:01:14.03,Default,,0,0,0,,따라서 이 극한은 x가 2일 때의\N미분계수, f prime of 2 입니다.
+Dialogue: 0,0:01:14.52,0:01:18.60,Default,,0,0,0,,그러면 f prime of x를 구합시다.
+Dialogue: 0,0:01:18.65,0:01:21.13,Default,,0,0,0,,항별로 미분합니다.
+Dialogue: 0,0:01:21.18,0:01:28.96,Default,,0,0,0,,2x의 세제곱은, 지수 3을 앞으로 내리고\N지수를 하나 낮춰서, 2 곱하기 3 x의 제곱.
+Dialogue: 0,0:01:29.01,0:01:35.28,Default,,0,0,0,,마이너스 x는 마이너스 1. 상수\N마이너스 4는 미분하면 0이니 사라집니다.
+Dialogue: 0,0:01:35.33,0:01:40.61,Default,,0,0,0,,정리하면 f prime of\Nx는 6x제곱 빼기 1입니다.
+Dialogue: 0,0:01:41.09,0:01:44.36,Default,,0,0,0,,이제 x에 2를 대입합니다.
+Dialogue: 0,0:01:44.41,0:01:51.02,Default,,0,0,0,,6 곱하기 2의 제곱 빼기 1. 2의\N제곱은 4, 6 곱하기 4는 24,
+Dialogue: 0,0:01:51.02,0:01:52.95,Default,,0,0,0,,24 빼기 1은 23.
+Dialogue: 0,0:01:53.00,0:01:57.05,Default,,0,0,0,,따라서 f prime of 2는 23입니다.
+Dialogue: 0,0:01:57.10,0:02:01.27,Default,,0,0,0,,처음의 극한값이 바로 이 23입니다.
+Dialogue: 0,0:02:01.76,0:02:05.61,Default,,0,0,0,,정답은 3번, 23입니다.
+Dialogue: 0,0:02:05.66,0:02:11.82,Default,,0,0,0,,정리하면, x가 a로 갈 때 f\Nof x 빼기 f of a, 나누기,
+Dialogue: 0,0:02:11.82,0:02:16.95,Default,,0,0,0,,x 빼기 a의 꼴은 항상 f\Nprime of a로 읽는다.
+Dialogue: 0,0:02:17.00,0:02:21.05,Default,,0,0,0,,정의를 알아보는 눈이 계산보다 먼저입니다.

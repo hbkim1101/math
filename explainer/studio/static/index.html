@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Explainer Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/static/style.css?v=2">
+</head>
+<body>
+<header id="topbar">
+  <div class="brand">Explainer <span>Studio</span></div>
+  <select id="projectSelect" title="프로젝트"></select>
+  <button id="btnNew" class="ghost" title="새 프로젝트">+ 새 프로젝트</button>
+  <span class="spacer"></span>
+  <span id="dirtyDot" class="dirty" title="저장되지 않은 변경"></span>
+  <button id="btnSave" title="저장 (Ctrl+S)">저장</button>
+  <button id="btnValidate" class="ghost" title="구조·액션·at 검사">검사</button>
+  <button id="btnTex" class="ghost" title="모든 LaTeX 문자열을 미리 컴파일">LaTeX 검사</button>
+  <span class="sep"></span>
+  <button id="btnPartial" class="ghost" title="선택한 세그먼트만 480p 로 빠르게 렌더">선택 세그먼트 렌더</button>
+  <button id="btnPreview" title="전체 480p 프리뷰 + 검증">프리뷰 렌더</button>
+  <button id="btnFinal" class="accent" title="최종 해상도 렌더 + 21항목 검증">최종 렌더</button>
+  <button id="btnCancel" class="danger hidden">중지</button>
+  <span id="jobStatus" class="status"></span>
+</header>
+
+<main id="layout">
+  <aside id="sidebar">
+    <div class="side-head">
+      <span>세그먼트</span>
+      <button id="btnAddSeg" class="mini" title="세그먼트 추가">+</button>
+    </div>
+    <ul id="segList"></ul>
+    <div class="side-foot">
+      <button id="tabSettings" class="wide ghost">⚙ 설정 (제목·목소리·칠판 칸)</button>
+      <button id="tabYaml" class="wide ghost">{ } YAML 전체 보기</button>
+      <button id="btnHistory" class="wide ghost">↶ 저장 이력</button>
+    </div>
+  </aside>
+
+  <section id="editor">
+    <div id="segEditor" class="pane"></div>
+    <div id="settingsEditor" class="pane hidden"></div>
+    <div id="yamlEditor" class="pane hidden">
+      <div class="row">
+        <span class="hint">YAML 을 직접 고친 뒤 <b>적용</b>을 누르면 폼에 반영됩니다. 폼에서 저장하면 주석은 사라집니다.</span>
+        <span class="spacer"></span>
+        <button id="btnYamlApply">적용</button>
+      </div>
+      <textarea id="yamlText" spellcheck="false"></textarea>
+    </div>
+  </section>
+
+  <aside id="preview">
+    <nav class="tabs">
+      <button data-tab="video" class="on">영상</button>
+      <button data-tab="storyboard">스토리보드</button>
+      <button data-tab="verify">검증</button>
+      <button data-tab="timeline">타임라인</button>
+      <button data-tab="log">로그</button>
+      <button data-tab="check">검사 결과</button>
+    </nav>
+    <div id="tab-video" class="tab on">
+      <div class="row">
+        <select id="videoSource"></select>
+        <span id="videoInfo" class="hint"></span>
+      </div>
+      <video id="video" controls preload="metadata"></video>
+      <div id="segChips" class="chips"></div>
+    </div>
+    <div id="tab-storyboard" class="tab"><img id="storyboard" alt="스토리보드"><p class="hint" id="storyboardHint"></p></div>
+    <div id="tab-verify" class="tab"><div id="verifyBox"></div></div>
+    <div id="tab-timeline" class="tab">
+      <div class="row"><button id="btnTiming" class="ghost">문장 타이밍 불러오기 (TTS)</button><span class="hint">막대를 클릭하면 세그먼트로, 문장을 클릭하면 <code>at: sN</code> 값을 복사</span></div>
+      <div id="timelineBox"></div>
+    </div>
+    <div id="tab-log" class="tab"><pre id="logBox"></pre></div>
+    <div id="tab-check" class="tab"><div id="checkBox" class="hint">검사를 실행하면 결과가 여기에 표시됩니다.</div></div>
+  </aside>
+</main>
+
+<div id="modal" class="hidden"><div class="modal-body" id="modalBody"></div></div>
+<div id="toast" class="hidden"></div>
+<script src="/static/app.js?v=2"></script>
+</body>
+</html>
