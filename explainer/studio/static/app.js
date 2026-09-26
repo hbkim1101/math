@@ -20,6 +20,7 @@
     projects: [], pid: null, doc: null, yamlText: "", yamlDirty: false, dirty: false,
     catalog: [], catalogByName: {}, hooks: [], sel: 0, outputs: null, job: null, logOffset: 0,
     timing: null, pollTimer: null, rawOpen: new Set(),
+    expanded: new Set(),      // 펼쳐진 액션 카드
     sentences: {},            // seg id → {exact, sentences:[{i,text,start?}], narr}  (서버: TTS 캐시 기준 실제 문장 경계)
   };
 
@@ -114,16 +115,90 @@
     $("#yamlText").value = state.yamlText;
   }
 
+  // ------------------------------------------------------------------ 액션 표시 정보 (아이콘·한글 이름·분류 색)
+  const CAT_COLOR = {
+    "카드·전환": "#b48cff", "문제": "#7cc4ff", "칠판 판서": "#ffd23f", "식 전개": "#ff9f43",
+    "그래프": "#5ad48a", "보드(panel 스타일)": "#4fd1c5", "사용자 정의": "#ff7ab6",
+  };
+  const ACTION_META = {
+    title_card: ["제목 카드", "▣"], end_card: ["마무리 카드", "▤"], section: ["섹션", "▭"], wait: ["대기", "⏸"],
+    clear: ["지우기", "⌫"], fade: ["사라짐", "◌"], dim: ["흐리게", "◐"], undim: ["되돌리기", "◑"], highlight: ["강조", "✦"],
+    problem: ["문제 전문", "≣"], problem_focus: ["읽는 줄 강조", "▶"], problem_dock: ["문제 축소", "⬒"], answer: ["정답", "✔"],
+    caption: ["캡션 메모", "❝"], goto: ["칸 이동", "➜"], write: ["판서", "✍"], space: ["여백", "␣"], camera: ["카메라", "◎"],
+    derive: ["식 전개", "∑"], step: ["전개 단계", "↳"], axes: ["좌표축", "┼"], plot: ["그래프", "∿"], line: ["직선", "╱"],
+    vline: ["세로선", "│"], point: ["점", "•"], points: ["점들", "∴"], polygon: ["다각형", "⬠"], segment: ["선분", "—"],
+    arrow: ["화살표", "→"], guides: ["보조선", "⌐"], translate_copy: ["평행이동 복사", "⇢"], reflect: ["대칭이동", "⇋"],
+    label: ["라벨", "🏷"], board_init: ["보드 만들기", "▦"], board_write: ["보드 쓰기", "▦"], board_replace: ["보드 바꾸기", "▦"],
+    board_highlight: ["보드 강조", "▦"], board_clear: ["보드 지우기", "▦"], board_title: ["보드 제목", "▦"], custom: ["사용자 함수", "⚙"],
+  };
+  const actLabel = (name) => (ACTION_META[name] || [name])[0];
+  const actIcon = (name) => (ACTION_META[name] || [null, "▪"])[1];
+  const actColor = (name) => CAT_COLOR[state.catalogByName[name]?.category] || "#8b93a7";
+  const short = (s, n = 60) => { s = String(s ?? ""); return s.length > n ? s.slice(0, n - 1) + "…" : s; };
+  const stripTex = (s) => String(s ?? "").replace(/\\(tfrac|dfrac|frac)\{([^}]*)\}\{([^}]*)\}/g, "$2/$3").replace(/\\mathrm\{([^}]*)\}/g, "$1")
+    .replace(/\\(quad|qquad|;|,|!)/g, " ").replace(/\\(Rightarrow|to|xrightarrow)/g, "→").replace(/\\(times|cdot)/g, "×").replace(/\\(log|therefore|checkmark)/g, (m) => ({ "\\log": "log", "\\therefore": "∴", "\\checkmark": "✓" })[m])
+    .replace(/\\[a-zA-Z]+/g, (m) => m.slice(1)).replace(/[{}$]/g, "").replace(/\s+/g, " ").trim();
+
+  /** 카드 머리에 보일 한 줄 요약: "이 액션이 무엇을 하는지" 가 파라미터 표 없이도 읽히게. */
+  function summarize(act) {
+    const a = act, j = (v) => (Array.isArray(v) ? v.join(", ") : v === undefined ? "" : String(v));
+    switch (a.do) {
+      case "goto": return `→ ${a.section ?? "?"} 칸`;
+      case "title_card": case "end_card": return short(a.title ?? "");
+      case "write": return short(stripTex(a.text ?? a.tex ?? (a.lines || []).join("  /  ")));
+      case "caption": return short(stripTex(a.text ?? a.tex ?? ""));
+      case "problem": return `${a.title ?? ""} · ${(a.lines || []).length}줄${a.choices ? ` · 보기 ${a.choices.length}개` : ""}`;
+      case "problem_focus": return `${(a.index ?? 0) + 1}번째 줄`;
+      case "answer": return a.tex ? stripTex(a.tex) : a.choice ? `보기 ${a.choice}번에 동그라미` : "";
+      case "derive": { const st = a.steps || []; return `${a.id ?? "d"} · ${st.length}단계` + (st[0] ? ` — ${short(stripTex((st[0].parts || [st[0].tex]).join(" ")), 40)}` : ""); }
+      case "step": return `${a.of ?? "d"} ← ${short(stripTex((a.parts || [a.tex]).join(" ")), 48)}`;
+      case "axes": return [a.x_range ? `x ${j(a.x_range)}` : "", a.y_range ? `y ${j(a.y_range)}` : ""].filter(Boolean).join("  ") || "기본 범위";
+      case "plot": return `${a.id ?? ""}:  y = ${a.expr ?? ""}` + (a.label ? `   (${stripTex(a.label)})` : "");
+      case "line": return `${a.id ?? ""}: ` + (a.expr ? `y = ${a.expr}` : `y = ${a.slope ?? "?"}·x + ${a.intercept ?? 0}`);
+      case "vline": return `${a.id ?? ""}: x = ${a.x}`;
+      case "points": return (a.items || []).map((it) => it.id).join(", ");
+      case "point": return `${a.id ?? ""} (${j(a.pos)})`;
+      case "polygon": return j(a.points);
+      case "segment": case "arrow": return `${a.a} → ${a.b}`;
+      case "guides": return `${a.point} 의 좌표 보조선`;
+      case "reflect": return `${a.source} → ${a.id}  (y = ${a.slope}x + ${a.intercept})`;
+      case "translate_copy": return `${a.source} → (${a.dx}, ${a.dy})`;
+      case "highlight": return `${j(a.ids)}  · ${a.mode ?? "indicate"}`;
+      case "dim": case "undim": case "fade": return j(a.ids);
+      case "camera": return a.reset ? "원래 뷰로" : a.sections ? `칸 ${j(a.sections)} 전체` : a.ids ? `${j(a.ids)} 이 보이게` : a.focus ?? (a.pos ? `(${j(a.pos)})` : "");
+      case "custom": { const ps = Object.entries(a).filter(([k]) => !["do", "fn", "at", "run_time"].includes(k)).slice(0, 3).map(([k, v]) => `${k}=${short(fmtVal(v), 18)}`); return `${a.fn}(${ps.join(", ")})`; }
+      case "wait": return `${a.seconds ?? 1}초`;
+      case "label": return short(stripTex(a.text ?? a.tex ?? ""));
+      default: { const ps = Object.entries(a).filter(([k, v]) => !["do", "at", "run_time"].includes(k) && (typeof v === "string" || typeof v === "number")).slice(0, 2); return ps.map(([k, v]) => `${k}: ${short(String(v), 24)}`).join(" · "); }
+    }
+  }
+  const atText = (at) => (at === undefined || at === null || at === "" ? "" : typeof at === "number" ? `${at}s` : String(at));
+
   // ------------------------------------------------------------------ 세그먼트 목록
+  function segDuration(seg) {
+    const info = state.sentences[seg.id];
+    if (info && info.exact && info.narr === normNarr(seg.narration) && info.sentences.length) return info.sentences[info.sentences.length - 1].end;
+    return null;
+  }
   function renderSegList() {
     const ul = $("#segList");
     ul.innerHTML = "";
+    let t0 = Number(state.doc.meta?.intro_silence ?? 0.6);
     state.doc.segments.forEach((seg, i) => {
+      const acts = seg.actions || [];
+      const dur = segDuration(seg);
+      const nS = sentencesFor(seg).list.length;
+      const bar = el("div", { class: "mix" });
+      for (const a of acts) bar.append(el("i", { style: `background:${actColor(a.do)}`, title: `${actLabel(a.do)} ${summarize(a)}` }));
       const li = el("li", { class: i === state.sel ? "on" : "", draggable: "true",
         onclick: () => { state.sel = i; showPane("seg"); renderSegList(); renderSegEditor(); } },
         el("span", { class: "n" }, String(i + 1)),
-        el("span", { class: "id" }, seg.id || "(id 없음)"),
-        el("span", { class: "cnt" }, `${(seg.actions || []).length}개`));
+        el("div", { class: "body" },
+          el("div", { class: "id" }, seg.id || "(id 없음)"),
+          el("div", { class: "meta" }, `${nS}문장 · ${acts.length}액션` + (dur !== null ? ` · ${dur.toFixed(0)}s` : "")),
+          bar),
+        dur !== null ? el("span", { class: "t0" }, fmtClock(t0)) : null);
+      if (dur !== null) t0 += dur + Number(seg.pad ?? state.doc.meta?.segment_pad ?? 0.5);
       li.addEventListener("dragstart", (e) => { e.dataTransfer.setData("text/plain", String(i)); });
       li.addEventListener("dragover", (e) => { e.preventDefault(); li.classList.add("dragover"); });
       li.addEventListener("dragleave", () => li.classList.remove("dragover"));
@@ -138,6 +213,7 @@
       ul.append(li);
     });
   }
+  const fmtClock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
   function touched() { setDirty(true); state.yamlDirty = false; }
 
@@ -151,8 +227,18 @@
       return;
     }
     seg.actions = seg.actions || [];
-    const head = el("div", { class: "row" },
-      el("h2", {}, `세그먼트 ${state.sel + 1} / ${state.doc.segments.length}`),
+
+    // 머리: 번호 배지 + id(인라인 편집) + 길이 + 버튼
+    const idIn = el("input", { class: "seg-id", value: seg.id || "", placeholder: "세그먼트 id (예: read_problem)", spellcheck: "false" });
+    idIn.addEventListener("change", () => { seg.id = idIn.value.trim(); touched(); renderSegList(); });
+    const padIn = el("input", { class: "seg-pad", value: seg.pad ?? "", placeholder: `여백 ${state.doc.meta?.segment_pad ?? 0.5}s`, title: "이 세그먼트 뒤의 여백(초). 비우면 meta.segment_pad" });
+    padIn.addEventListener("change", () => { const n = parseVal(padIn.value); if (n === undefined) delete seg.pad; else seg.pad = n; touched(); });
+    const dur = segDuration(seg);
+    const head = el("div", { class: "seg-head" },
+      el("span", { class: "badge" }, String(state.sel + 1)),
+      el("div", { class: "titles" }, idIn,
+        el("div", { class: "hint" }, `${state.sel + 1} / ${state.doc.segments.length} 번째 세그먼트` + (dur !== null ? ` · 내레이션 ${dur.toFixed(1)}s` : "") + ` · 액션 ${seg.actions.length}개`)),
+      padIn,
       el("span", { class: "spacer" }),
       el("button", { class: "ghost mini", title: "위로", onclick: () => moveSeg(-1) }, "↑"),
       el("button", { class: "ghost mini", title: "아래로", onclick: () => moveSeg(1) }, "↓"),
@@ -160,61 +246,129 @@
       el("button", { class: "danger mini", onclick: () => delSeg() }, "삭제"));
     pane.append(head);
 
-    pane.append(field("id", inp(seg.id || "", (v) => { seg.id = v; touched(); renderSegList(); }, { placeholder: "예: read_problem" })));
-    pane.append(field("여백 pad(s)", inp(seg.pad ?? "", (v) => { const n = parseVal(v); if (n === undefined) delete seg.pad; else seg.pad = n; touched(); }, { placeholder: "기본 meta.segment_pad" })));
-
-    // 내레이션
-    const narr = el("div", { class: "narr" });
-    const ta = el("textarea", { placeholder: "내레이션. 문장(., ?, !)으로 끊으면 at: s2 처럼 문장 시작에 애니메이션을 맞출 수 있습니다." });
+    // 1) 내레이션
+    const narr = el("section", { class: "block" });
+    const ta = el("textarea", { placeholder: "내레이션. 문장(., ?, !)으로 끊으면 아래 표에서 문장별로 애니메이션을 맞출 수 있습니다." });
     ta.value = seg.narration || "";
-    const sentBox = el("div", { class: "sentences" });
-    const renderSent = (timed) => {
-      sentBox.innerHTML = "";
-      const info = timed ? { exact: true, list: timed } : sentencesFor(seg);
-      const sents = info.list;
-      sentBox.append(el("span", { class: "s-mode " + (info.exact ? "exact" : "guess"),
-        title: info.exact ? "TTS 엔진이 실제로 끊어 읽은 문장 경계입니다 (at: sN 의 기준)" : "문장부호로 추정한 경계입니다. 숫자 뒤의 '.' 등은 TTS 가 다르게 끊을 수 있으니 ▶ 듣기로 확인하세요" },
-        info.exact ? "실제 경계" : "추정"));
-      for (const s of sents) {
-        sentBox.append(el("span", { class: "s", title: "클릭하면 at 값(sN)을 복사", onclick: () => { navigator.clipboard?.writeText("s" + s.i); toast(`s${s.i} 복사됨`); } },
-          el("b", {}, "s" + s.i), s.text.length > 46 ? s.text.slice(0, 46) + "…" : s.text,
-          s.start !== undefined ? el("span", { class: "t" }, `${s.start.toFixed(1)}s`) : null));
-      }
-    };
-    ta.addEventListener("input", () => { seg.narration = ta.value; touched(); renderSent(); });
     const audio = el("audio", { controls: "", class: "hidden", style: "height:28px" });
     const btnTts = el("button", { class: "ghost mini", onclick: async () => {
       btnTts.disabled = true; btnTts.textContent = "합성 중…";
       try {
         const r = await api("/api/tts", { method: "POST", body: { text: ta.value, voice: seg.voice || state.doc.meta.voice || "ko-KR-InJoonNeural", rate: seg.rate || state.doc.meta.rate || "+0%" } });
         state.sentences[seg.id] = { exact: true, sentences: r.sentences, narr: normNarr(ta.value) };
-        renderSent(r.sentences); audio.src = r.audio_url; audio.classList.remove("hidden"); audio.play().catch(() => {});
-        const n = sentencesFor(seg).list.length;
-        $$("#segEditor .card").forEach((c, idx) => { const a = seg.actions[idx] || {}; c.classList.toggle("at-warn", typeof a.at === "string" && /^s\d+$/.test(a.at) && Number(a.at.slice(1)) > Math.max(1, n)); });
+        audio.src = r.audio_url; audio.classList.remove("hidden"); audio.play().catch(() => {});
         toast(`내레이션 ${r.duration.toFixed(1)}초, ${r.sentences.length}문장`);
+        renderSync(); renderCards(); renderSegList();
       } catch (e) { toast(e.message, "bad"); }
       btnTts.disabled = false; btnTts.textContent = "▶ 듣기 · 문장 타이밍";
     } }, "▶ 듣기 · 문장 타이밍");
-    narr.append(el("div", { class: "row" }, el("label", { class: "hint" }, "내레이션"), el("span", { class: "spacer" }), audio, btnTts), ta, sentBox);
+    narr.append(el("div", { class: "block-head" }, el("h3", {}, "① 내레이션"), el("span", { class: "hint" }, "이 글이 TTS 로 읽힙니다"), el("span", { class: "spacer" }), audio, btnTts), ta);
+    ta.addEventListener("input", () => { seg.narration = ta.value; touched(); renderSync(); });
     pane.append(narr);
-    renderSent();
 
-    // 액션
-    const addSel = el("select", {});
+    // 2) 문장 ↔ 액션 동기화 보드
+    const sync = el("section", { class: "block" });
+    pane.append(sync);
+    const renderSync = () => { sync.innerHTML = ""; sync.append(syncBoard(seg, (idx) => focusCard(idx))); };
+
+    // 3) 액션 카드
+    const addSel = el("select", { class: "add-action" });
     addSel.append(el("option", { value: "" }, "+ 액션 추가…"));
     let lastCat = null;
     for (const a of state.catalog) {
       if (a.category !== lastCat) { lastCat = a.category; addSel.append(el("optgroup", { label: a.category })); }
-      addSel.lastChild.append(el("option", { value: a.name }, `${a.name} — ${a.doc}`.slice(0, 70)));
+      addSel.lastChild.append(el("option", { value: a.name }, `${actIcon(a.name)} ${actLabel(a.name)} (${a.name}) — ${a.doc}`.slice(0, 80)));
     }
     addSel.addEventListener("change", () => {
       if (!addSel.value) return;
       const t = state.catalogByName[addSel.value];
-      seg.actions.push({ do: addSel.value, ...(JSON.parse(JSON.stringify(t.template || {}))) });
+      const act = { do: addSel.value, ...(JSON.parse(JSON.stringify(t.template || {}))) };
+      seg.actions.push(act); state.expanded.add(act);
       touched(); renderSegEditor(); renderSegList();
+      setTimeout(() => focusCard(seg.actions.length - 1), 0);
     });
-    pane.append(el("div", { class: "actions-head" }, el("h3", {}, `액션 ${seg.actions.length}개`), el("span", { class: "spacer" }), addSel));
-    seg.actions.forEach((act, i) => pane.append(actionCard(seg, act, i)));
+    const cardsBox = el("div", { class: "cards" });
+    const acts = el("section", { class: "block" },
+      el("div", { class: "block-head" }, el("h3", {}, `③ 액션 ${seg.actions.length}개`),
+        el("span", { class: "hint" }, "위에서 아래 순서로 실행 · 카드를 누르면 세부 설정"), el("span", { class: "spacer" }),
+        el("button", { class: "ghost mini", onclick: () => { seg.actions.forEach((a) => state.expanded.add(a)); renderCards(); } }, "모두 펼치기"),
+        el("button", { class: "ghost mini", onclick: () => { state.expanded.clear(); renderCards(); } }, "모두 접기"),
+        addSel),
+      cardsBox);
+    pane.append(acts);
+    const renderCards = () => { cardsBox.innerHTML = ""; seg.actions.forEach((act, i) => cardsBox.append(actionCard(seg, act, i))); };
+    function focusCard(idx) {
+      const act = seg.actions[idx]; if (!act) return;
+      state.expanded.add(act); renderCards();
+      const c = cardsBox.children[idx]; if (!c) return;
+      c.scrollIntoView({ behavior: "smooth", block: "center" });
+      c.classList.add("flash"); setTimeout(() => c.classList.remove("flash"), 1200);
+    }
+    renderSync(); renderCards();
+  }
+
+  /** 문장(줄) ↔ 액션(칩) 표 + 비율 시간 바. 액션은 at 에 따라 해당 문장 줄에, at 이 없으면 앞 액션과 같은 줄에 놓인다. */
+  function syncBoard(seg, onPick) {
+    const info = sentencesFor(seg);
+    const sents = info.list;
+    const total = info.exact && sents.length ? sents[sents.length - 1].end : null;
+    const rows = sents.map((s) => ({ s, acts: [] }));
+    const before = { s: null, acts: [] }, numeric = [];   // 문장 없이 시작하는 것 / 초 단위 at
+    let cur = rows.length ? 0 : -1, curNumeric = null;
+    seg.actions.forEach((a, i) => {
+      const at = a.at;
+      if (typeof at === "string" && /^s\d+$/.test(at)) {
+        const k = Number(at.slice(1)) - 1;
+        cur = Math.min(Math.max(k, 0), rows.length - 1); curNumeric = null;
+        if (k >= rows.length) { (rows[rows.length - 1] || before).acts.push({ a, i, warn: true }); return; }
+      } else if (typeof at === "number") {
+        if (total !== null) { const k = sents.findIndex((s) => at < s.end); cur = k < 0 ? rows.length - 1 : k; curNumeric = null; }
+        else { curNumeric = at; }
+      }
+      if (curNumeric !== null) { let r = numeric.find((x) => x.t === curNumeric); if (!r) { r = { t: curNumeric, acts: [] }; numeric.push(r); } r.acts.push({ a, i }); return; }
+      (cur >= 0 ? rows[cur] : before).acts.push({ a, i });
+    });
+
+    const box = el("div", { class: "sync" });
+    box.append(el("div", { class: "block-head" }, el("h3", {}, "② 문장 ↔ 액션 동기화"),
+      el("span", { class: "s-mode " + (info.exact ? "exact" : "guess"),
+        title: info.exact ? "TTS 엔진이 실제로 끊어 읽은 문장 경계와 시각입니다 (at: sN 의 기준)" : "문장부호로 추정한 경계입니다. 숫자 뒤의 '.' 등은 TTS 가 다르게 끊을 수 있으니 ▶ 듣기로 확인하세요" },
+        info.exact ? "실제 경계 · 시각" : "추정 경계"),
+      el("span", { class: "hint" }, "줄 = 한 문장, 칩 = 그 문장이 시작될 때 실행되는 액션. 칩을 누르면 카드로 이동")));
+
+    if (total) {
+      const bar = el("div", { class: "timebar" });
+      sents.forEach((s) => bar.append(el("span", { class: "blk", style: `left:${(s.start / total) * 100}%;width:${((s.end - s.start) / total) * 100}%`, title: `s${s.i} ${s.start.toFixed(1)}–${s.end.toFixed(1)}s` }, `s${s.i}`)));
+      seg.actions.forEach((a, i) => {
+        let t = null;
+        if (typeof a.at === "number") t = a.at;
+        else if (typeof a.at === "string" && /^s\d+$/.test(a.at)) t = sents[Number(a.at.slice(1)) - 1]?.start ?? null;
+        if (t === null) return;
+        bar.append(el("i", { class: "mark", style: `left:${Math.min(100, (t / total) * 100)}%;background:${actColor(a.do)}`, title: `${actIcon(a.do)} ${actLabel(a.do)} ${summarize(a)} @ ${t.toFixed(1)}s`, onclick: () => onPick(i) }));
+      });
+      bar.append(el("span", { class: "end" }, `${total.toFixed(1)}s`));
+      box.append(bar);
+    }
+
+    const table = el("div", { class: "sync-rows" });
+    const chip = ({ a, i, warn }) => el("button", { class: "achip" + (warn ? " warn" : ""), style: `--c:${actColor(a.do)}`, title: `${i + 1}. ${a.do} — ${summarize(a)}`, onclick: () => onPick(i) },
+      el("b", {}, actIcon(a.do)), el("span", { class: "nm" }, actLabel(a.do)), el("span", { class: "sm" }, short(summarize(a), 26)),
+      a.at === undefined || a.at === null || a.at === "" ? null : el("span", { class: "at" }, atText(a.at)));
+    const row = (label, sub, actsList, extraCls = "") => el("div", { class: "srow " + extraCls },
+      el("div", { class: "sent" }, el("b", {}, label), sub ? el("span", { class: "t" }, sub) : null),
+      el("div", { class: "chips" }, ...(actsList.length ? actsList.map(chip) : [el("span", { class: "none" }, "—")])));
+    if (before.acts.length) table.append(row("시작", "", before.acts, "pre"));
+    rows.forEach(({ s, acts }) => {
+      const label = el("span", { class: "sn", title: "클릭하면 at 값(sN)을 복사", onclick: () => { navigator.clipboard?.writeText("s" + s.i); toast(`s${s.i} 복사됨 — 액션의 at 칸에 붙이세요`); } }, `s${s.i}`);
+      const r = el("div", { class: "srow" },
+        el("div", { class: "sent" }, label, s.start !== undefined ? el("span", { class: "t" }, `${s.start.toFixed(1)}s`) : null, el("span", { class: "txt", title: s.text }, s.text)),
+        el("div", { class: "chips" }, ...(acts.length ? acts.map(chip) : [el("span", { class: "none" }, "—")])));
+      table.append(r);
+    });
+    numeric.sort((x, y) => x.t - y.t).forEach((r) => table.append(row(`${r.t}s`, "", r.acts, "num")));
+    if (!rows.length && !before.acts.length) table.append(el("p", { class: "hint" }, "내레이션을 쓰면 문장별 줄이 생깁니다."));
+    box.append(table);
+    return box;
   }
 
   function field(label, control) { return el("div", { class: "field" }, el("label", {}, label), control); }
@@ -237,75 +391,113 @@
     state.doc.segments.splice(state.sel, 1); state.sel = Math.max(0, state.sel - 1); touched(); renderSegList(); renderSegEditor();
   }
 
-  // ------------------------------------------------------------------ 액션 카드
+  // ------------------------------------------------------------------ 액션 카드 (접힘: 아이콘·이름·요약·시각 / 펼침: 세부 설정)
   function actionCard(seg, act, i) {
     const spec = state.catalogByName[act.do];
-    const card = el("div", { class: "card" });
+    const color = actColor(act.do);
+    const open = state.expanded.has(act);
+    const card = el("div", { class: "card" + (open ? " open" : ""), style: `--c:${color}` });
     const nSent = sentencesFor(seg).list.length;
-    if (typeof act.at === "string" && /^s\d+$/.test(act.at) && Number(act.at.slice(1)) > Math.max(1, nSent)) card.classList.add("at-warn");
+    const atWarn = typeof act.at === "string" && /^s\d+$/.test(act.at) && Number(act.at.slice(1)) > Math.max(1, nSent);
+    if (atWarn) card.classList.add("at-warn");
 
+    // 접힌 머리
+    const rerenderCard = () => { const n = actionCard(seg, act, i); card.replaceWith(n); };
+    const head = el("div", { class: "head", onclick: (e) => { if (e.target.closest("button, input, select")) return; open ? state.expanded.delete(act) : state.expanded.add(act); rerenderCard(); } },
+      el("span", { class: "idx" }, String(i + 1)),
+      el("span", { class: "ico" }, actIcon(act.do)),
+      el("span", { class: "name" }, actLabel(act.do), el("code", {}, act.do)),
+      el("span", { class: "sum", title: summarize(act) }, summarize(act) || el("i", { class: "hint" }, spec ? spec.doc : "알 수 없는 액션")),
+      el("span", { class: "timing" + (atWarn ? " warn" : "") + (act.at === undefined ? " seq" : ""), title: atWarn ? `문장이 ${nSent}개뿐입니다` : "실행 시각" },
+        act.at === undefined || act.at === null || act.at === "" ? "이어서" : `▶ ${atText(act.at)}`),
+      act.run_time !== undefined ? el("span", { class: "rt", title: "run_time(초)" }, `${act.run_time}s`) : null,
+      el("span", { class: "tools" },
+        el("button", { class: "ghost mini", title: "위로", onclick: () => swapAct(seg, i, -1) }, "↑"),
+        el("button", { class: "ghost mini", title: "아래로", onclick: () => swapAct(seg, i, 1) }, "↓"),
+        el("button", { class: "ghost mini", title: "복제", onclick: () => { seg.actions.splice(i + 1, 0, JSON.parse(JSON.stringify(act))); touched(); renderSegEditor(); renderSegList(); } }, "⧉"),
+        el("button", { class: "ghost mini", title: "삭제", onclick: () => { if (confirm(`${actLabel(act.do)} 액션을 삭제할까요?`)) { seg.actions.splice(i, 1); touched(); renderSegEditor(); renderSegList(); } } }, "✕")),
+      el("span", { class: "chev" }, open ? "▾" : "▸"));
+    card.append(head);
+    if (!open) return card;
+
+    // ---- 펼친 본문
+    const body = el("div", { class: "body" });
+
+    // 종류 / 시각 / 길이
     const doSel = el("select", { class: "do" });
     let lastCat = null;
     for (const a of state.catalog) {
       if (a.category !== lastCat) { lastCat = a.category; doSel.append(el("optgroup", { label: a.category })); }
-      doSel.lastChild.append(el("option", { value: a.name }, a.name));
+      doSel.lastChild.append(el("option", { value: a.name }, `${actIcon(a.name)} ${actLabel(a.name)} (${a.name})`));
     }
     if (!spec) doSel.append(el("option", { value: act.do }, act.do + " (?)"));
     doSel.value = act.do;
-    doSel.addEventListener("change", () => { act.do = doSel.value; touched(); rerenderCard(); });
+    doSel.addEventListener("change", () => { act.do = doSel.value; touched(); renderSegEditor(); });
+    const atIn = el("input", { class: "at", value: act.at ?? "", placeholder: "예: s2 / 3.5", title: "실행 시각: sN(문장 N 시작) 또는 초. 비우면 앞 액션이 끝난 뒤 이어서" });
+    atIn.addEventListener("change", () => { const v = parseVal(atIn.value); if (v === undefined) delete act.at; else act.at = v; touched(); renderSegEditor(); });
+    const rtIn = el("input", { class: "rt", value: act.run_time ?? "", placeholder: "기본", title: "애니메이션 길이(초)" });
+    rtIn.addEventListener("change", () => { const v = parseVal(rtIn.value); if (v === undefined) delete act.run_time; else act.run_time = v; touched(); rerenderCard(); });
+    const sents = sentencesFor(seg).list;
+    const atPick = el("select", { class: "atpick", title: "문장을 골라 at 을 정합니다" });
+    atPick.append(el("option", { value: "" }, "문장 선택…"));
+    atPick.append(el("option", { value: "__seq" }, "이어서 (at 없음)"));
+    sents.forEach((s) => atPick.append(el("option", { value: "s" + s.i }, `s${s.i}${s.start !== undefined ? ` (${s.start.toFixed(1)}s)` : ""} ${short(s.text, 28)}`)));
+    atPick.addEventListener("change", () => { if (!atPick.value) return; if (atPick.value === "__seq") delete act.at; else act.at = atPick.value; touched(); renderSegEditor(); });
+    body.append(el("div", { class: "ctl" },
+      el("span", { class: "ctl-item" }, el("label", {}, "종류"), doSel),
+      el("span", { class: "ctl-item" }, el("label", {}, "시각(at)"), atIn, atPick),
+      el("span", { class: "ctl-item" }, el("label", {}, "길이(run)"), rtIn, el("label", {}, "초"))));
+    if (spec?.doc_full) body.append(el("p", { class: "doc" }, spec.doc_full));
 
-    const atIn = el("input", { class: "at", value: act.at ?? "", placeholder: "s2 / 3.5", title: "실행 시각: sN(문장 N 시작) 또는 초" });
-    atIn.addEventListener("change", () => { const v = parseVal(atIn.value); if (v === undefined) delete act.at; else act.at = v; touched(); rerenderCard(); });
-    const rtIn = el("input", { class: "rt", value: act.run_time ?? "", placeholder: "run", title: "run_time(초)" });
-    rtIn.addEventListener("change", () => { const v = parseVal(rtIn.value); if (v === undefined) delete act.run_time; else act.run_time = v; touched(); });
-
-    const head = el("div", { class: "head" },
-      el("span", { class: "idx" }, String(i + 1)), doSel,
-      el("span", { class: "doc", title: spec?.doc_full || "" }, spec ? spec.doc : "알 수 없는 액션"),
-      el("label", {}, "at"), atIn, el("label", {}, "run"), rtIn,
-      el("button", { class: "ghost mini", title: "위로", onclick: () => swapAct(seg, i, -1) }, "↑"),
-      el("button", { class: "ghost mini", title: "아래로", onclick: () => swapAct(seg, i, 1) }, "↓"),
-      el("button", { class: "ghost mini", title: "복제", onclick: () => { seg.actions.splice(i + 1, 0, JSON.parse(JSON.stringify(act))); touched(); renderSegEditor(); renderSegList(); } }, "⧉"),
-      el("button", { class: "ghost mini", title: "삭제", onclick: () => { seg.actions.splice(i, 1); touched(); renderSegEditor(); renderSegList(); } }, "✕"));
-    card.append(head);
-
-    // 파라미터 그리드
+    // 파라미터: 설정된 것만 표로, 나머지는 "+ 파라미터" 로 추가
     const params = el("div", { class: "params" });
     const skip = new Set(["do", "at", "run_time", "steps", "parts"]);
+    const stepKeys = ["why", "from", "focus", "new", "cancel", "box", "pulse", "hold", "cancel_at", "underline", "same_line", "space"];
     const known = (spec?.params || []).map((p) => p.name).filter((n) => !skip.has(n));
-    const extra = Object.keys(act).filter((k) => !skip.has(k) && !known.includes(k));
-    const handledByStepsEditor = act.do === "derive" || act.do === "step";
-    const keys = [...known, ...extra].filter((k) => !(handledByStepsEditor && ["why", "from", "focus", "new", "cancel", "box", "pulse", "hold", "cancel_at", "underline", "same_line", "space"].includes(k) && act.do === "step"));
-    for (const k of keys) {
+    const setKeys = Object.keys(act).filter((k) => !skip.has(k) && !(act.do === "step" && stepKeys.includes(k)));
+    const unset = known.filter((k) => !(k in act) && !(act.do === "step" && stepKeys.includes(k)));
+    const required = (spec?.params || []).filter((p) => p.required && !skip.has(p.name)).map((p) => p.name);
+    for (const k of [...required.filter((k) => !setKeys.includes(k)), ...setKeys]) {
       const pspec = (spec?.params || []).find((p) => p.name === k);
       const val = act[k];
-      const input = el("input", { value: val === undefined ? "" : fmtVal(val), placeholder: pspec && pspec.default !== null && pspec.default !== undefined ? `기본 ${fmtVal(pspec.default)}` : "" });
+      const long = typeof val === "string" && val.length > 60 || Array.isArray(val) && val.some((x) => typeof x === "string" && x.length > 30);
+      const input = long ? el("textarea", { rows: Math.min(6, 1 + Math.ceil(fmtVal(val).length / 70)), spellcheck: "false" }) : el("input", { spellcheck: "false" });
+      input.value = val === undefined ? "" : fmtVal(val);
+      input.placeholder = pspec && pspec.default !== null && pspec.default !== undefined ? `기본 ${fmtVal(pspec.default)}` : (pspec?.required ? "필수" : "");
       if (val !== undefined && typeof val !== "string") input.classList.add("json");
       input.addEventListener("change", () => {
         const v = parseVal(input.value);
         if (v === undefined) delete act[k]; else act[k] = v;
-        input.classList.toggle("json", v !== undefined && typeof v !== "string");
-        touched();
+        touched(); rerenderCard();
       });
-      if (k === "fn" && act.do === "custom" && state.hooks.length) {
-        input.setAttribute("list", "hooksList");
-      }
+      if (k === "fn" && act.do === "custom" && state.hooks.length) input.setAttribute("list", "hooksList");
       if (k === "section" && act.do === "goto") input.setAttribute("list", "sectionsList");
-      params.append(el("span", { class: "k" + (pspec?.required ? " req" : ""), title: pspec?.type || "" }, k), input,
-        el("span", { class: "x", title: "값 지우기", onclick: () => { delete act[k]; touched(); rerenderCard(); } }, "✕"));
+      if (k === "color") input.setAttribute("list", "colorsList");
+      params.append(el("span", { class: "k" + (pspec?.required ? " req" : "") + (pspec ? "" : " extra"), title: pspec ? `${pspec.type || ""}${pspec.required ? " · 필수" : ""}` : "카탈로그에 없는 항목" }, k), input,
+        el("span", { class: "x", title: "이 항목 지우기", onclick: () => { delete act[k]; touched(); rerenderCard(); } }, "✕"));
     }
-    card.append(params);
+    body.append(params);
     ensureDatalists();
 
-    // derive/step 전용: 단계 편집기
-    if (act.do === "derive") card.append(stepsEditor(act.steps = act.steps || [], () => { touched(); }));
-    if (act.do === "step") card.append(stepsEditor([act], () => { touched(); }, true));
+    // + 파라미터
+    const addP = el("select", { class: "addp" });
+    addP.append(el("option", { value: "" }, unset.length ? `+ 파라미터 (${unset.length}개 더)…` : "+ 파라미터…"));
+    for (const k of unset) { const p = (spec?.params || []).find((q) => q.name === k); addP.append(el("option", { value: k }, `${k}${p && p.default !== null && p.default !== undefined ? ` — 기본 ${fmtVal(p.default)}` : ""}`)); }
+    addP.append(el("option", { value: "__custom" }, "직접 입력…"));
+    addP.addEventListener("change", () => {
+      let k = addP.value; if (!k) return;
+      if (k === "__custom") { k = prompt("추가할 항목 이름"); if (!k) return; }
+      const p = (spec?.params || []).find((q) => q.name === k);
+      act[k] = p && p.default !== null && p.default !== undefined ? JSON.parse(JSON.stringify(p.default)) : "";
+      touched(); rerenderCard();
+    });
+    const rawBtn = el("button", { class: "ghost mini", onclick: () => { state.rawOpen.has(act) ? state.rawOpen.delete(act) : state.rawOpen.add(act); rerenderCard(); } }, state.rawOpen.has(act) ? "JSON 닫기" : "JSON 으로 보기");
+    body.append(el("div", { class: "foot" }, addP, el("span", { class: "hint" }, "값: 숫자/true/false/[목록]/{매핑} 자동 인식"), el("span", { class: "spacer" }), rawBtn));
 
-    // 푸터: 항목 추가 / JSON
-    const newKey = el("input", { placeholder: "항목 추가 (키)", style: "width:150px" });
-    newKey.addEventListener("keydown", (e) => { if (e.key === "Enter" && newKey.value.trim()) { act[newKey.value.trim()] = ""; touched(); rerenderCard(); } });
-    const rawBtn = el("button", { class: "ghost mini", onclick: () => { state.rawOpen.has(act) ? state.rawOpen.delete(act) : state.rawOpen.add(act); rerenderCard(); } }, state.rawOpen.has(act) ? "JSON 닫기" : "JSON");
-    card.append(el("div", { class: "foot" }, newKey, el("span", { class: "hint" }, "값: 숫자/true/false/[목록]/{매핑} 은 자동 인식, 나머지는 문자열"), rawBtn));
+    // derive/step 전용: 단계 편집기
+    if (act.do === "derive") body.append(stepsEditor(act.steps = act.steps || [], () => { touched(); }, false, sents));
+    if (act.do === "step") body.append(stepsEditor([act], () => { touched(); }, true, sents));
+
     if (state.rawOpen.has(act)) {
       const ta = el("textarea", { class: "raw", spellcheck: "false" });
       ta.value = JSON.stringify(act, null, 2);
@@ -313,10 +505,9 @@
         try { const o = JSON.parse(ta.value); for (const k of Object.keys(act)) delete act[k]; Object.assign(act, o); touched(); rerenderCard(); }
         catch (e) { toast("JSON 오류: " + e.message, "bad"); }
       });
-      card.append(ta);
+      body.append(ta);
     }
-
-    function rerenderCard() { const n = actionCard(seg, act, i); card.replaceWith(n); }
+    card.append(body);
     return card;
   }
 
@@ -325,41 +516,63 @@
     [seg.actions[i], seg.actions[j]] = [seg.actions[j], seg.actions[i]]; touched(); renderSegEditor();
   }
 
+  const COLOR_NAMES = ["exp", "log", "q1", "q2", "point", "rect", "axis_sym", "guide", "ok", "warn", "chalk", "accent", "highlight", "muted", "text"];
   function ensureDatalists() {
-    let dl = $("#hooksList");
-    if (!dl) { dl = el("datalist", { id: "hooksList" }); document.body.append(dl); }
-    dl.innerHTML = ""; for (const h of state.hooks) dl.append(el("option", { value: h }));
-    let sl = $("#sectionsList");
-    if (!sl) { sl = el("datalist", { id: "sectionsList" }); document.body.append(sl); }
-    sl.innerHTML = ""; for (const s of (state.doc.layout?.chalk?.sections || [])) sl.append(el("option", { value: s.id }));
+    const fill = (id, values) => {
+      let dl = $("#" + id);
+      if (!dl) { dl = el("datalist", { id }); document.body.append(dl); }
+      dl.innerHTML = ""; for (const v of values) dl.append(el("option", { value: v }));
+    };
+    fill("hooksList", state.hooks);
+    fill("sectionsList", (state.doc.layout?.chalk?.sections || []).map((s) => s.id));
+    fill("colorsList", COLOR_NAMES);
   }
 
-  /** derive.steps 또는 step 액션 하나를 편집하는 표. single=true 면 steps 배열 대신 액션 자체가 한 단계. */
-  function stepsEditor(steps, onchange, single = false) {
+  /** derive.steps 또는 step 액션 하나를 편집하는 표. single=true 면 steps 배열 대신 액션 자체가 한 단계.
+   *  각 단계: [번호] 조각 미리보기(칩) · 조각 입력 · 이유 · 옵션(접힘) */
+  function stepsEditor(steps, onchange, single = false, sents = []) {
     const box = el("div", { class: "steps" });
+    const optOpen = new Set();
     const render = () => {
       box.innerHTML = "";
-      box.append(el("div", { class: "row" }, el("span", { class: "hint" }, single ? "단계 내용" : `전개 단계 ${steps.length}개 — 조각은 " | " 로 구분 (예: = | 2^{3} | \\times | x)`),
+      box.append(el("div", { class: "block-head" }, el("h4", {}, single ? "이 단계의 식" : `전개 단계 ${steps.length}개`),
+        el("span", { class: "hint" }, "조각은 \" | \" 로 구분 — 이전 줄과 같은 조각은 미끄러지고, 바뀐 조각만 강조되어 날아옵니다"),
         el("span", { class: "spacer" }),
         single ? null : el("button", { class: "ghost mini", onclick: () => { steps.push({ parts: ["=", ""] }); onchange(); render(); } }, "+ 단계")));
       steps.forEach((st, k) => {
-        const partsIn = el("input", { value: joinParts(st.parts || (st.tex ? [st.tex] : [])), placeholder: "조각 | 조각 | …" });
-        partsIn.addEventListener("change", () => { st.parts = splitParts(partsIn.value); delete st.tex; onchange(); });
-        const whyIn = el("input", { value: st.why || "", placeholder: "(∵ 이유)" });
-        whyIn.addEventListener("change", () => { if (whyIn.value.trim()) st.why = whyIn.value; else delete st.why; onchange(); });
-        const row = el("div", { class: "step" }, el("span", { class: "n" }, single ? "" : String(k + 1)), partsIn, whyIn,
-          single ? el("span") : el("span", {},
-            el("button", { class: "ghost mini", onclick: () => { if (k > 0) { [steps[k - 1], steps[k]] = [steps[k], steps[k - 1]]; onchange(); render(); } } }, "↑"),
-            el("button", { class: "ghost mini", onclick: () => { steps.splice(k, 1); onchange(); render(); } }, "✕")));
-        // 옵션 줄
-        const opts = el("div", { class: "opts" });
-        const chk = (key, label) => { const c = el("input", { type: "checkbox" }); c.checked = !!st[key]; c.addEventListener("change", () => { if (c.checked) st[key] = true; else delete st[key]; onchange(); }); return el("label", {}, c, label); };
-        const txt = (key, label, cls = "small", ph = "") => { const t = el("input", { class: cls, value: st[key] === undefined ? "" : fmtVal(st[key]), placeholder: ph }); t.addEventListener("change", () => { const v = parseVal(t.value); if (v === undefined) delete st[key]; else st[key] = v; onchange(); }); return el("label", {}, label, t); };
-        opts.append(txt("at", "at", "small", "s2"), txt("hold", "hold", "small", "s3"), txt("run_time", "run", "small", "2.0"),
-          chk("box", "상자"), chk("pulse", "펄스"),
-          txt("from", "from", "wide", '{"2^{2}": "x^{2}"}'), txt("cancel", "cancel", "wide", '["a_7", 5]'),
-          txt("cancel_at", "cancel_at", "small", "s5"), txt("focus", "focus", "wide", '["2\\\\cdot3x^{2}"]'), txt("new", "new", "wide", '["6", "x^{2}"]'));
-        row.append(opts);
+        const parts = st.parts || (st.tex ? [st.tex] : []);
+        const preview = el("div", { class: "preview" });
+        parts.forEach((p) => preview.append(el("span", { class: "pc" + (p === "=" || /^[+\-−×·,]$/.test(p) || /^\\(times|cdot|pm|Rightarrow)$/.test(p) ? " op" : "") }, stripTex(p) || " ")));
+        if (st.why) preview.append(el("span", { class: "why" }, `(∵ ${stripTex(st.why)})`));
+        const flags = [st.box ? "상자" : "", st.pulse ? "펄스" : "", st.cancel ? "소거" : "", st.from ? "대입" : "", st.at ? `▶ ${atText(st.at)}` : "", st.hold ? `hold ${st.hold}` : ""].filter(Boolean);
+        flags.forEach((f) => preview.append(el("span", { class: "flag" }, f)));
+
+        const partsIn = el("input", { value: joinParts(parts), placeholder: "조각 | 조각 | …  (예: = | 2^{3} | \\times | x)", spellcheck: "false" });
+        partsIn.addEventListener("change", () => { st.parts = splitParts(partsIn.value); delete st.tex; onchange(); render(); });
+        const whyIn = el("input", { value: st.why || "", placeholder: "(∵ 이유) — 한글+수식", spellcheck: "false" });
+        whyIn.addEventListener("change", () => { if (whyIn.value.trim()) st.why = whyIn.value; else delete st.why; onchange(); render(); });
+        const optBtn = el("button", { class: "ghost mini", onclick: () => { optOpen.has(st) ? optOpen.delete(st) : optOpen.add(st); render(); } }, optOpen.has(st) ? "옵션 ▾" : "옵션 ▸");
+        const row = el("div", { class: "step" },
+          el("span", { class: "n" }, single ? "" : String(k + 1)),
+          el("div", { class: "main" }, preview,
+            el("div", { class: "inputs" }, partsIn, whyIn)),
+          el("span", { class: "tools" }, optBtn,
+            single ? null : el("button", { class: "ghost mini", title: "위로", onclick: () => { if (k > 0) { [steps[k - 1], steps[k]] = [steps[k], steps[k - 1]]; onchange(); render(); } } }, "↑"),
+            single ? null : el("button", { class: "ghost mini", title: "삭제", onclick: () => { steps.splice(k, 1); onchange(); render(); } }, "✕")));
+        if (optOpen.has(st)) {
+          const opts = el("div", { class: "opts" });
+          const chk = (key, label, tip) => { const c = el("input", { type: "checkbox", title: tip }); c.checked = !!st[key]; c.addEventListener("change", () => { if (c.checked) st[key] = true; else delete st[key]; onchange(); render(); }); return el("label", { title: tip }, c, label); };
+          const txt = (key, label, cls = "small", ph = "", tip = "") => { const t = el("input", { class: cls, value: st[key] === undefined ? "" : fmtVal(st[key]), placeholder: ph, title: tip, spellcheck: "false" }); t.addEventListener("change", () => { const v = parseVal(t.value); if (v === undefined) delete st[key]; else st[key] = v; onchange(); render(); }); return el("label", { title: tip }, label, t); };
+          const atSel = el("select", { class: "small" }); atSel.append(el("option", { value: "" }, "문장…")); sents.forEach((s) => atSel.append(el("option", { value: "s" + s.i }, `s${s.i}`)));
+          atSel.addEventListener("change", () => { if (atSel.value) { st.at = atSel.value; onchange(); render(); } });
+          opts.append(
+            el("div", { class: "grp" }, el("b", {}, "시각"), txt("at", "at", "small", "s2", "이 단계를 시작할 문장/초"), atSel, txt("hold", "hold", "small", "s3", "출처 상자만 먼저 짚어 두고 이 문장부터 움직임"), txt("run_time", "run", "small", "2.0", "단계 애니메이션 길이(초)")),
+            el("div", { class: "grp" }, el("b", {}, "강조"), chk("box", "상자", "결과에 분필 상자"), chk("pulse", "펄스", "상자를 한 번 두드림"), chk("underline", "밑줄", "")),
+            el("div", { class: "grp" }, el("b", {}, "매칭"), txt("from", "from", "wide", '{"2^{2}": "x^{2}"}', "대입: 새 조각 ← 이전 조각"), txt("focus", "focus", "wide", '["2\\\\cdot3x^{2}"]', "출처를 이 조각들로 한정"), txt("new", "new", "wide", '["6", "x^{2}"]', "완전히 새로 쓰는 조각")),
+            el("div", { class: "grp" }, el("b", {}, "소거"), txt("cancel", "cancel", "wide", '["a_7", 5]', "취소선을 그을 조각(문자열/인덱스)"), txt("cancel_at", "cancel_at", "small", "s5", "취소선을 긋는 문장")),
+          );
+          row.append(opts);
+        }
         box.append(row);
       });
     };

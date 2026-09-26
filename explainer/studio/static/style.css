@@ -40,12 +40,17 @@ code, pre { font-family: var(--mono); }
 #sidebar { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; }
 .side-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px 4px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
 #segList { list-style: none; margin: 0; padding: 0 8px; flex: 1; }
-#segList li { padding: 7px 9px; border-radius: 6px; cursor: pointer; display: flex; gap: 6px; align-items: center; border: 1px solid transparent; }
+#segList li { padding: 7px 9px; border-radius: 8px; cursor: pointer; display: flex; gap: 8px; align-items: flex-start; border: 1px solid transparent; margin-bottom: 2px; }
 #segList li:hover { background: var(--panel2); }
 #segList li.on { background: var(--panel2); border-color: var(--blue); }
-#segList li .n { color: var(--muted); font-size: 11px; width: 18px; }
-#segList li .id { font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#segList li .cnt { color: var(--muted); font-size: 11px; }
+#segList li .n { flex: none; width: 22px; height: 22px; border-radius: 50%; background: #0c111c; border: 1px solid var(--line); color: var(--muted); font-size: 11px; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
+#segList li.on .n { background: var(--accent); color: #1a1a1a; border-color: transparent; font-weight: 700; }
+#segList li .body { flex: 1; min-width: 0; }
+#segList li .id { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#segList li .meta { color: var(--muted); font-size: 11px; margin-top: 1px; }
+#segList li .mix { display: flex; gap: 2px; margin-top: 5px; height: 4px; }
+#segList li .mix i { flex: 1; border-radius: 2px; opacity: .85; }
+#segList li .t0 { flex: none; color: var(--muted); font-size: 11px; font-family: var(--mono); margin-top: 3px; }
 #segList li.dragover { border-top: 2px solid var(--accent); }
 .side-foot { padding: 8px; border-top: 1px solid var(--line); }
 
@@ -54,45 +59,112 @@ code, pre { font-family: var(--mono); }
 .field { display: grid; grid-template-columns: 110px 1fr; gap: 8px; align-items: center; margin: 6px 0; }
 .field label { color: var(--muted); font-size: 12.5px; }
 .field input, .field select { width: 100%; }
-.narr textarea { min-height: 96px; font-family: inherit; font-size: 14px; line-height: 1.55; }
-.sentences { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.sentences .s { background: var(--panel2); border: 1px solid var(--line); border-radius: 14px; padding: 2px 9px; font-size: 12px; cursor: pointer; }
-.sentences .s b { color: var(--accent); margin-right: 4px; }
-.sentences .s .t { color: var(--muted); margin-left: 5px; }
-.sentences .s:hover { border-color: var(--blue); }
-.sentences .s-mode { font-size: 11px; padding: 2px 7px; border-radius: 10px; align-self: center; }
-.sentences .s-mode.exact { color: var(--ok, #7ee2a8); border: 1px solid currentColor; }
-.sentences .s-mode.guess { color: var(--warn, #f0c674); border: 1px dashed currentColor; }
+/* ---- 세그먼트 머리 */
+.seg-head { display: flex; gap: 10px; align-items: center; margin: 2px 0 14px; }
+.seg-head .badge { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #1a1a1a; font-weight: 800; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; }
+.seg-head .titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.seg-head input.seg-id { font-size: 18px; font-weight: 700; padding: 3px 8px; background: transparent; border-color: transparent; width: 320px; font-family: var(--mono); }
+.seg-head input.seg-id:hover, .seg-head input.seg-id:focus { border-color: var(--line); background: #0c111c; }
+.seg-head input.seg-pad { width: 92px; font-size: 12px; }
 
-.actions-head { display: flex; align-items: center; gap: 8px; margin: 18px 0 8px; }
-.actions-head h3 { margin: 0; font-size: 14px; white-space: nowrap; }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 8px 0; }
-.card.at-warn { border-color: var(--warn); }
-.card .head { display: flex; gap: 6px; align-items: center; }
-.card .head .idx { color: var(--muted); font-size: 11px; width: 20px; }
-.card .head select.do { font-weight: 600; min-width: 130px; }
-.card .head .doc { color: var(--muted); font-size: 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.card .head input.at { width: 62px; }
-.card .head input.rt { width: 62px; }
-.card .head label { color: var(--muted); font-size: 12px; }
-.card .params { display: grid; grid-template-columns: 130px 1fr auto; gap: 4px 8px; margin-top: 8px; align-items: center; }
+/* ---- 블록(①②③) */
+.block { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 10px 0; }
+.block-head { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.block-head h3 { margin: 0; font-size: 14px; white-space: nowrap; }
+.block-head h4 { margin: 0; font-size: 13px; white-space: nowrap; color: var(--text); }
+.block textarea { width: 100%; min-height: 96px; font-family: inherit; font-size: 14px; line-height: 1.55; }
+.s-mode { font-size: 11px; padding: 2px 7px; border-radius: 10px; align-self: center; }
+.s-mode.exact { color: var(--ok); border: 1px solid currentColor; }
+.s-mode.guess { color: var(--warn); border: 1px dashed currentColor; }
+select.add-action { max-width: 260px; }
+
+/* ---- 문장 ↔ 액션 동기화 보드 */
+.timebar { position: relative; height: 30px; margin: 18px 0 10px; background: #0c111c; border: 1px solid var(--line); border-radius: 6px; }
+.timebar .blk { position: absolute; top: 0; height: 100%; border-right: 1px solid var(--line); font-size: 10px; color: var(--muted); padding: 2px 4px; overflow: hidden; white-space: nowrap; }
+.timebar .blk:nth-child(odd) { background: rgba(255,255,255,.03); }
+.timebar .mark { position: absolute; bottom: 3px; width: 9px; height: 9px; margin-left: -4px; border-radius: 50%; border: 1.5px solid #0c111c; cursor: pointer; box-shadow: 0 0 0 1px rgba(255,255,255,.25); }
+.timebar .mark:hover { transform: scale(1.4); }
+.timebar .end { position: absolute; right: -2px; top: -16px; font-size: 10px; color: var(--muted); font-family: var(--mono); }
+.sync-rows { display: flex; flex-direction: column; gap: 3px; }
+.srow { display: grid; grid-template-columns: minmax(240px, 40%) 1fr; gap: 10px; align-items: start; padding: 5px 6px; border-radius: 6px; }
+.srow:nth-child(odd) { background: rgba(255,255,255,.025); }
+.srow.pre .sent b, .srow.num .sent b { color: var(--muted); }
+.srow .sent { display: flex; gap: 7px; align-items: baseline; min-width: 0; font-size: 13px; }
+.srow .sent .sn { color: var(--accent); font-weight: 700; font-family: var(--mono); cursor: pointer; flex: none; }
+.srow .sent .sn:hover { text-decoration: underline; }
+.srow .sent .t { color: var(--muted); font-size: 11px; font-family: var(--mono); flex: none; width: 42px; }
+.srow .sent .txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #cfd5e3; }
+.srow .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.srow .chips .none { color: var(--line); padding: 2px 6px; }
+.achip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px 2px 6px; border-radius: 14px; border: 1px solid var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--text); font-size: 12px; cursor: pointer; line-height: 1.4; }
+.achip:hover { background: color-mix(in srgb, var(--c) 30%, transparent); }
+.achip b { color: var(--c); font-weight: 700; }
+.achip .nm { font-weight: 600; }
+.achip .sm { color: var(--muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.achip .at { color: var(--c); font-family: var(--mono); font-size: 11px; }
+.achip.warn { border-color: var(--warn); }
+
+/* ---- 액션 카드 */
+.cards { display: flex; flex-direction: column; gap: 6px; }
+.card { background: #131927; border: 1px solid var(--line); border-left: 4px solid var(--c, var(--line)); border-radius: 8px; }
+.card.open { background: var(--panel2); }
+.card.at-warn { border-color: var(--warn); border-left-color: var(--warn); }
+.card.flash { box-shadow: 0 0 0 2px var(--accent); }
+.card .head { display: flex; gap: 8px; align-items: center; padding: 7px 10px; cursor: pointer; user-select: none; }
+.card .head:hover { background: rgba(255,255,255,.03); }
+.card .head .idx { color: var(--muted); font-size: 11px; width: 18px; text-align: right; font-family: var(--mono); }
+.card .head .ico { color: var(--c); font-size: 15px; width: 20px; text-align: center; }
+.card .head .name { font-weight: 700; white-space: nowrap; }
+.card .head .name code { color: var(--muted); font-weight: 400; font-size: 11px; margin-left: 5px; }
+.card .head .sum { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #cfd5e3; font-family: var(--mono); font-size: 12.5px; }
+.card .head .timing { flex: none; font-family: var(--mono); font-size: 11.5px; padding: 1px 7px; border-radius: 10px; background: rgba(90,212,138,.15); color: var(--ok); border: 1px solid rgba(90,212,138,.4); }
+.card .head .timing.seq { background: transparent; color: var(--muted); border-color: var(--line); }
+.card .head .timing.warn { background: rgba(255,159,67,.15); color: var(--warn); border-color: var(--warn); }
+.card .head .rt { flex: none; color: var(--muted); font-size: 11px; font-family: var(--mono); }
+.card .head .tools { display: none; gap: 2px; }
+.card .head:hover .tools, .card.open .head .tools { display: inline-flex; }
+.card .head .chev { color: var(--muted); width: 14px; }
+.card .body { padding: 4px 12px 12px 12px; border-top: 1px dashed var(--line); }
+.card .body .doc { color: var(--muted); font-size: 12px; margin: 6px 0 8px; white-space: pre-line; max-height: 5.6em; overflow: auto; }
+.card .ctl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+.card .ctl .ctl-item { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.card .ctl label { color: var(--muted); font-size: 12px; }
+.card .ctl select.do { font-weight: 600; min-width: 200px; }
+.card .ctl input.at { width: 90px; font-family: var(--mono); }
+.card .ctl select.atpick { max-width: 260px; color: var(--muted); }
+.card .ctl input.rt { width: 64px; font-family: var(--mono); }
+.card .params { display: grid; grid-template-columns: 120px 1fr auto; gap: 5px 8px; margin-top: 6px; align-items: center; }
 .card .params .k { color: var(--muted); font-size: 12.5px; font-family: var(--mono); text-align: right; }
 .card .params .k.req::after { content: " *"; color: var(--warn); }
-.card .params input { width: 100%; font-family: var(--mono); font-size: 12.5px; }
-.card .params input.json { color: var(--blue); }
+.card .params .k.extra { color: var(--blue); }
+.card .params input, .card .params textarea { width: 100%; font-family: var(--mono); font-size: 12.5px; min-height: 0; }
+.card .params .json { color: var(--blue); }
 .card .params .x { color: var(--muted); cursor: pointer; padding: 0 4px; }
 .card .params .x:hover { color: var(--bad); }
-.card .foot { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
-.card .foot .hint { flex: 1; }
-.card textarea.raw { min-height: 90px; margin-top: 6px; }
-.steps { margin-top: 8px; border-top: 1px dashed var(--line); padding-top: 6px; }
-.steps .step { display: grid; grid-template-columns: 22px 1fr 180px auto; gap: 6px; align-items: center; margin: 4px 0; }
-.steps .step .n { color: var(--muted); font-size: 11px; }
-.steps .step input { font-family: var(--mono); font-size: 12.5px; }
-.steps .step .opts { grid-column: 2 / span 3; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 4px; }
-.steps .step .opts label { font-size: 12px; color: var(--muted); display: inline-flex; gap: 3px; align-items: center; }
-.steps .step .opts input.small { width: 70px; }
-.steps .step .opts input.wide { flex: 1; min-width: 160px; }
+.card .foot { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+.card .foot select.addp { max-width: 260px; }
+.card textarea.raw { min-height: 120px; margin-top: 8px; font-size: 12px; font-family: var(--mono); }
+
+/* ---- 식 전개 단계 */
+.steps { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.steps .step { display: grid; grid-template-columns: 24px 1fr auto; gap: 8px; align-items: start; padding: 6px 4px; border-radius: 6px; }
+.steps .step:nth-child(even) { background: rgba(255,255,255,.025); }
+.steps .step .n { width: 22px; height: 22px; border-radius: 50%; background: #0c111c; border: 1px solid var(--line); color: var(--muted); font-size: 11px; display: inline-flex; align-items: center; justify-content: center; margin-top: 2px; }
+.steps .step .main { min-width: 0; }
+.steps .step .preview { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-bottom: 5px; min-height: 22px; }
+.steps .step .preview .pc { background: #0c111c; border: 1px solid var(--line); border-radius: 5px; padding: 1px 7px; font-family: var(--mono); font-size: 13px; color: var(--text); }
+.steps .step .preview .pc.op { background: transparent; border-color: transparent; color: var(--muted); padding: 1px 2px; }
+.steps .step .preview .why { color: var(--blue); font-size: 12px; margin-left: 4px; }
+.steps .step .preview .flag { font-size: 10.5px; color: var(--accent); border: 1px solid rgba(255,210,63,.4); border-radius: 10px; padding: 0 6px; }
+.steps .step .inputs { display: grid; grid-template-columns: 1fr 220px; gap: 6px; }
+.steps .step .inputs input { font-family: var(--mono); font-size: 12.5px; width: 100%; }
+.steps .step .tools { display: inline-flex; gap: 2px; margin-top: 2px; }
+.steps .step .opts { grid-column: 2 / span 2; display: flex; flex-direction: column; gap: 5px; margin-top: 4px; padding: 8px; background: #0c111c; border-radius: 6px; border: 1px solid var(--line); }
+.steps .step .opts .grp { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.steps .step .opts .grp > b { color: var(--muted); font-size: 11.5px; width: 34px; }
+.steps .step .opts label { font-size: 12px; color: var(--muted); display: inline-flex; gap: 4px; align-items: center; }
+.steps .step .opts input.small, .steps .step .opts select.small { width: 76px; font-family: var(--mono); font-size: 12px; }
+.steps .step .opts input.wide { width: 210px; font-family: var(--mono); font-size: 12px; }
 .steps .step .opts input[type=checkbox] { width: auto; }
 
 #preview { background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; }
