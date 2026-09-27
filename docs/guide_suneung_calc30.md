@@ -2,6 +2,9 @@
 
 이 문서는 **Explainer Studio** 로 수학 해설 영상 한 편을 만드는 과정을, 실제 문제(2026학년도 수능 미적분 30번, 정답 11)를 예로 처음부터 끝까지 따라갑니다. 완성된 결과물은 `projects/2026_suneung_calc30/` 와 `output/2026_suneung_calc30/` 에 있습니다.
 
+> **영상 버전**: [`output/studio_guide/studio_guide.mp4`](../output/studio_guide/studio_guide.mp4) (5분 24초, 1080p, 내레이션·자막). Studio 화면을 따라가며 같은 순서를 설명하고, 마지막에 완성된 30번 영상의 한 장면을 보여 줍니다.
+> 다시 만들기: `python scripts/guide_video/make_guide_video.py` — 장면 정의는 `docs/guide_video/scenes.json`, 스크린샷은 `docs/guide_video/shots/`.
+
 전체 흐름은 다음 7단계입니다. 각 단계마다 "무엇을 왜 하는지"와 "Studio 에서 어디를 누르는지"를 적었습니다.
 
 ```
