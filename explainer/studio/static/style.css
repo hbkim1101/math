@@ -64,7 +64,8 @@ kbd { font: 11px var(--mono); background: #0c111c; border: 1px solid var(--line)
 .modeToggle input { margin: 0; }
 body.pro .modeToggle { color: var(--blue); }
 
-#layout { flex: 1; display: grid; grid-template-columns: 250px minmax(480px, 1fr) minmax(340px, 34%); min-height: 0; }
+/* 파워포인트식 3단: 슬라이드 목록 · 중앙 큰 무대 · 오른쪽 속성 */
+#layout { flex: 1; display: grid; grid-template-columns: 236px minmax(560px, 1fr) minmax(380px, 30%); min-height: 0; }
 #sidebar, #editor, #preview { min-height: 0; overflow: auto; }
 @media (max-width: 1100px) {
   #layout { grid-template-columns: 210px minmax(380px, 1fr) minmax(300px, 34%); }
@@ -98,7 +99,13 @@ body.pro .modeToggle { color: var(--blue); }
 .side-foot { padding: 8px; border-top: 1px solid var(--line); }
 .side-empty { padding: 18px 12px; color: var(--muted); font-size: 12.5px; text-align: center; }
 
-#editor { padding: 14px 18px; }
+#editor { padding: 10px 16px 0; display: flex; flex-direction: column; overflow: hidden; }
+#editor .pane { flex: 1; min-height: 0; overflow: auto; padding-bottom: 14px; }
+#segEditor { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
+#segEditor > .stagebox { flex: none; margin-top: 0; }
+#segEditor .stage-host { max-width: calc(50vh * 16 / 9); margin: 0 auto; }
+#segEditor .below { flex: 1; min-height: 0; overflow: auto; padding-bottom: 14px; }
+#segEditor .below .seg-head { margin-top: 4px; }
 .pane h2 { font-size: 15px; margin: 4px 0 10px; color: var(--muted); font-weight: 600; }
 .field { display: grid; grid-template-columns: 110px 1fr; gap: 8px; align-items: center; margin: 6px 0; }
 .field label { color: var(--muted); font-size: 12.5px; }
@@ -297,6 +304,26 @@ body.pro .modeToggle { color: var(--blue); }
 .card .head .tools { display: none; gap: 2px; }
 .card .head:hover .tools, .card.open .head .tools { display: inline-flex; }
 .card .head .chev { color: var(--muted); width: 14px; }
+.card.row1.on { border-color: var(--accent); background: var(--panel2); box-shadow: 0 0 0 1px rgba(255,210,63,.35); }
+.card.row1.on .head .chev { color: var(--accent); }
+.card.row1.on .head .tools { display: inline-flex; }
+.card.props { border-left-width: 4px; }
+.props-head { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.props-head .idx { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+.props-head .ico { font-size: 16px; }
+.props-head b { font-size: 14px; }
+.props-head code { color: var(--muted); font-size: 11px; }
+.props-head .badge { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #1a1a1a; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
+.props-head .tools { display: inline-flex; gap: 2px; }
+.props .field { grid-template-columns: 90px 1fr; }
+#tab-props { padding: 10px; }
+#tab-props .card .params { grid-template-columns: 96px 1fr auto; }
+#tab-props .card .ctl { flex-direction: column; align-items: stretch; }
+#tab-props .card .ctl .ctl-item { justify-content: space-between; }
+#tab-props .card .ctl select.do, #tab-props .card .ctl select.atpick { min-width: 0; max-width: none; flex: 1; }
+#tab-props .apreview .frames2 { grid-template-columns: 1fr 18px 1fr; }
+#tab-props .apreview .side { grid-column: 1 / -1; flex-direction: row; align-items: center; }
+#tab-props .steps .step .inputs { grid-template-columns: 1fr; }
 .card .body { padding: 4px 12px 12px 12px; border-top: 1px dashed var(--line); }
 .card .body .doc { color: var(--muted); font-size: 12px; margin: 6px 0 8px; white-space: pre-line; max-height: 5.6em; overflow: auto; }
 .card .ctl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; padding: 8px 10px; background: #0c111c; border-radius: 8px; border: 1px solid var(--line); }
