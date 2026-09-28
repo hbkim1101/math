@@ -603,7 +603,12 @@
     });
   }
   const fmtClock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
-  function selectSegment(i) { if (i !== state.sel) state.cursor = { seg: i, act: null }; state.sel = i; showPane("seg"); renderSegList(); renderSegEditor(); }
+  function selectSegment(i) {
+    const changed = i !== state.sel;
+    if (changed) state.cursor = { seg: i, act: null };
+    state.sel = i; showPane("seg"); renderSegList(); renderSegEditor();
+    if (changed) switchTab("flow");   // 새 장면을 고르면 그 장면의 대본·흐름부터 보인다
+  }
   state.selectSegment = selectSegment;
 
   // ------------------------------------------------------------------ 장면 편집기
@@ -612,6 +617,7 @@
     pane.innerHTML = "";
     const seg = state.doc.segments[state.sel];
     if (!seg) {
+      const fb = $("#flowBox"); if (fb) { fb.innerHTML = ""; fb.append(el("p", { class: "hint" }, "장면을 만들면 여기에 대본과 동작 목록이 나옵니다.")); }
       pane.append(el("div", { class: "empty" },
         el("div", { class: "big" }, "🎞"),
         el("p", {}, el("b", {}, "장면"), "은 영상의 한 토막입니다. 장면마다 ", el("b", {}, "대본(내레이션)"), "을 쓰고, 그 문장에 맞춰 칠판에 일어날 ", el("b", {}, "동작"), "을 붙입니다."),
@@ -643,8 +649,9 @@
         el("button", { class: "ghost mini", title: "뒤로", onclick: () => moveSeg(1) }, "↓"),
         el("button", { class: "ghost mini", title: "이 장면을 복제해 바로 뒤에 추가", onclick: () => dupSeg() }, "복제"),
         el("button", { class: "danger mini", onclick: () => delSeg() }, "삭제")));
-    // 무대는 위에 고정, 그 아래(장면 머리·대본·동기화·동작 목록)만 스크롤 — 파워포인트의 슬라이드/노트 배치
+    // 중앙은 무대만. 장면 머리·대본·문장 맞추기·동작 목록은 오른쪽 ‘장면 · 대본 · 흐름’ 탭에 — 파워포인트의 슬라이드/서식 창 배치
     const below = el("div", { class: "below" });
+    const flowBox = $("#flowBox"); flowBox.innerHTML = ""; flowBox.append(below);
 
     // 0) 무대: 편집 즉시 그려 보는 미리보기 (기본) / 실제 렌더 화면
     const rr = renderedRange(seg);
@@ -678,7 +685,8 @@
       state.renderStage = () => renderStage(host, strip, seg);
       setTimeout(state.renderStage, 0);
     }
-    pane.append(shot, below);
+    pane.append(shot, el("div", { class: "center-foot" },
+      el("span", { class: "hint" }, "대본과 동작 순서는 오른쪽 ‘장면 · 대본 · 흐름’ 탭에서, 선택한 동작의 설정은 ‘속성’ 탭에서 고칩니다.")));
     below.append(head);
 
     // 1) 대본
@@ -1542,9 +1550,18 @@
   }
 
   // ------------------------------------------------------------------ 탭/모달/이력/도움말/투어
+  /** 오른쪽 패널 탭 전환. 위(속성/흐름)와 아래(확인 서랍)는 따로 움직이고, 아래 탭을 고르면 서랍이 펼쳐진다. */
   function switchTab(name) {
-    $$("#preview .tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === name));
-    $$("#preview .tab").forEach((t) => t.classList.toggle("on", t.id === "tab-" + name));
+    const sec = $("#tab-" + name)?.closest("section"); if (!sec) return;
+    $$(".tabs button", sec).forEach((b) => b.classList.toggle("on", b.dataset.tab === name));
+    $$(".tab", sec).forEach((t) => t.classList.toggle("on", t.id === "tab-" + name));
+    if (sec.id === "rightBottom") sec.classList.remove("collapsed");
+  }
+  function toggleDrawer(open) {
+    const sec = $("#rightBottom");
+    const willOpen = open === undefined ? sec.classList.contains("collapsed") : open;
+    sec.classList.toggle("collapsed", !willOpen);
+    if (willOpen && !$("#rightBottom .tab.on")) switchTab("video");
   }
   function modal(content, wide = false) {
     const m = $("#modal"); const b = $("#modalBody"); b.innerHTML = ""; b.className = "modal-body" + (wide ? " wide" : ""); b.append(content); m.classList.remove("hidden");
@@ -1613,11 +1630,11 @@
 
   const TOUR = [
     { sel: "#sidebar", title: "① 장면 목록", text: "영상은 장면들이 순서대로 이어진 것입니다. 클릭해서 고르고, 드래그로 순서를 바꾸고, ＋ 장면으로 추가합니다." },
-    { sel: "#segEditor .block.narr", title: "② 대본", text: "말할 내용을 씁니다. 마침표로 문장을 끊으세요 — 문장마다 동작을 붙일 수 있습니다. ▶ 듣기로 목소리를 확인하고 문장 시각을 잽니다." },
-    { sel: "#segEditor .block.syncb", title: "③ 문장에 동작 맞추기", text: "줄 하나가 문장 하나. 줄 위에 마우스를 올리면 나오는 ‘＋ 여기서’ 로 그 문장에 맞춰 동작을 추가합니다. 칩을 누르면 그 동작의 설정으로 이동." },
-    { sel: "#segEditor .stagebox", title: "④ 무대", text: "이 장면이 화면에 어떻게 보이는지 바로 그려 줍니다. 글씨·그래프를 클릭하면 그 동작이 선택되고, 아래 단계 스트립으로 한 동작씩 넘겨 볼 수 있어요." },
-    { sel: "#preview", title: "⑤ 속성 패널", text: "선택한 동작의 설정이 여기에 나옵니다 (파워포인트의 서식 창처럼). 수식은 입력란 아래에 바로 조판되고, 값을 바꾸면 무대가 즉시 바뀝니다. 영상·검증·문제점 탭도 여기에." },
-    { sel: ".flow", title: "⑥ 확인하고 완성하기", text: "① 이 장면만 빨리 미리보기(수십 초) → ② 전체 미리보기 → ③ 최종 영상. 노란 테두리가 지금 권하는 다음 단계입니다." },
+    { sel: "#segEditor .stagebox", title: "② 무대", text: "이 장면이 화면에 어떻게 보이는지 바로 그려 줍니다. 글씨·그래프를 클릭하면 그 동작이 선택되고, 아래 단계 스트립으로 한 동작씩 넘겨 볼 수 있어요." },
+    { sel: "#rightTop", before: () => switchTab("flow"), title: "③ 장면 · 대본 · 흐름", text: "말할 내용(대본)을 쓰고 — 마침표로 문장을 끊으세요 — 문장 줄의 ‘＋ 여기서’ 로 그 문장에 맞춰 동작을 넣습니다. 아래 동작 목록에서 순서를 바꾸거나 지울 수 있어요." },
+    { sel: "#rightTop", before: () => switchTab("props"), title: "④ 속성", text: "선택한 동작의 설정이 여기에 나옵니다 (파워포인트의 서식 창처럼). 수식은 입력란 아래에 바로 조판되고, 값을 바꾸면 무대가 즉시 바뀝니다." },
+    { sel: ".flow", title: "⑤ 확인하고 완성하기", text: "① 이 장면만 빨리 미리보기(수십 초) → ② 전체 미리보기 → ③ 최종 영상. 노란 테두리가 지금 권하는 다음 단계입니다." },
+    { sel: "#rightBottom", title: "⑥ 확인 서랍", text: "만든 영상·장면 그림·검증 결과·문제점·로그는 여기 탭을 누르면 펼쳐집니다. 문제점의 항목을 클릭하면 그 자리로 바로 이동합니다." },
   ];
   function startTour(force = false) {
     if (!force && LS.get("tour.v1", false)) return;
@@ -1628,7 +1645,7 @@
       root.innerHTML = "";
       while (k < TOUR.length && !document.querySelector(TOUR[k].sel)) k++;
       if (k >= TOUR.length) return done();
-      const step = TOUR[k]; const target = document.querySelector(step.sel);
+      const step = TOUR[k]; step.before?.(); const target = document.querySelector(step.sel);
       target.scrollIntoView({ block: "nearest" });
       const r = target.getBoundingClientRect();
       const spot = el("div", { class: "spot", style: `left:${r.left - 4}px;top:${r.top - 4}px;width:${r.width + 8}px;height:${r.height + 8}px` });
@@ -1681,7 +1698,12 @@
         renderSegList(); renderSegEditor(); renderSettings(); showPane("seg"); updateUndoButtons(); toast("YAML 을 폼에 반영했습니다 (저장은 별도)", "ok");
       } catch (e) { toast(e.message, "bad"); }
     });
-    $$("#preview .tabs button").forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.tab)));
+    $$("#preview .tabs button[data-tab]").forEach((b) => b.addEventListener("click", () => {
+      // 이미 열린 서랍의 켜진 탭을 다시 누르면 접기
+      if (b.closest("#rightBottom") && b.classList.contains("on") && !$("#rightBottom").classList.contains("collapsed")) { toggleDrawer(false); return; }
+      switchTab(b.dataset.tab);
+    }));
+    $("#btnDrawer").addEventListener("click", () => toggleDrawer());
     $("#btnTiming").addEventListener("click", loadTiming);
     document.addEventListener("keydown", (e) => {
       const inField = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "");

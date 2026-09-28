@@ -5,7 +5,7 @@
 <title>Explainer Studio</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="/static/style.css?v=6">
+<link rel="stylesheet" href="/static/style.css?v=7">
 <!-- 수식 미리보기(KaTeX). 인터넷이 없으면 조용히 실패하고 텍스트로 대체됩니다. -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
@@ -66,16 +66,28 @@
   </section>
 
   <aside id="preview">
+    <!-- 위: 선택한 동작의 속성 · 장면의 대본/흐름 편집 -->
+    <section id="rightTop">
+      <nav class="tabs">
+        <button data-tab="props" class="on">속성</button>
+        <button data-tab="flow">장면 · 대본 · 흐름</button>
+      </nav>
+      <div id="tab-props" class="tab on"><div id="propsBox"></div></div>
+      <div id="tab-flow" class="tab"><div id="flowBox"></div></div>
+    </section>
+    <!-- 아래: 렌더 결과 확인 서랍 (누르면 펼쳐짐) -->
+    <section id="rightBottom" class="collapsed">
     <nav class="tabs">
-      <button data-tab="props" class="on">속성</button>
+      <span class="lbl">확인</span>
       <button data-tab="video">영상</button>
       <button data-tab="storyboard">장면 그림</button>
       <button data-tab="verify">검증</button>
       <button data-tab="timeline">타임라인</button>
       <button data-tab="check">문제점 <i id="checkBadge" class="badge hidden"></i></button>
       <button data-tab="log">로그</button>
+      <span class="spacer"></span>
+      <button id="btnDrawer" class="ghost icon" title="펼치기 / 접기">▴</button>
     </nav>
-    <div id="tab-props" class="tab on"><div id="propsBox"></div></div>
     <div id="tab-video" class="tab">
       <div class="row">
         <select id="videoSource"></select>
@@ -104,6 +116,7 @@
       <div id="checkBox" class="hint">검사를 실행하면 결과가 여기에 표시됩니다.</div>
     </div>
     <div id="tab-log" class="tab"><pre id="logBox"></pre></div>
+    </section>
   </aside>
 </main>
 
@@ -111,6 +124,6 @@
 <div id="tour" class="hidden"></div>
 <div id="toast" class="hidden"></div>
 <script src="/static/stage.js?v=2"></script>
-<script src="/static/app.js?v=6"></script>
+<script src="/static/app.js?v=7"></script>
 </body>
 </html>
