@@ -338,7 +338,8 @@ window.StudioStage = (() => {
       }
       if (it.choices && !it.docked) {
         const ch = el("div", { class: "st-choices" });
-        it.choices.forEach((c, i) => ch.append(el("span", { class: "st-choice" + (it.answer && it.answer.choice === i + 1 ? " ans" : "") }, "①②③④⑤⑥⑦⑧⑨"[i] || `${i + 1}.`, " ", math(c))));
+        // 보기는 $ 없이 수식만 쓰는 형식 (예: 2^{-1}, \frac12)
+        it.choices.forEach((c, i) => ch.append(el("span", { class: "st-choice" + (it.answer && it.answer.choice === i + 1 ? " ans" : "") }, "①②③④⑤⑥⑦⑧⑨"[i] || `${i + 1}.`, " ", math(c, { onlyMath: !String(c).includes("$") }))));
         body.append(ch);
       }
       node.append(num ? el("div", { class: "st-pnum" }, num) : null, body);

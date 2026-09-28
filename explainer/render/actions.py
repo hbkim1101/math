@@ -236,7 +236,9 @@ def _paper_problem(scene, lines: list[str], title: str, choices: list[str] | Non
     choice_mob = None
     if choices:
         # 보기는 하나씩 따로 조판해 `answer choice:` 가 동그라미 칠 조각(submobject)이 되게 한다
-        parts = [scene.paper_tex(rf"\textcircled{{\scriptsize {i + 1}}}\ {c}", scale=scale) for i, c in enumerate(choices)]
+        # 보기는 $ 없이 수식만 쓰는 형식(예: 2^{-1}) — 지면 조판은 글 모드라 수식 모드로 감싼다
+        as_math = lambda c: c if "$" in str(c) else f"${c}$"  # noqa: E731
+        parts = [scene.paper_tex(rf"\textcircled{{\scriptsize {i + 1}}}\ {as_math(c)}", scale=scale) for i, c in enumerate(choices)]
         choice_mob = VGroup(*parts).arrange(RIGHT, buff=0.55, aligned_edge=DOWN)
         if choice_mob.width > text_w:
             choice_mob.scale_to_fit_width(text_w)
