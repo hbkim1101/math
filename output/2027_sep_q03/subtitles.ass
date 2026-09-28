@@ -1,0 +1,35 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Noto Sans CJK KR,45,&H00F5F7FA,&H000000FF,&H00000000,&H8C0A0E17,-1,0,0,0,100,100,0.5,0,3,9,0,2,80,80,37,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.60,0:00:05.23,Default,,0,0,0,,9월 모의평가 3번, 등차수열 문제입니다.
+Dialogue: 0,0:00:05.28,0:00:10.54,Default,,0,0,0,,등차수열은 항 번호가 하나 늘\N때마다 공차 d를 한 번 더합니다.
+Dialogue: 0,0:00:10.59,0:00:16.21,Default,,0,0,0,,그러니까 두 항의 번호 차이가\N곧, 공차를 더한 횟수입니다.
+Dialogue: 0,0:00:16.26,0:00:19.63,Default,,0,0,0,,이 한 가지만 기억하면 됩니다.
+Dialogue: 0,0:00:20.12,0:00:22.30,Default,,0,0,0,,문제입니다.
+Dialogue: 0,0:00:22.35,0:00:30.51,Default,,0,0,0,,등차수열 a n에 대하여 a 2는 2, a\N10 빼기 a 7은 9일 때, a 7의 값은?
+Dialogue: 0,0:00:30.56,0:00:37.59,Default,,0,0,0,,보기는 16, 17, 18, 19, 20입니다.
+Dialogue: 0,0:00:38.08,0:00:41.62,Default,,0,0,0,,항들을 한 줄로 늘어놓고 보겠습니다.
+Dialogue: 0,0:00:41.67,0:00:47.97,Default,,0,0,0,,첫째항부터 열째항까지, 옆으로 한\N칸 갈 때마다 공차 d를 더합니다.
+Dialogue: 0,0:00:48.02,0:00:51.14,Default,,0,0,0,,a 7에서 a 10까지는 세 칸이니까,
+Dialogue: 0,0:00:51.14,0:00:56.29,Default,,0,0,0,,d를 세 번 더한 것. 즉 a\N10은 a 7 더하기 3d입니다.
+Dialogue: 0,0:00:56.34,0:01:02.35,Default,,0,0,0,,그런데 이 차이가 9라고 했으니,\N3d는 9. 공차 d는 3입니다.
+Dialogue: 0,0:01:02.82,0:01:05.79,Default,,0,0,0,,이제 a 7을 구합니다.
+Dialogue: 0,0:01:05.84,0:01:11.63,Default,,0,0,0,,알고 있는 항은 a 2가 2라는 것.\Na 2에서 a 7까지는 다섯 칸,
+Dialogue: 0,0:01:11.63,0:01:14.10,Default,,0,0,0,,공차를 다섯 번 더하면 됩니다.
+Dialogue: 0,0:01:14.15,0:01:17.66,Default,,0,0,0,,a 7은 a 2 더하기 5d.
+Dialogue: 0,0:01:17.71,0:01:22.98,Default,,0,0,0,,2 더하기 5 곱하기 3은\N2 더하기 15, 17입니다.
+Dialogue: 0,0:01:23.03,0:01:29.50,Default,,0,0,0,,2에서 출발해 3을 다섯 번 더하면\N17, 표에서도 그대로 확인됩니다.
+Dialogue: 0,0:01:29.98,0:01:33.60,Default,,0,0,0,,정답은 2번, 17입니다.
+Dialogue: 0,0:01:33.65,0:01:39.38,Default,,0,0,0,,등차수열에서 a m과 a n의\N차는, 항 번호의 차 곱하기 공차.
+Dialogue: 0,0:01:39.43,0:01:45.89,Default,,0,0,0,,a n은 a m 더하기 n 빼기 m 곱하기\Nd. 첫째항을 굳이 구하지 않아도 되는 이유가
+Dialogue: 0,0:01:45.89,0:01:47.07,Default,,0,0,0,,여기에 있습니다.

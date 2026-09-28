@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Explainer Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/static/style.css?v=9">
+<!-- 수식 미리보기(KaTeX). 인터넷이 없으면 조용히 실패하고 텍스트로 대체됩니다. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<header id="topbar">
+  <div class="brand" title="Explainer Studio">Explainer <span>Studio</span></div>
+  <select id="projectSelect" title="작업할 프로젝트"></select>
+  <button id="btnNew" class="ghost icon" title="새 프로젝트 만들기">＋</button>
+  <span class="sep"></span>
+
+  <button id="btnSave" title="저장 (Ctrl+S) — 저장하면 구조 검사도 함께 합니다"><span id="dirtyDot" class="dirty"></span>저장</button>
+  <button id="btnUndo" class="ghost icon" title="되돌리기 (Ctrl+Z)" disabled>↶</button>
+  <button id="btnRedo" class="ghost icon" title="다시하기 (Ctrl+Y)" disabled>↷</button>
+  <span class="sep"></span>
+
+  <div class="flow" title="왼쪽부터 순서대로: 장면 하나를 빨리 확인 → 전체를 확인 → 최종 영상">
+    <button id="btnPartial" class="step" title="선택한 장면만 480p 로 빠르게 렌더해 오른쪽 ‘영상’ 탭에서 확인 (수십 초)"><b>1</b>이 장면 미리보기</button>
+    <span class="arrow">›</span>
+    <button id="btnPreview" class="step" title="전체를 480p 로 렌더 (몇 분)"><b>2</b>전체 미리보기</button>
+    <span class="arrow">›</span>
+    <button id="btnFinal" class="step accent" title="최종 해상도로 렌더 + 21항목 자동 검증 (오래 걸림)"><b>3</b>최종 영상 만들기</button>
+    <button id="btnCancel" class="danger hidden">■ 중지</button>
+  </div>
+  <div id="jobStatus" class="progress"></div>
+
+  <span class="spacer"></span>
+  <label class="modeToggle" title="켜면 내부 이름(YAML 키, 액션 코드, JSON 원문)이 함께 보입니다"><input type="checkbox" id="proMode"><span>고급</span></label>
+  <button id="btnHelp" class="ghost icon" title="도움말 (F1)">?</button>
+</header>
+
+<main id="layout">
+  <aside id="sidebar">
+    <div class="side-head">
+      <span>장면</span>
+      <span class="hint">순서대로 이어져 한 편이 됩니다</span>
+      <button id="btnAddSeg" class="mini" title="새 장면 추가">＋ 장면</button>
+    </div>
+    <ul id="segList"></ul>
+    <div class="side-foot">
+      <button id="tabSettings" class="wide ghost">⚙ 영상 설정 <small>제목 · 목소리 · 해상도 · 칠판 칸</small></button>
+      <button id="tabYaml" class="wide ghost pro-only">{ } YAML 원문</button>
+      <button id="btnHistory" class="wide ghost">↶ 저장 이력 <small>이전 버전으로 되돌리기</small></button>
+    </div>
+  </aside>
+
+  <section id="editor">
+    <div id="segEditor" class="pane"></div>
+    <div id="settingsEditor" class="pane hidden"></div>
+    <div id="yamlEditor" class="pane hidden">
+      <div class="row">
+        <span class="hint">YAML 을 직접 고친 뒤 <b>적용</b>을 누르면 폼에 반영됩니다. 폼에서 저장하면 주석은 사라집니다.</span>
+        <span class="spacer"></span>
+        <button id="btnYamlApply">적용</button>
+      </div>
+      <textarea id="yamlText" spellcheck="false"></textarea>
+    </div>
+  </section>
+
+  <aside id="preview">
+    <!-- 위: 선택한 동작의 속성 · 장면의 대본/흐름 편집 -->
+    <section id="rightTop">
+      <nav class="tabs">
+        <button data-tab="props" class="on">속성</button>
+        <button data-tab="flow">장면 · 대본 · 흐름</button>
+      </nav>
+      <div id="tab-props" class="tab on"><div id="propsBox"></div></div>
+      <div id="tab-flow" class="tab"><div id="flowBox"></div></div>
+    </section>
+    <!-- 아래: 렌더 결과 확인 서랍 (누르면 펼쳐짐) -->
+    <section id="rightBottom" class="collapsed">
+    <nav class="tabs">
+      <span class="lbl">확인</span>
+      <button data-tab="video">영상</button>
+      <button data-tab="storyboard">장면 그림</button>
+      <button data-tab="verify">검증</button>
+      <button data-tab="timeline">타임라인</button>
+      <button data-tab="check">문제점 <i id="checkBadge" class="badge hidden"></i></button>
+      <button data-tab="log">로그</button>
+      <span class="spacer"></span>
+      <button id="btnDrawer" class="ghost icon" title="펼치기 / 접기">▴</button>
+    </nav>
+    <div id="tab-video" class="tab">
+      <div class="row">
+        <select id="videoSource"></select>
+        <span id="videoInfo" class="hint"></span>
+      </div>
+      <video id="video" controls preload="metadata"></video>
+      <div id="segChips" class="chips"></div>
+      <div id="videoEmpty" class="empty hidden">
+        <div class="big">🎬</div>
+        <p>아직 만든 영상이 없습니다.</p>
+        <p class="hint">왼쪽에서 장면을 고른 뒤 상단의 <b>① 이 장면 미리보기</b>를 누르면 수십 초 안에 여기서 볼 수 있어요.</p>
+      </div>
+    </div>
+    <div id="tab-storyboard" class="tab"><img id="storyboard" alt="스토리보드"><p class="hint" id="storyboardHint"></p></div>
+    <div id="tab-verify" class="tab"><div id="verifyBox"></div></div>
+    <div id="tab-timeline" class="tab">
+      <div class="row"><button id="btnTiming" class="ghost">문장 시간 재기 (TTS)</button><span class="hint">막대 = 장면, 눈금 = 문장. 문장을 클릭하면 <code>s번호</code>가 복사됩니다</span></div>
+      <div id="timelineBox"></div>
+    </div>
+    <div id="tab-check" class="tab">
+      <div class="row">
+        <button id="btnValidate" class="ghost" title="장면 구조·동작 이름·시작 시점 검사 (빠름)">구조 검사</button>
+        <button id="btnTex" class="ghost" title="모든 수식을 미리 컴파일해 오류를 찾습니다 (수십 초)">수식(LaTeX) 검사</button>
+        <span class="hint">저장할 때마다 구조 검사는 자동으로 합니다</span>
+      </div>
+      <div id="checkBox" class="hint">검사를 실행하면 결과가 여기에 표시됩니다.</div>
+    </div>
+    <div id="tab-log" class="tab"><pre id="logBox"></pre></div>
+    </section>
+  </aside>
+</main>
+
+<div id="modal" class="hidden"><div class="modal-body" id="modalBody"></div></div>
+<div id="tour" class="hidden"></div>
+<div id="toast" class="hidden"></div>
+<script src="/static/stage.js?v=5"></script>
+<script src="/static/app.js?v=8"></script>
+</body>
+</html>

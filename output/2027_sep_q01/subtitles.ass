@@ -1,0 +1,37 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Noto Sans CJK KR,45,&H00F5F7FA,&H000000FF,&H00000000,&H8C0A0E17,-1,0,0,0,100,100,0.5,0,3,9,0,2,80,80,37,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.60,0:00:05.19,Default,,0,0,0,,9월 모의평가 1번, 지수법칙 문제입니다.
+Dialogue: 0,0:00:05.24,0:00:12.17,Default,,0,0,0,,계산은 짧지만, 어느 법칙을 어느 순서로\N쓰는지 한 단계씩 눈으로 따라가 보겠습니다.
+Dialogue: 0,0:00:12.67,0:00:14.85,Default,,0,0,0,,문제입니다.
+Dialogue: 0,0:00:14.90,0:00:21.31,Default,,0,0,0,,2의 2분의 3제곱, 곱하기, 4의\N마이너스 2분의 1제곱의 값은?
+Dialogue: 0,0:00:21.36,0:00:29.62,Default,,0,0,0,,보기는 2의 마이너스 1제곱, 2의 마이너스\N2분의 1제곱, 1, 2의 2분의 1제곱,
+Dialogue: 0,0:00:29.62,0:00:31.17,Default,,0,0,0,,그리고 2입니다.
+Dialogue: 0,0:00:31.67,0:00:34.98,Default,,0,0,0,,밑이 2와 4로 서로 다릅니다.
+Dialogue: 0,0:00:35.03,0:00:38.37,Default,,0,0,0,,지수법칙은 밑이 같을 때만 쓸 수 있으니,
+Dialogue: 0,0:00:38.37,0:00:42.66,Default,,0,0,0,,먼저 4를 2의 제곱으로\N바꿔서 밑을 2로 통일합니다.
+Dialogue: 0,0:00:42.71,0:00:49.64,Default,,0,0,0,,4의 마이너스 2분의 1제곱이, 2의\N제곱의 마이너스 2분의 1제곱이 되었습니다.
+Dialogue: 0,0:00:50.13,0:00:56.67,Default,,0,0,0,,괄호가 있는 거듭제곱은, a의 m제곱의\Nn제곱은 a의 m 곱하기 n제곱,
+Dialogue: 0,0:00:56.67,0:00:59.40,Default,,0,0,0,,이 법칙으로 지수끼리 곱합니다.
+Dialogue: 0,0:00:59.45,0:01:06.45,Default,,0,0,0,,2 곱하기 마이너스 2분의 1은 마이너스\N1. 그래서 2의 마이너스 1제곱이 됩니다.
+Dialogue: 0,0:01:06.93,0:01:10.18,Default,,0,0,0,,이제 밑이 모두 2입니다.
+Dialogue: 0,0:01:10.23,0:01:14.14,Default,,0,0,0,,밑이 같은 거듭제곱의 곱은 지수를 더합니다.
+Dialogue: 0,0:01:14.19,0:01:20.37,Default,,0,0,0,,2분의 3 빼기 1은 2분의 1.\N따라서 답은 2의 2분의 1제곱입니다.
+Dialogue: 0,0:01:20.87,0:01:26.69,Default,,0,0,0,,2의 2분의 1제곱은 루트\N2, 약 1.41입니다.
+Dialogue: 0,0:01:26.74,0:01:30.60,Default,,0,0,0,,1과 2 사이의 값이니 크기도 자연스럽죠.
+Dialogue: 0,0:01:30.65,0:01:37.37,Default,,0,0,0,,자주 하는 실수 하나,4의 마이너스 2분의\N1제곱을 마이너스 2로 계산하면 안 됩니다.
+Dialogue: 0,0:01:37.42,0:01:43.33,Default,,0,0,0,,음의 지수는 역수, 분수 지수는\N거듭제곱근이라는 뜻입니다.
+Dialogue: 0,0:01:43.80,0:01:48.70,Default,,0,0,0,,따라서 정답은 4번, 2의 2분의 1제곱입니다.
+Dialogue: 0,0:01:48.75,0:01:54.62,Default,,0,0,0,,정리하면, 밑을 통일하고,\N거듭제곱의 거듭제곱은 지수를 곱하고,
+Dialogue: 0,0:01:54.62,0:01:57.42,Default,,0,0,0,,같은 밑의 곱은 지수를 더한다.
+Dialogue: 0,0:01:57.47,0:02:01.59,Default,,0,0,0,,이 세 단계가 지수 계산의 기본 순서입니다.

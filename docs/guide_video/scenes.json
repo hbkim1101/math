@@ -1,0 +1,381 @@
+{
+  "voice": "ko-KR-InJoonNeural",
+  "rate": "+2%",
+  "final_video": "output/2026_suneung_calc30/2026_suneung_calc30.mp4",
+  "scenes": [
+    {
+      "id": "01_title",
+      "kind": "slide",
+      "title": "Explainer Studio 제작 가이드",
+      "subtitle": "2026학년도 수능 미적분 30번 해설 영상을 처음부터 끝까지",
+      "bullets": [
+        "① 문제 분석 · 풀이를 장면으로 나누기",
+        "② 프로젝트 만들기 · 칠판 칸 나누기",
+        "③ 내레이션 → 액션 → 문장에 맞추기",
+        "④ 검사 · 부분 렌더로 고치기 · 최종 렌더 + 21항목 검증"
+      ],
+      "narration": "이 영상은 Explainer Studio로 수학 해설 영상 한 편을 처음부터 끝까지 만드는 과정을, 2026학년도 수능 미적분 30번을 예로 보여 드립니다. 문제를 장면으로 나누고, 내레이션과 애니메이션을 맞추고, 렌더와 검증까지 마치는 순서입니다."
+    },
+    {
+      "id": "02_overview",
+      "kind": "shot",
+      "image": "shots/02_overview.png",
+      "zoom": false,
+      "highlights": [
+        [
+          0,
+          0,
+          1236,
+          72
+        ],
+        [
+          0,
+          72,
+          240,
+          844
+        ],
+        [
+          240,
+          72,
+          551,
+          844
+        ],
+        [
+          791,
+          72,
+          445,
+          844
+        ]
+      ],
+      "narration": "터미널에서 python -m explainer studio 를 실행하면 브라우저에 스튜디오가 열립니다. 위쪽은 저장·검사·렌더 버튼, 왼쪽은 세그먼트 목록, 가운데는 편집기, 오른쪽은 영상과 스토리보드, 검증, 로그 패널입니다."
+    },
+    {
+      "id": "03_new_project",
+      "kind": "shot",
+      "image": "shots/03_new_project.png",
+      "highlights": [
+        [
+          338,
+          331,
+          560,
+          254
+        ]
+      ],
+      "narration": "새 영상은 플러스 새 프로젝트에서 시작합니다. 영문 id와 제목을 넣으면 제목, 문제, 풀이, 정답 네 개의 세그먼트가 들어 있는 칠판 템플릿이 만들어집니다."
+    },
+    {
+      "id": "04_settings",
+      "kind": "shot",
+      "image": "shots/04_settings.png",
+      "highlights": [
+        [
+          258,
+          121,
+          500,
+          224
+        ],
+        [
+          258,
+          475,
+          500,
+          525
+        ]
+      ],
+      "zoom_rect": [
+        240,
+        100,
+        551,
+        500
+      ],
+      "narration": "설정에서는 목소리와 해상도, 자막을 정하고 칠판을 칸으로 나눕니다. 칸은 왼쪽에서 오른쪽으로 이어지며, 그래프와 판서를 함께 쓰는 칸은 split, 식만 쓰는 칸은 full 로 둡니다. 이 문제는 그래프가 핵심이어서 네 칸을 split 으로 잡았습니다."
+    },
+    {
+      "id": "05_segments",
+      "kind": "shot",
+      "image": "shots/02_overview.png",
+      "highlights": [
+        [
+          0,
+          72,
+          240,
+          844
+        ]
+      ],
+      "zoom_rect": [
+        0,
+        72,
+        560,
+        400
+      ],
+      "narration": "세그먼트는 내레이션 한 덩어리이자 장면 하나입니다. 목록에는 문장 수와 액션 수, 길이가 보이고, 렌더한 뒤에는 화면 썸네일과 액션 구성 바가 채워져 어느 장면인지 바로 찾을 수 있습니다."
+    },
+    {
+      "id": "06_narration",
+      "kind": "shot",
+      "image": "shots/06_narration.png",
+      "highlights": [
+        [
+          258,
+          345,
+          500,
+          152
+        ],
+        [
+          613,
+          356,
+          132,
+          21
+        ]
+      ],
+      "zoom_rect": [
+        240,
+        72,
+        551,
+        500
+      ],
+      "narration": "세그먼트를 고르면 먼저 내레이션을 씁니다. 수식은 읽히는 대로 쓰고 문장 단위로 끊습니다. 듣기 버튼을 누르면 TTS로 미리 들어 볼 수 있고, 각 문장이 시작되는 시각이 함께 표시됩니다."
+    },
+    {
+      "id": "07_sync",
+      "kind": "shot",
+      "image": "shots/07_sync.png",
+      "highlights": [
+        [
+          258,
+          84,
+          500,
+          684
+        ],
+        [
+          271,
+          163,
+          474,
+          30
+        ]
+      ],
+      "narration": "문장과 액션의 동기화 표입니다. 한 줄이 문장 하나, 칩은 그 문장이 시작될 때 실행되는 액션입니다. 위의 시간 바에서 액션이 어느 시점에 놓였는지 한눈에 보이고, 칩을 누르면 해당 카드로 이동합니다.",
+      "zoom_rect": [
+        240,
+        72,
+        551,
+        520
+      ]
+    },
+    {
+      "id": "08_actions",
+      "kind": "shot",
+      "image": "shots/08_actions.png",
+      "highlights": [
+        [
+          350,
+          230,
+          260,
+          33
+        ],
+        [
+          271,
+          271,
+          474,
+          607
+        ]
+      ],
+      "narration": "액션은 위에서 아래 순서로 실행됩니다. 액션 추가 메뉴에서 그래프, 판서, 식 전개, 강조 같은 액션을 고르면 카드가 생깁니다. 카드는 분류별 색과 한 줄 요약으로 접혀 있어, 장면의 흐름을 목록처럼 읽을 수 있습니다.",
+      "zoom_rect": [
+        240,
+        180,
+        551,
+        560
+      ]
+    },
+    {
+      "id": "09_custom_card",
+      "kind": "shot",
+      "image": "shots/09_custom_card.png",
+      "highlights": [
+        [
+          287,
+          132,
+          445,
+          133
+        ],
+        [
+          287,
+          457,
+          445,
+          311
+        ]
+      ],
+      "zoom_rect": [
+        258,
+        72,
+        500,
+        560
+      ],
+      "narration": "카드를 펼치면 이 액션이 언제 실행되고 몇 초 걸리는지, 그리고 렌더된 영상에서 실행 전과 후의 화면이 나란히 보입니다. 이 카드는 hooks 파일에 만든 사용자 함수, 기울기 스윕을 부르는 custom 액션입니다."
+    },
+    {
+      "id": "10_hooks",
+      "kind": "slide",
+      "title": "없는 애니메이션은 hooks.py 에 파이썬으로",
+      "subtitle": "함수 이름 = custom 액션의 fn, 나머지 키 = 함수 인자",
+      "code": [
+        "def slope_sweep(scene, func, point, k_from, k_to, run_time=4.0, at=None, **_):",
+        "    if at is not None:                       # 내레이션 문장에 맞추기",
+        "        scene.wait_until(scene.current_segment.resolve_at(at))",
+        "    f = scene.funcs[func]                    # plot 이 등록한 함수",
+        "    tracker = ValueTracker(scene.eval(k_from))",
+        "    line = always_redraw(make_line)          # y = k(x - px) + py",
+        "    dots = always_redraw(make_dots)          # 곡선과 직선의 교점",
+        "    scene.add(line, dots, readout)",
+        "    scene.play(tracker.animate.set_value(scene.eval(k_to)), run_time=run_time)",
+        "",
+        "# project.yaml",
+        "- {do: custom, fn: slope_sweep, func: h3, point: [0, 1], k_from: -1.6, k_to: -0.35, at: s2}"
+      ],
+      "narration": "기존 액션으로 표현할 수 없는 애니메이션은 프로젝트 폴더의 hooks 파일에 파이썬 함수로 만듭니다. 함수 이름이 곧 fn 이고, 나머지 키는 그대로 함수 인자가 됩니다. 이 문제에서는 역함수 그리기, 기울기 스윕, 계단 그래프 세 함수를 만들었습니다."
+    },
+    {
+      "id": "11_derive",
+      "kind": "shot",
+      "image": "shots/11_derive_card.png",
+      "highlights": [
+        [
+          287,
+          255,
+          445,
+          521
+        ]
+      ],
+      "narration": "식 전개 카드에서는 식을 조각으로 나눠 단계별로 씁니다. 그대로인 조각은 미끄러지고 바뀐 조각은 강조되어 날아가므로, 학생이 어느 항이 어디서 왔는지 따라갈 수 있습니다. 단계마다 이유와 실행 시각을 달 수 있습니다."
+    },
+    {
+      "id": "12_check",
+      "kind": "shot",
+      "image": "shots/12_check.png",
+      "highlights": [
+        [
+          612,
+          8,
+          46,
+          55
+        ],
+        [
+          666,
+          8,
+          79,
+          55
+        ],
+        [
+          804,
+          123,
+          420,
+          27
+        ]
+      ],
+      "zoom_rect": [
+        560,
+        0,
+        676,
+        220
+      ],
+      "narration": "검사를 누르면 구조 오류, 없는 칸을 가리키는 goto, 문장 수를 넘는 at 같은 문제를 위치와 함께 알려 줍니다. LaTeX 검사는 모든 수식을 미리 컴파일해서, 렌더 도중 수식 오류로 멈추는 일을 막습니다."
+    },
+    {
+      "id": "13_render",
+      "kind": "shot",
+      "image": "shots/13_render_log.png",
+      "highlights": [
+        [
+          770,
+          8,
+          118,
+          55
+        ],
+        [
+          895,
+          8,
+          82,
+          55
+        ],
+        [
+          985,
+          8,
+          71,
+          55
+        ],
+        [
+          792,
+          113,
+          444,
+          803
+        ]
+      ],
+      "zoom_rect": [
+        600,
+        0,
+        636,
+        400
+      ],
+      "narration": "선택 세그먼트 렌더로 지금 보는 장면만 빠르게 확인하고, 프리뷰 렌더로 전체를 480p로 훑어본 뒤, 최종 렌더를 누릅니다. 진행 로그는 오른쪽에 실시간으로 흐르고, 판서가 넘치는 칸이 있으면 경고로 알려 줍니다."
+    },
+    {
+      "id": "14_verify",
+      "kind": "shot",
+      "image": "shots/14_verify.png",
+      "highlights": [
+        [
+          804,
+          123,
+          420,
+          673
+        ]
+      ],
+      "narration": "최종 렌더가 끝나면 스물한 항목의 자동 검증 결과가 나옵니다. 해상도와 길이 일치, 내레이션 잘림, 자막 겹침, 검은 프레임, 라우드니스, 긴 무음까지 확인합니다. 이 영상은 스물한 항목을 모두 통과했습니다.",
+      "zoom_rect": [
+        700,
+        72,
+        536,
+        480
+      ]
+    },
+    {
+      "id": "15_video",
+      "kind": "shot",
+      "image": "shots/15_video.png",
+      "zoom": false,
+      "highlights": [
+        [
+          804,
+          168,
+          420,
+          236
+        ],
+        [
+          258,
+          199,
+          500,
+          137
+        ]
+      ],
+      "narration": "영상 탭에서 결과를 재생하고, 세그먼트마다 시작·중간·끝 화면과 이 구간 재생 버튼으로 장면을 확인합니다. 마음에 안 드는 장면은 그 세그먼트만 다시 렌더하면 됩니다. 완성된 장면을 잠깐 보겠습니다."
+    },
+    {
+      "id": "16_clip",
+      "kind": "clip",
+      "start": 236.0,
+      "end": 254.0
+    },
+    {
+      "id": "17_outro",
+      "kind": "slide",
+      "title": "정리",
+      "bullets": [
+        "풀이를 장면(세그먼트)으로 나눈다",
+        "내레이션을 먼저 쓰고, 액션을 문장(at: sN)에 맞춘다",
+        "검사 · 선택 세그먼트 렌더로 고치고, 최종 렌더 + 21항목 자동 검증",
+        "글 버전: docs/guide_suneung_calc30.md  ·  코드: github.com/hbkim1101/math"
+      ],
+      "narration": "정리하면, 풀이를 장면으로 나누고, 내레이션을 먼저 쓰고, 액션을 문장에 맞추고, 검사와 부분 렌더로 고친 뒤 최종 렌더와 검증으로 마무리합니다. 자세한 글 버전은 docs 폴더의 가이드 문서를 보세요."
+    }
+  ]
+}
