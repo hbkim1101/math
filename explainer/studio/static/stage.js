@@ -128,7 +128,8 @@ window.StudioStage = (() => {
           case "section": s.banner = { text: a.text, meta }; break;
           case "title_card": s.items.push({ kind: "title", title: a.title, subtitle: a.subtitle, tag: a.tag, meta }); break;
           case "end_card": s.items.push({ kind: "end", title: a.title, lines: a.lines || [], meta }); break;
-          case "problem": s.items.push({ kind: "problem", title: a.title, lines: a.lines || (a.tex ? [a.tex] : []), choices: a.choices || null, focus: null, docked: false, meta }); break;
+          case "problem": s.items.push({ kind: "problem", title: a.title, lines: a.lines || (a.tex ? [a.tex] : []), choices: a.choices || null, focus: null, docked: false, meta,
+            style: a.image ? "image" : (a.style || "paper"), image: a.image || null }); break;
           case "problem_focus": { const p = findProblem(); if (p) p.focus = a.index ?? 0; break; }
           case "problem_dock": { const p = findProblem(); if (p) { p.docked = true; p.focus = null; } break; }
           case "answer": {
@@ -263,16 +264,7 @@ window.StudioStage = (() => {
         continue;
       }
       if (it.kind === "problem") {
-        const node = el("div", { class: "st-problem" + (it.docked ? " docked" : "") });
-        if (it.title) node.append(el("div", { class: "st-ptitle" }, it.title));
-        it.lines.forEach((ln, k) => node.append(el("div", { class: "st-pline" + (it.focus === k ? " focus" : "") + (it.focus !== null && it.focus !== k ? " dimmed" : "") }, math(ln))));
-        if (it.choices && !it.docked) {
-          const ch = el("div", { class: "st-choices" });
-          it.choices.forEach((c, k) => ch.append(el("span", { class: "st-choice" + (it.answer && it.answer.choice === k + 1 ? " ans" : "") }, "①②③④⑤⑥⑦⑧⑨"[k] || `${k + 1}.`, " ", math(c))));
-          node.append(ch);
-        }
-        col.append(tag(node, it.meta, "문제"));
-        if (it.answer) node.querySelector(".st-choice.ans") && tag(node.querySelector(".st-choice.ans"), it.answer.meta, "정답 표시");
+        col.append(tag(renderProblem(it, doc), it.meta, "문제"));
         continue;
       }
       if (it.kind === "title") {
@@ -305,6 +297,53 @@ window.StudioStage = (() => {
     fit();
     if (container.isConnected && !container._stageRO && typeof ResizeObserver !== "undefined") { container._stageRO = new ResizeObserver(() => { const st = container.querySelector(".stage"); const wr = container.querySelector(".stage-wrap"); if (st && wr) { const s = (container.clientWidth || W) / W; st.style.transform = `scale(${s})`; wr.style.height = `${H * s}px`; } }); container._stageRO.observe(container); }
     return { section: S.id, model: M };
+  }
+
+  /** 문제: 실제 캡처 그림(image) 또는 수능 지면 양식(paper: 번호·[배점]·(가)(나) 조건 상자·①~⑤), 이전 방식(chalk). */
+  const splitTitle = (title) => {
+    let t = String(title || "").trim(), num = "", pts = "";
+    let m = /^\s*(\d+)\s*\.?\s*/.exec(t); if (m) { num = m[1] + "."; t = t.slice(m[0].length); }
+    m = /\[\s*\d+\s*점\s*\]/.exec(t); if (m) { pts = m[0].replace(/\s/g, ""); t = (t.slice(0, m.index) + t.slice(m.index + m[0].length)).trim(); }
+    return { num, pts, rest: t };
+  };
+  const isCond = (s) => /^\s*\((가|나|다|라|ㄱ|ㄴ|ㄷ)\)/.test(String(s));
+  function renderProblem(it, doc) {
+    const node = el("div", { class: "st-problem st-paper" + (it.docked ? " docked" : "") + (it.style === "chalk" ? " chalkstyle" : "") });
+    if (it.style === "image" && it.image) {
+      const pid = (doc.meta || {}).id || "";
+      node.append(el("img", { class: "st-pimg", src: `/projects/${pid}/${it.image}`, alt: it.image,
+        onerror: (e) => { e.target.replaceWith(el("div", { class: "st-pmissing" }, `그림 파일을 찾을 수 없습니다: projects/${pid}/${it.image}`)); } }));
+      return node;
+    }
+    if (it.style === "chalk") {
+      node.classList.remove("st-paper");
+      if (it.title) node.append(el("div", { class: "st-ptitle" }, it.title));
+      it.lines.forEach((ln, k) => node.append(el("div", { class: "st-pline" + (it.focus === k ? " focus" : "") + (it.focus !== null && it.focus !== k ? " dimmed" : "") }, math(ln))));
+    } else {
+      const { num, pts, rest } = splitTitle(it.title);
+      const lines = rest ? [rest, ...it.lines] : [...it.lines];
+      const body = el("div", { class: "st-pbody" });
+      let k = 0, lineNo = 0;
+      const lineNode = (txt, idx, extra) => el("div", { class: "st-pline" + (it.focus === idx ? " focus" : "") + (it.focus !== null && it.focus !== idx ? " dimmed" : "") }, math(txt), extra || null);
+      while (k < lines.length) {
+        if (isCond(lines[k])) {
+          const box = el("div", { class: "st-pcond" });
+          while (k < lines.length && isCond(lines[k])) { box.append(lineNode(lines[k], lineNo++)); k++; }
+          body.append(box);
+        } else {
+          const last = k === lines.length - 1;
+          body.append(lineNode(lines[k], lineNo++, last && pts && !lines.join(" ").includes(pts) ? el("b", { class: "st-pts" }, " " + pts) : null));
+          k++;
+        }
+      }
+      if (it.choices && !it.docked) {
+        const ch = el("div", { class: "st-choices" });
+        it.choices.forEach((c, i) => ch.append(el("span", { class: "st-choice" + (it.answer && it.answer.choice === i + 1 ? " ans" : "") }, "①②③④⑤⑥⑦⑧⑨"[i] || `${i + 1}.`, " ", math(c))));
+        body.append(ch);
+      }
+      node.append(num ? el("div", { class: "st-pnum" }, num) : null, body);
+    }
+    return node;
   }
 
   /** 커서 동작까지만 적용했을 때의 카메라 칸 (goto 가 커서면 목적지). */

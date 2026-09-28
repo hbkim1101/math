@@ -154,6 +154,21 @@ body.pro .modeToggle { color: var(--blue); }
 .stage .st-step.box .st-eq { border: 2.5px solid #ffd23f; border-radius: 8px; padding: 4px 12px; }
 .stage .st-why { font-size: .62em; color: #a9d4ff; font-family: "Nanum Pen Script", "NanumBarunpen", sans-serif; white-space: nowrap; }
 .stage .st-problem { align-self: stretch; background: rgba(255,255,255,.06); border: 1.5px solid rgba(255,255,255,.28); border-radius: 12px; padding: 14px 22px; font-size: 27px; line-height: 1.5; }
+/* 수능 지면 양식: 칠판에 붙인 흰 시험지 */
+.stage .st-problem.st-paper { display: flex; gap: 12px; align-items: flex-start; background: #f8f5ec; color: #1c1c1c; border: 1px solid #d8d0bd; border-radius: 4px; box-shadow: 6px 7px 0 rgba(0,0,0,.32); padding: 20px 26px 18px; font-family: "HCR Batang", "Batang", "NanumMyeongjo", "Noto Serif KR", serif; font-size: 25px; line-height: 1.6; }
+.stage .st-problem.st-paper .katex { color: #1c1c1c; }
+.stage .st-problem.st-paper .st-pnum { font-weight: 700; flex: none; letter-spacing: .5px; }
+.stage .st-problem.st-paper .st-pbody { flex: 1; min-width: 0; }
+.stage .st-problem.st-paper .st-pline { margin: 0; }
+.stage .st-problem.st-paper .st-pline.focus { background: rgba(255,230,109,.55); border-left: none; margin-left: 0; padding-left: 0; border-radius: 3px; }
+.stage .st-problem.st-paper .st-pline.dimmed { opacity: .35; }
+.stage .st-problem.st-paper .st-pts { font-weight: 700; }
+.stage .st-problem.st-paper .st-pcond { border: 1.6px solid #1c1c1c; padding: 8px 18px; margin: 10px 0 12px; }
+.stage .st-problem.st-paper .st-choices { gap: 34px; margin-top: 14px; }
+.stage .st-problem.st-paper .st-choice.ans { outline: 3px solid #d0312d; }
+.stage .st-problem.st-paper .st-pimg { display: block; max-width: 100%; max-height: 520px; margin: 0 auto; }
+.stage .st-problem.st-paper .st-pmissing { color: #b3261e; font-size: 20px; font-family: "Noto Sans KR", sans-serif; }
+.stage .st-problem.st-paper.docked { font-size: 17px; padding: 8px 14px; }
 .stage .st-problem.docked { font-size: 18px; padding: 6px 14px; opacity: .85; }
 .stage .st-problem.docked .st-pline:nth-child(n+3) { display: none; }
 .stage .st-ptitle { font-weight: 700; color: #ffe38a; margin-bottom: 6px; }
@@ -349,6 +364,8 @@ body.pro .card .params .k small { color: var(--muted); }
 .card .params .v .sub { color: var(--muted); font-size: 11px; margin-top: 2px; }
 .card .params .v .pair { display: flex; gap: 6px; align-items: center; }
 .card .params .v .pair input { width: 90px; }
+.card .params .v .pair input.mono { flex: 1; width: auto; min-width: 0; }
+.card .params .v .imgprev { display: block; max-width: 100%; max-height: 160px; margin-top: 6px; border-radius: 4px; background: #fff; border: 1px solid var(--line); }
 .card .params .v .pair span { color: var(--muted); font-size: 12px; }
 .card .params .v label.chk { display: inline-flex; gap: 6px; align-items: center; color: var(--text); font-size: 13px; padding-top: 5px; cursor: pointer; }
 .card .params .v label.chk input { width: auto; }

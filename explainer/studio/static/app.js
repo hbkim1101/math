@@ -235,7 +235,7 @@
     write: "칠판에 손글씨로 한 줄씩 적습니다. 한글과 수식을 섞어 쓸 수 있어요.", derive: "식을 한 줄씩 변형해 가는 애니메이션. 앞 줄과 같은 조각은 미끄러지고, 바뀐 조각만 강조됩니다.",
     step: "이미 시작한 식 전개에 한 단계를 더합니다 (다른 문장에 맞춰 이어 쓸 때).", caption: "그래프 아래에 한 줄 설명 말풍선을 띄웁니다. 새 말풍선을 띄우면 이전 것은 바뀝니다.",
     goto: "카메라를 다음 칠판 칸으로 옮깁니다. 처음 가는 칸이면 제목을 판서합니다.", highlight: "그래프·식·점을 짚어 주거나 반짝이게 해서 시선을 모읍니다.",
-    problem: "문제 전문을 화면 중앙에 크게 보여줍니다 (제목·줄·보기).", problem_focus: "문제의 특정 줄만 밝게 해서 지금 읽는 곳을 표시합니다.", problem_dock: "중앙의 문제를 위쪽 작은 헤더로 줄여 자리를 비웁니다.",
+    problem: "문제를 보여줍니다. 기본은 수능 지면처럼 재구성한 흰 시험지(번호·[배점]·(가)(나) 상자·①~⑤), 또는 실제 문제 그림을 올려 그대로 붙일 수 있어요.", problem_focus: "문제의 특정 줄만 밝게 해서 지금 읽는 곳을 표시합니다.", problem_dock: "중앙의 문제를 위쪽 작은 헤더로 줄여 자리를 비웁니다.",
     answer: "정답을 표시합니다 — 보기 번호에 동그라미, 또는 수식을 상자로.", plot: "y = f(x) 그래프를 그립니다. 식은 파이썬 문법(x**2, exp(x)).", point: "점 하나를 찍습니다. 라벨과 색을 붙일 수 있어요.",
     points: "여러 점을 차례로 찍습니다.", line: "직선을 그립니다 (기울기·y절편, 또는 두 점).", vline: "x = a 세로 점선 (점근선 등).", axes: "좌표축을 그립니다. x·y 범위를 정할 수 있어요.",
     custom: "프로젝트 폴더 hooks.py 에 만든 파이썬 함수를 실행합니다 (복잡한 애니메이션용).", wait: "지정한 초만큼 아무것도 하지 않고 기다립니다.",
@@ -320,7 +320,9 @@
     title: ["제목", "title"], subtitle: ["부제", "subtitle"], tag: ["태그", "tag", "예: 수학Ⅰ"], id: ["이름 (id)", "id", "나중에 강조·지우기·카메라에서 이 이름으로 가리킵니다"],
     ids: ["대상 이름들", "ids", "쉼표로 여러 개"], keep: ["남길 이름들", "keep"], section: ["칠판 칸", "section"], color: ["색", "color"], label: ["라벨(수식)", "label"],
     expr: ["식  y = …", "expr", "파이썬 문법: x**2, exp(x), log(x), sin(x)"], x_range: ["x 범위", "x_range", "최소, 최대[, 눈금]"], y_range: ["y 범위", "y_range", "최소, 최대[, 눈금]"],
-    pos: ["좌표 (x, y)", "pos"], choices: ["보기 ①~⑤", "choices", "한 줄에 하나씩"], index: ["줄 번호", "index", "0 이 첫 줄"], choice: ["정답 보기 번호", "choice", "1~5"],
+    pos: ["좌표 (x, y)", "pos"], choices: ["보기 ①~⑤", "choices", "한 줄에 하나씩"],
+    style: ["표시 양식", "style", "시험지 양식이면 흰 지면에 명조체로 번호·[배점]·(가)(나) 상자·①~⑤ 를 자동 배치합니다"],
+    image: ["문제 그림", "image", "시험지에서 잘라낸 실제 문제 그림(PNG/JPG). 올리면 글 대신 이 그림을 그대로 붙입니다"], index: ["줄 번호", "index", "0 이 첫 줄"], choice: ["정답 보기 번호", "choice", "1~5"],
     mode: ["강조 방식", "mode"], seconds: ["초", "seconds"], fn: ["함수 이름", "fn", "프로젝트 폴더 hooks.py 에 def 로 정의한 함수"], ko: ["한글 포함", "ko", "한글이 섞여 있으면 켜세요 (xelatex)"],
     box: ["상자 치기", "box"], underline: ["밑줄", "underline"], scale: ["크기 배율", "scale"], width: ["폭", "width"], height: ["높이", "height"], indent: ["들여쓰기", "indent"], space: ["위 여백", "space"],
     opacity: ["불투명도", "opacity", "0(투명)~1"], out: ["사라짐", "out", "끄면 반대로 나타남"], dashed: ["점선", "dashed"], stroke_width: ["선 굵기", "stroke_width"], slope: ["기울기", "slope"], intercept: ["y절편", "intercept"],
@@ -336,6 +338,7 @@
   };
   const SELECT_OPTIONS = {
     mode: Object.keys(MODE_KO).map((k) => [k, MODE_KO[k]]), position: [["bottom", "아래"], ["top", "위"]], animation: [["write", "써 내려가기"], ["fade", "서서히"]],
+    style: [["paper", "시험지 양식 (수능 지면처럼)"], ["image", "실제 문제 그림"], ["chalk", "칠판 손글씨"]],
     label_dir: DIRS.map((d) => [d, d]), dir: DIRS.map((d) => [d, d]),
   };
   const MATH_KEYS = new Set(["tex", "text", "lines", "label", "choices", "why", "x_label", "y_label", "arrow_label", "caption_text", "subtitle", "title"]);
@@ -349,6 +352,7 @@
     if (key === "section") return "section";
     if (SELECT_OPTIONS[key]) return "select";
     if (key === "fn") return "fn";
+    if (key === "image") return "image";
     const t = pspec?.type || "";
     if (typeof val === "boolean" || t === "bool" || /^bool/.test(t)) return "bool";
     if (typeof val === "number" || /^(float|int)/.test(t)) return "num";
@@ -1113,6 +1117,27 @@
         for (const c of COLOR_NAMES) row.append(el("button", { type: "button", class: val === c ? "on" : "", title: c, onclick: () => set(val === c ? undefined : c) }, el("i", { class: "swatch", style: `background:${COLOR_HEX[c]}` }), COLOR_KO[c] || c));
         if (val && !COLOR_NAMES.includes(val)) row.append(el("button", { type: "button", class: "on" }, val));
         wrap.append(row); return wrap;
+      }
+      case "image": {
+        const i = el("input", { value: val ?? "", placeholder: "예: problem.png (프로젝트 폴더 안)", class: "mono" });
+        i.addEventListener("change", () => set(i.value.trim() || undefined));
+        const file = el("input", { type: "file", accept: "image/png,image/jpeg,image/webp,image/gif", style: "display:none" });
+        const btn = el("button", { type: "button", class: "mini", onclick: () => file.click() }, "📷 그림 올리기…");
+        file.addEventListener("change", async () => {
+          const f = file.files?.[0]; if (!f) return;
+          btn.disabled = true; btn.textContent = "올리는 중…";
+          try {
+            const dataUrl = await new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => bad(new Error("read")); r.readAsDataURL(f); });
+            const name = f.name.replace(/[^\w\-. ()가-힣]/g, "_");
+            const r = await api(`/api/projects/${state.pid}/upload`, { method: "POST", body: { name, data_base64: dataUrl } });
+            act[k] = r.path; if ("style" in act) act.style = "image";
+            touched(); toast(`그림을 올렸습니다: ${r.path} — 무대에서 확인하세요`, "ok"); onchange();
+          } catch (e) { toast("올리기 실패: " + e.message, "bad"); btn.disabled = false; btn.textContent = "📷 그림 올리기…"; }
+        });
+        wrap.append(el("div", { class: "pair" }, i, btn, file));
+        if (val) wrap.append(el("img", { class: "imgprev", src: `/projects/${state.pid}/${val}`, alt: "", onerror: (e) => { e.target.replaceWith(el("div", { class: "sub", style: "color:var(--bad)" }, `파일을 찾을 수 없습니다: projects/${state.pid}/${val}`)); } }));
+        wrap.append(el("div", { class: "sub" }, "시험지 PDF/캡처에서 문제 부분만 잘라 올리면 그대로 붙습니다. 그림을 쓰면 줄 강조(problem_focus)는 동작하지 않습니다."));
+        return wrap;
       }
       case "fn": {
         const i = el("input", { value: val ?? "", placeholder: "hooks.py 의 함수 이름", class: "mono", list: "hooksList" });

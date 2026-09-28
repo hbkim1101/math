@@ -191,6 +191,18 @@ class ExplainerScene(MovingCameraScene):
         m.set_color(self.color(color, self.theme.text))
         return self.finish_text(m.scale(scale))
 
+    def paper_tex(self, tex: str, scale: float = 1.0, width: float | None = None, color: str = "#1c1c1c") -> Tex:
+        """시험지 지면용 조판: 명조 계열 한글 + 검은 잉크. 분필 질감을 입히지 않는다."""
+        from .theme import PAPER_TEX_TEMPLATE
+        if width is not None:
+            cm = width / scale * self.CM_PER_UNIT
+            body = rf"\parbox{{{cm:.2f}cm}}{{\raggedright\setlength{{\baselineskip}}{{1.4\baselineskip}}{tex}}}"
+        else:
+            body = tex
+        m = Tex(body, tex_template=PAPER_TEX_TEMPLATE)
+        m.set_color(color)
+        return m.scale(scale)
+
     def ktext(self, text: str, size: int = 30, color: str | None = None, weight: str = "NORMAL",
               font: str | None = None) -> Text:
         m = Text(text, font=font or self.theme.font, font_size=size, weight=weight,

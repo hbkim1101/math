@@ -74,6 +74,11 @@ class YamlBody(BaseModel):
     yaml: str
 
 
+class UploadBody(BaseModel):
+    name: str                 # 저장할 파일 이름 (프로젝트 폴더 안)
+    data_base64: str          # 파일 내용 (data URL 도 허용)
+
+
 def create_app(root: str | Path = ".") -> FastAPI:
     root = Path(root).resolve()
     projects_dir = root / "projects"
@@ -374,6 +379,25 @@ def create_app(root: str | Path = ".") -> FastAPI:
             raise HTTPException(404, "작업 없음")
         return jobs.cancel(jid).to_json()
 
+    @app.post("/api/projects/{pid}/upload")
+    def upload(pid: str, body: UploadBody):
+        """그림 파일(문제 캡처 등)을 프로젝트 폴더에 저장한다. 응답의 path 를 problem.image 에 넣으면 된다."""
+        import base64
+        p = project_yaml(pid)
+        name = Path(body.name).name
+        if not re.match(r"^[\w\-. ()가-힣]+\.(png|jpg|jpeg|webp|gif)$", name, flags=re.I):
+            raise HTTPException(400, "PNG/JPG/WEBP/GIF 그림 파일만 올릴 수 있습니다")
+        data = body.data_base64.split(",", 1)[-1]
+        try:
+            raw = base64.b64decode(data)
+        except Exception:  # noqa: BLE001
+            raise HTTPException(400, "파일 내용을 읽을 수 없습니다")
+        if len(raw) > 20 * 1024 * 1024:
+            raise HTTPException(413, "20MB 이하의 그림만 올릴 수 있습니다")
+        dst = p.parent / name
+        dst.write_bytes(raw)
+        return {"path": name, "url": f"/projects/{pid}/{name}?v={int(dst.stat().st_mtime)}", "size": len(raw)}
+
     @app.get("/api/actions")
     def actions():
         return build_catalog()
@@ -409,6 +433,7 @@ def create_app(root: str | Path = ".") -> FastAPI:
 
     # 산출물/정적 파일
     app.mount("/output", StaticFiles(directory=str(output_dir)), name="output")
+    app.mount("/projects", StaticFiles(directory=str(projects_dir)), name="projects")   # 문제 그림 등 프로젝트 파일 (무대 미리보기용)
     app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
 
     @app.get("/")

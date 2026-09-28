@@ -270,3 +270,25 @@ def test_sentences_fall_back_to_last_render_timeline(studio):
     doc["segments"][0]["narration"] = seg["narration"] + " 새 문장입니다."
     r = client.post("/api/projects/2027_sep_q03/sentences", json={"doc": doc}).json()
     assert r[seg["id"]]["exact"] is False
+
+
+def test_upload_problem_image_and_serve(studio):
+    """문제 그림 업로드 → 프로젝트 폴더에 저장되고 /projects/... 로 무대가 읽을 수 있어야 한다."""
+    import base64
+    client, root = studio
+    png = base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"\x00" * 32).decode()
+    r = client.post("/api/projects/2027_sep_q03/upload", json={"name": "problem.png", "data_base64": "data:image/png;base64," + png})
+    assert r.status_code == 200 and r.json()["path"] == "problem.png"
+    assert (root / "projects/2027_sep_q03/problem.png").exists()
+    assert client.get("/projects/2027_sep_q03/problem.png").status_code == 200
+    # 그림 파일이 아니거나 경로를 벗어나면 거부
+    assert client.post("/api/projects/2027_sep_q03/upload", json={"name": "hooks.py", "data_base64": png}).status_code == 400
+    assert client.post("/api/projects/2027_sep_q03/upload", json={"name": "../x.png", "data_base64": png}).json()["path"] == "x.png"
+
+
+def test_problem_paper_title_split():
+    from explainer.render.actions import _split_title
+    assert _split_title("30. [4점]") == ("30.", "[4점]", "")
+    assert _split_title("12.") == ("12.", "", "")
+    assert _split_title("[3점]") == ("", "[3점]", "")
+    assert _split_title("") == ("", "", "")

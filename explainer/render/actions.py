@@ -182,17 +182,158 @@ def section(scene, text: str, run_time: float | None = None, id: str = "section"
 
 
 # ====================================================================== 문제 패널 / 보드
+PAPER_INK = "#1c1c1c"
+PAPER_FILL = "#f8f5ec"
+PAPER_EDGE = "#d8d0bd"
+
+
+def _split_title(title: str) -> tuple[str, str, str]:
+    """'30. [4점]' → ('30.', '[4점]', 나머지). 번호·배점이 없으면 빈 문자열."""
+    import re
+    t = (title or "").strip()
+    num = pts = ""
+    m = re.match(r"^\s*(\d+)\s*\.?\s*", t)
+    if m:
+        num, t = f"{m.group(1)}.", t[m.end():]
+    m = re.search(r"\[\s*\d+\s*점\s*\]", t)
+    if m:
+        pts, t = m.group(0).replace(" ", ""), (t[:m.start()] + t[m.end():]).strip()
+    return num, pts, t
+
+
+def _paper_problem(scene, lines: list[str], title: str, choices: list[str] | None, width: float, scale: float,
+                   line_buff: float) -> tuple[VGroup, list[Mobject], Mobject | None, VGroup]:
+    """수능 지면 양식으로 문제를 재구성한다: 번호 · 본문(마지막 문장 끝에 [배점]) · (가)(나) 조건 상자 · ①~⑤ 보기.
+    반환: (지면 전체, 줄 mob 들(problem_focus 용), 보기 mob, 흰 종이 배경)."""
+    import re
+    num, pts, rest = _split_title(title)
+    body_lines = list(lines)
+    if rest:
+        body_lines.insert(0, rest)
+    if pts and body_lines and pts not in " ".join(body_lines):
+        # 배점은 마지막 문장(보기 앞) 끝에
+        body_lines[-1] = body_lines[-1].rstrip() + rf"\ \textbf{{{pts}}}"
+    num_mob = scene.paper_tex(rf"\textbf{{{num}}}", scale=scale) if num else None
+    indent = (num_mob.width + 0.22) if num_mob is not None else 0.0
+    text_w = width - indent
+    is_cond = lambda s: bool(re.match(r"^\s*\((가|나|다|라|ㄱ|ㄴ|ㄷ)\)", s))  # noqa: E731
+    line_mobs: list[Mobject] = []
+    blocks: list[Mobject] = []
+    k = 0
+    while k < len(body_lines):
+        if is_cond(body_lines[k]):
+            grp: list[Mobject] = []
+            while k < len(body_lines) and is_cond(body_lines[k]):
+                m = scene.paper_tex(body_lines[k], width=text_w - 0.7, scale=scale)
+                grp.append(m); line_mobs.append(m); k += 1
+            inner = VGroup(*grp).arrange(DOWN, buff=line_buff * 0.8, aligned_edge=LEFT)
+            frame = Rectangle(width=text_w - 0.1, height=inner.height + 0.42, stroke_color=PAPER_INK, stroke_width=1.6, fill_opacity=0)
+            inner.move_to(frame.get_center()).align_to(frame, LEFT).shift(RIGHT * 0.3)
+            blocks.append(VGroup(frame, inner))
+        else:
+            m = scene.paper_tex(body_lines[k], width=text_w, scale=scale)
+            line_mobs.append(m); blocks.append(m); k += 1
+    choice_mob = None
+    if choices:
+        # 보기는 하나씩 따로 조판해 `answer choice:` 가 동그라미 칠 조각(submobject)이 되게 한다
+        parts = [scene.paper_tex(rf"\textcircled{{\scriptsize {i + 1}}}\ {c}", scale=scale) for i, c in enumerate(choices)]
+        choice_mob = VGroup(*parts).arrange(RIGHT, buff=0.55, aligned_edge=DOWN)
+        if choice_mob.width > text_w:
+            choice_mob.scale_to_fit_width(text_w)
+        blocks.append(choice_mob)
+    body = VGroup(*blocks).arrange(DOWN, buff=line_buff, aligned_edge=LEFT)
+    content = VGroup(body)
+    if num_mob is not None:
+        num_mob.next_to(body, LEFT, buff=0.22, aligned_edge=UP)
+        content.add(num_mob)
+    content.set_z_index(2)      # 형광펜 띠(problem_focus, z=1)가 글자 뒤·종이 위에 놓이게
+    # 종이는 판서 폭을 꽉 채운다 (내용이 짧아도 지면 폭은 일정하게)
+    paper = RoundedRectangle(corner_radius=0.06, width=max(content.width + 0.9, width + 0.9), height=content.height + 0.8,
+                             fill_color=PAPER_FILL, fill_opacity=1, stroke_color=PAPER_EDGE, stroke_width=2)
+    paper.move_to(content.get_center()).align_to(content, LEFT).shift(LEFT * 0.45)
+    shadow = paper.copy().set_fill("#000000", 0.32).set_stroke(width=0).shift(DOWN * 0.09 + RIGHT * 0.09)
+    g = VGroup(shadow, paper, content)
+    return g, line_mobs, choice_mob, VGroup(shadow, paper)
+
+
 @action("problem")
 def problem(scene, tex: str | None = None, lines: list[str] | None = None, width: float = 12.0,
             scale: float = 0.85, run_time: float | None = None, id: str = "problem", title: str = "",
-            line_buff: float = 0.32, choices: list[str] | None = None, **_):
-    """문제 전문을 화면 중앙에 크게 보여준다 (한글+수식, xelatex). width: 표시 폭(Manim 단위).
+            line_buff: float = 0.32, choices: list[str] | None = None, style: str = "paper",
+            image: str | None = None, **_):
+    """문제 전문을 보여준다. width: 표시 폭(Manim 단위).
 
+    style: paper(기본) — 수능 지면 양식으로 재구성한 흰 시험지를 칠판에 붙인다 (명조체·번호·[배점]·(가)(나) 조건 상자·①~⑤).
+           chalk — 칠판에 손글씨로 써 내려간다(이전 방식). image — `image` 로 준 실제 문제 캡처 그림을 종이처럼 붙인다.
+    image: 프로젝트 폴더 기준 그림 파일 경로(PNG/JPG). 주면 style 은 image 로 취급.
     `lines` 로 주면 줄(문장)별로 따로 렌더되어 `problem_focus` 로 읽는 위치를 따라갈 수 있다.
     `choices` 는 5지선다 보기(수식) — ①~⑤ 로 한 줄에 쓰이며 `answer` 의 `choice` 로 동그라미 친다.
     """
     rt = _rt(run_time, 1.8)
     chalk = scene.theme.chalk and scene.chalk is not None
+    if image:
+        style = "image"
+    if style == "image":
+        from pathlib import Path
+        from manim import ImageMobject
+        p = Path(image or "")
+        if not p.is_absolute() and getattr(scene.project, "source_path", None):
+            p = Path(scene.project.source_path).parent / p
+        if not p.exists():
+            raise FileNotFoundError(f"problem image 없음: {p}")
+        img = ImageMobject(str(p))
+        sec = scene.chalk.section() if chalk else None
+        w = min(width, sec.notes_width) if chalk else min(width, 12.8)
+        img.scale_to_fit_width(w - 0.6)
+        if chalk:
+            avail_h = sec.cursor_y - (sec.bottom + scene.chalk.bottom_reserve) - 0.6
+            if img.height > avail_h:
+                img.scale_to_fit_height(avail_h)
+        paper = RoundedRectangle(corner_radius=0.06, width=img.width + 0.5, height=img.height + 0.5,
+                                 fill_color=PAPER_FILL, fill_opacity=1, stroke_color=PAPER_EDGE, stroke_width=2)
+        shadow = paper.copy().set_fill("#000000", 0.32).set_stroke(width=0).shift(DOWN * 0.09 + RIGHT * 0.09)
+        from manim import Group
+        g = Group(shadow, paper, img)
+        paper.move_to(img.get_center()); shadow.move_to(img.get_center() + DOWN * 0.09 + RIGHT * 0.09)
+        if chalk:
+            g.move_to([sec.notes_left, sec.cursor_y, 0], aligned_edge=UL)
+            sec.cursor_y = g.get_bottom()[1] - scene.chalk.line_gap
+        else:
+            g.move_to([0, 0.55, 0])
+        scene.register(id, g)
+        scene.problem_lines = []
+        scene.play(FadeIn(g, shift=UP * 0.15, scale=0.98), run_time=rt)
+        return
+    if style == "paper":
+        sec = scene.chalk.section() if chalk else None
+        w = min(width, sec.notes_width) if chalk else min(width, 12.8)
+        avail_h = (sec.cursor_y - (sec.bottom + scene.chalk.bottom_reserve)) if chalk else 5.9
+        # 높이가 넘치면 지면을 통째로 줄이지 말고 글자 크기를 조금씩 줄여 다시 조판 (한 줄에 더 담겨 줄 수가 준다)
+        g = line_mobs = choice_mob = None
+        for s in [scale] + [round(scale * f, 3) for f in (0.92, 0.85, 0.78, 0.72, 0.66, 0.6)]:
+            g, line_mobs, choice_mob, _bg = _paper_problem(scene, lines or ([tex] if tex else []), title, choices, w - 0.9, s, line_buff * s / scale)
+            if g.height <= avail_h:
+                break
+        if chalk:
+            if g.height > avail_h:
+                g.scale_to_fit_height(avail_h)
+            g.move_to([sec.notes_left, sec.cursor_y, 0], aligned_edge=UL)
+            sec.cursor_y = g.get_bottom()[1] - scene.chalk.line_gap
+        else:
+            if g.height > 5.9:
+                g.scale_to_fit_height(5.9)
+            g.move_to([0, 0.55, 0])
+        scene.register(id, g)
+        scene.problem_lines = line_mobs
+        scene.problem_paper = True
+        for i, m in enumerate(line_mobs):
+            scene.register(f"{id}_line_{i}", m)
+        if choice_mob is not None:
+            scene.register(f"{id}_choices", choice_mob)
+            scene.problem_choices = choice_mob
+        scene.play(FadeIn(g, shift=UP * 0.15, scale=0.98), run_time=rt)
+        return
+    scene.problem_paper = False
     if chalk:
         # 칠판: 현재 섹션 판서 폭에 맞춰 줄마다 손글씨로 써 내려간다
         sec = scene.chalk.section()
@@ -268,11 +409,17 @@ def problem_focus(scene, index: int, id: str = "problem", run_time: float | None
         return
     rt = _rt(run_time, 0.6)
     index = max(0, min(int(index), len(lines) - 1))
-    accent = scene.color(color, scene.theme.accent)
     target = lines[index]
     anims = [Transform(m, _opacity_target(m, 1.0 if i == index else dim_opacity)) for i, m in enumerate(lines)]
-    bar = Rectangle(width=0.09, height=target.height + 0.22, fill_color=accent, fill_opacity=1, stroke_width=0)
-    bar.next_to(target, LEFT, buff=0.28).set_z_index(3)
+    if getattr(scene, "problem_paper", False):
+        # 시험지 위: 형광펜 띠 (글자 뒤, 종이 위)
+        accent = scene.color(color, "#ffe66d")
+        bar = SurroundingRectangle(target, buff=0.07, fill_color=accent, fill_opacity=0.45, stroke_width=0, corner_radius=0.05)
+        bar.set_z_index(1)          # 종이(0) 위, 글자(2) 아래
+    else:
+        accent = scene.color(color, scene.theme.accent)
+        bar = Rectangle(width=0.09, height=target.height + 0.22, fill_color=accent, fill_opacity=1, stroke_width=0)
+        bar.next_to(target, LEFT, buff=0.28).set_z_index(3)
     old = scene.objs.get(f"{id}_focus")
     scene.register(f"{id}_focus", bar)
     if old is not None:

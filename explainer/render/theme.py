@@ -35,6 +35,24 @@ KO_TEX_TEMPLATE = TexTemplate(
 """.replace("__FONT__", KOREAN_FONT),
 )
 
+# 시험지(수능 지면) 재구성용 명조 계열 폰트. 함초롬바탕이 실제 수능 지면과 가장 비슷하다.
+PAPER_FONT = _installed_font("HCR Batang", "Batang", "NanumMyeongjo", "Noto Serif KR", "Noto Serif CJK KR", KOREAN_FONT)
+PAPER_TEX_TEMPLATE = TexTemplate(
+    tex_compiler="xelatex",
+    output_format=".xdv",
+    documentclass=r"\documentclass[preview]{standalone}",
+    preamble=r"""
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{fontspec}
+\usepackage{kotex}
+\setmainhangulfont{__FONT__}
+\setsanshangulfont{__FONT__}
+\setlength{\parindent}{0pt}
+\XeTeXlinebreakpenalty=10000
+\emergencystretch=3em
+""".replace("__FONT__", PAPER_FONT),
+)
+
 # 수식 전용(pdflatex, 빠름). Manim 기본 템플릿에 몇 개 패키지를 추가.
 MATH_TEX_TEMPLATE = TexTemplate()
 MATH_TEX_TEMPLATE.add_to_preamble(r"\usepackage{amssymb,mathtools}")

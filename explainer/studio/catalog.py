@@ -22,7 +22,7 @@ CATEGORIES: dict[str, list[str]] = {
 TEMPLATES: dict[str, dict[str, Any]] = {
     "title_card": {"title": "제목", "subtitle": "부제", "tag": "수학Ⅰ"},
     "goto": {"section": "sol", "run_time": 1.6},
-    "problem": {"title": "1. [2점]", "lines": ["$x^{2}$의 값은?"], "choices": ["1", "2", "3", "4", "5"]},
+    "problem": {"title": "1. [2점]", "lines": ["$x^{2}$의 값은?"], "choices": ["1", "2", "3", "4", "5"], "style": "paper"},
     "problem_focus": {"at": "s2", "index": 1},
     "write": {"tex": "$x=1$", "ko": True},
     "caption": {"text": "설명"},
