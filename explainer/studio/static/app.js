@@ -26,6 +26,8 @@
     pro: LS.get("pro", false),
     past: [], future: [], snap: null, lastTouch: { key: null, t: 0 },   // 되돌리기
     stage: 0, lastCheck: null,
+    cursor: { seg: -1, act: null },   // 무대에서 강조할 동작 (편집 중인 카드)
+    stageMode: "stage",               // stage(즉시 미리보기) | render(렌더 화면)
   };
   window.__studio = state;    // 브라우저 콘솔에서 상태를 들여다볼 수 있게 (디버깅용)
 
@@ -195,6 +197,8 @@
     state.snap = cur; state.lastTouch = { key: coalesce, t: now };
     setDirty(true); state.yamlDirty = false;
     updateUndoButtons();
+    // 장면 목록의 슬라이드 썸네일을 편집에 맞춰 갱신 (타이핑 중에는 잠깐 모아서)
+    clearTimeout(state._listTimer); state._listTimer = setTimeout(renderSegList, 250);
   }
   function restoreDoc(json) {
     const seg = state.doc.segments[state.sel];
@@ -572,7 +576,10 @@
       const nS = sentencesFor(seg).list.length;
       const bar = el("div", { class: "mix" });
       for (const a of acts) bar.append(el("i", { style: `background:${actColor(a.do)}`, title: `${actLabel(a.do)} ${summarize(a)}` }));
-      const thumb = thumbImg(seg, "thumb");
+      // 슬라이드 썸네일: 편집 내용을 바로 반영하는 무대 축소판 (없으면 렌더 프레임)
+      let thumb = null;
+      if (window.StudioStage) { try { thumb = window.StudioStage.thumbnail(state.doc, i, 196); } catch (_) { thumb = null; } }
+      if (!thumb) thumb = thumbImg(seg, "thumb");
       const first = splitSentences(seg.narration)[0];
       const li = el("li", { class: i === state.sel ? "on" : "", draggable: "true", onclick: () => selectSegment(i), title: "클릭: 이 장면 편집 · 드래그: 순서 바꾸기" },
         el("span", { class: "n" }, String(i + 1)),
@@ -599,7 +606,7 @@
     });
   }
   const fmtClock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
-  function selectSegment(i) { state.sel = i; showPane("seg"); renderSegList(); renderSegEditor(); }
+  function selectSegment(i) { if (i !== state.sel) state.cursor = { seg: i, act: null }; state.sel = i; showPane("seg"); renderSegList(); renderSegEditor(); }
   state.selectSegment = selectSegment;
 
   // ------------------------------------------------------------------ 장면 편집기
@@ -641,26 +648,37 @@
         el("button", { class: "danger mini", onclick: () => delSeg() }, "삭제")));
     pane.append(head);
 
-    // 0) 실제 화면
+    // 0) 무대: 편집 즉시 그려 보는 미리보기 (기본) / 실제 렌더 화면
     const rr = renderedRange(seg);
-    const shot = el("section", { class: "block shots" });
-    if (rr) {
+    const shot = el("section", { class: "block shots stagebox" });
+    const modeBtns = el("span", { class: "modes" },
+      el("button", { class: state.stageMode !== "render" ? "on" : "", onclick: () => { state.stageMode = "stage"; renderSegEditor(); } }, "즉시 미리보기"),
+      el("button", { class: state.stageMode === "render" ? "on" : "", onclick: () => { state.stageMode = "render"; renderSegEditor(); }, title: rr ? "마지막 렌더에서 뽑은 실제 화면" : "아직 렌더한 적이 없습니다" }, "렌더 화면" + (rr ? "" : " (없음)")));
+    if (state.stageMode === "render" && rr) {
       const frames = el("div", { class: "frames" });
       [["시작", 0.04], ["중간", 0.5], ["끝", 0.96]].forEach(([lab, ratio]) => {
         const img = thumbImg(seg, "frame", ratio);
         frames.append(el("figure", { onclick: () => playRange(seg), title: "클릭하면 오른쪽 영상 패널에서 이 구간을 재생" }, img, el("figcaption", {}, lab)));
       });
-      shot.append(el("div", { class: "block-head" }, el("h3", {}, "화면"),
+      shot.append(el("div", { class: "block-head" }, el("h3", {}, "화면"), modeBtns,
         el("span", { class: "hint" }, `${rr.kind === "final" ? "최종" : rr.kind === "preview" ? "프리뷰" : "부분"} 렌더 ${fmtClock(rr.start)} – ${fmtClock(rr.end)}` + (rr.stale ? " · 대본이 바뀐 뒤 렌더 안 함" : "")),
         el("span", { class: "spacer" }),
         el("button", { class: "mini", onclick: () => playRange(seg) }, "▶ 이 구간 재생"),
         el("button", { class: "ghost mini", title: "이 장면만 480p 로 다시 렌더", onclick: () => startBuild("partial") }, "다시 렌더")), frames);
       if (rr.stale) shot.classList.add("stale");
+      state.renderStage = null;
     } else {
-      shot.append(el("div", { class: "block-head" }, el("h3", {}, "화면"),
-        el("span", { class: "hint" }, "아직 이 장면을 렌더한 적이 없습니다. 미리보기를 만들면 시작·중간·끝 화면이 여기에 보입니다."),
+      if (state.stageMode === "render") state.stageMode = "stage";
+      const host = el("div", { class: "stage-host" });
+      const strip = el("div", { class: "steps-strip" });
+      shot.append(el("div", { class: "block-head" }, el("h3", {}, "무대"), modeBtns,
+        el("span", { class: "hint" }, "이 장면이 끝났을 때의 칠판. 노란 테두리 = 지금 편집하는 동작 · 흐린 것 = 아직 안 나온 동작 · 무대의 글씨·그래프를 클릭하면 그 카드가 열립니다"),
         el("span", { class: "spacer" }),
-        el("button", { class: "mini", onclick: () => startBuild("partial") }, "① 이 장면 미리보기 (480p)")));
+        el("button", { class: "ghost mini", title: "이 장면만 480p 로 실제 렌더 (수십 초)", onclick: () => startBuild("partial") }, rr ? "다시 렌더" : "① 이 장면 미리보기")), host, strip,
+        el("div", { class: "legend" }, el("span", {}, el("i", { style: "background:#ffd23f" }), "편집 중"), el("span", {}, el("i", { style: "background:#f2f2e6" }), "이 장면에서 나온 것"), el("span", {}, el("i", { style: "background:#8b93a7" }), "앞 장면에서 이미 있던 것"), el("span", {}, el("i", { style: "background:#3a4256" }), "아직 안 나온 것"),
+          el("span", { class: "spacer" }), el("span", {}, "실제 렌더와 배치가 조금 다를 수 있어요")));
+      state.renderStage = () => renderStage(host, strip, seg);
+      setTimeout(state.renderStage, 0);
     }
     pane.append(shot);
 
@@ -709,15 +727,48 @@
       }
       seg.actions.forEach((act, i) => cardsBox.append(actionCard(seg, act, i)));
     };
-    function focusCard(idx) {
+    function focusCard(idx, noScroll = false) {
       const act = seg.actions[idx]; if (!act) return;
+      state.cursor = { seg: state.sel, act: idx };
       state.expanded.add(act); renderCards();
+      state.renderStage?.();
       const c = cardsBox.children[idx]; if (!c) return;
-      c.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (!noScroll) c.scrollIntoView({ behavior: "smooth", block: "center" });
       c.classList.add("flash"); setTimeout(() => c.classList.remove("flash"), 1200);
     }
     state.focusCard = focusCard;
     renderSync(); renderCards();
+  }
+
+  // ------------------------------------------------------------------ 무대 (즉시 미리보기) 그리기
+  /** 커서 동작이 실행될 때 읽히는 문장 (자막 띠용). */
+  function subtitleFor(seg, actIdx) {
+    const list = sentencesFor(seg).list; if (!list.length) return "";
+    const acts = seg.actions || [];
+    let at = null;
+    for (let k = (actIdx === null ? acts.length - 1 : actIdx); k >= 0; k--) { const a = acts[k]?.at; if (a !== undefined && a !== null && a !== "") { at = a; break; } }
+    if (typeof at === "string" && /^s\d+$/.test(at)) return list[Math.min(list.length, Number(at.slice(1))) - 1]?.text || "";
+    if (typeof at === "number" && list[0]?.start !== undefined) { const s = list.find((x) => at < x.end); return (s || list[list.length - 1]).text; }
+    return actIdx === null ? list[list.length - 1].text : list[0].text;
+  }
+  function renderStage(host, strip, seg) {
+    if (!window.StudioStage || !state.doc) return;
+    const cursor = { seg: state.sel, act: state.cursor.seg === state.sel ? state.cursor.act : null };
+    try {
+      window.StudioStage.render(host, state.doc, { cursor, subtitle: subtitleFor(seg, cursor.act), onPick: (si, ai) => { if (si !== state.sel) { selectSegment(si); setTimeout(() => state.focusCard?.(ai), 60); } else state.focusCard?.(ai); } });
+    } catch (e) { host.innerHTML = ""; host.append(el("p", { class: "hint", style: "padding:12px" }, "무대를 그리지 못했습니다: " + e.message)); }
+    // 동작 단계 스트립 (파워포인트의 애니메이션 창처럼)
+    strip.innerHTML = "";
+    const acts = seg.actions || [];
+    const go = (i) => { state.cursor = { seg: state.sel, act: i }; if (i !== null) state.focusCard?.(i, true); else { state.renderStage?.(); } };
+    strip.append(el("button", { class: "ghost mini nav", title: "앞 동작", onclick: () => go(cursor.act === null ? Math.max(0, acts.length - 1) : Math.max(0, cursor.act - 1)) }, "◀"));
+    acts.forEach((a, i) => {
+      const rel = cursor.act === null ? "done" : i < cursor.act ? "done" : i === cursor.act ? "on" : "";
+      strip.append(el("button", { class: "stp " + rel, style: `--c:${actColor(a.do)}`, title: `${actLabel(a.do)} — ${summarize(a)}\n이 동작까지 실행된 무대를 봅니다`, onclick: () => go(i) }, el("b", {}, String(i + 1)), actLabel(a.do)));
+    });
+    strip.append(el("button", { class: "ghost mini nav", title: "다음 동작", onclick: () => go(cursor.act === null ? null : cursor.act + 1 >= acts.length ? null : cursor.act + 1) }, "▶"));
+    strip.append(el("button", { class: "stp " + (cursor.act === null ? "on" : ""), title: "장면이 끝났을 때", onclick: () => go(null) }, "끝"));
+    if (!acts.length) strip.append(el("span", { class: "hint" }, "동작을 추가하면 여기서 한 단계씩 넘겨 볼 수 있습니다"));
   }
 
   /** 문장(줄) ↔ 동작(칩) 표 + 비율 시간 바. */
@@ -866,9 +917,10 @@
     const atWarn = typeof act.at === "string" && /^s\d+$/.test(act.at) && Number(act.at.slice(1)) > Math.max(1, nSent);
     if (atWarn) card.classList.add("at-warn");
 
-    const rerenderCard = () => { const n = actionCard(seg, act, i); card.replaceWith(n); };
+    // 카드를 바꾸는 동안 포커스된 입력이 blur → 브라우저가 change 를 한 번 더 쏘며 재진입할 수 있어 막는다
+    const rerenderCard = () => { if (!card.isConnected || card._replacing) return; card._replacing = true; const n = actionCard(seg, act, i); card.replaceWith(n); state.renderStage?.(); };
     const timingText = act.at === undefined || act.at === null || act.at === "" ? "이어서" : typeof act.at === "number" ? `▶ ${act.at}s` : `▶ ${String(act.at).replace(/^s(\d+)$/, "$1번째 문장")}`;
-    const head = el("div", { class: "head", onclick: (e) => { if (e.target.closest("button, input, select")) return; open ? state.expanded.delete(act) : state.expanded.add(act); rerenderCard(); } },
+    const head = el("div", { class: "head", onclick: (e) => { if (e.target.closest("button, input, select")) return; if (open) state.expanded.delete(act); else { state.expanded.add(act); state.cursor = { seg: state.sel, act: i }; } rerenderCard(); } },
       el("span", { class: "idx" }, String(i + 1)),
       el("span", { class: "ico" }, actIcon(act.do)),
       el("span", { class: "name" }, actLabel(act.do), el("code", { class: "pro-only" }, act.do)),
@@ -955,8 +1007,8 @@
     const rawBtn = el("button", { class: "ghost mini pro-only", onclick: () => { state.rawOpen.has(act) ? state.rawOpen.delete(act) : state.rawOpen.add(act); rerenderCard(); } }, state.rawOpen.has(act) ? "JSON 닫기" : "JSON 으로 보기");
     body.append(el("div", { class: "foot" }, addP, el("span", { class: "hint" }, act.do === "custom" ? "함수 인자는 ‘직접 입력…’ 으로 이름을 추가하세요" : ""), el("span", { class: "spacer" }), rawBtn));
 
-    if (act.do === "derive") body.append(stepsEditor(act.steps = act.steps || [], () => { touched(); }, false, sents));
-    if (act.do === "step") body.append(stepsEditor([act], () => { touched(); }, true, sents));
+    if (act.do === "derive") body.append(stepsEditor(act.steps = act.steps || [], () => { touched(); state.renderStage?.(); }, false, sents));
+    if (act.do === "step") body.append(stepsEditor([act], () => { touched(); state.renderStage?.(); }, true, sents));
 
     if (state.rawOpen.has(act)) {
       const ta = el("textarea", { class: "raw", spellcheck: "false" });
