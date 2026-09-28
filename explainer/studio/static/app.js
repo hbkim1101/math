@@ -164,6 +164,7 @@
     if (!state.doc) { state.doc = { meta: { id: pid, title: pid }, segments: [] }; }
     if (!Array.isArray(state.doc.segments)) state.doc.segments = [];
     state.snap = JSON.stringify(state.doc);
+    if ((data.autofix || []).length) { setDirty(true); toast(`${data.autofix.join(" · ")} — 저장하면 파일에 반영됩니다`, "ok"); }
     location.hash = pid;
     $("#projectSelect").value = pid;
     renderAll();
@@ -784,7 +785,7 @@
     return box;
   }
 
-  function field(label, control, hint) { return el("div", { class: "field" }, el("label", {}, label), control, hint ? el("span", { class: "hint" }, hint) : null); }
+  function field(label, control, hint, key) { return el("div", { class: "field", "data-field": key }, el("label", {}, label), control, hint ? el("span", { class: "hint" }, hint) : null); }
   function inp(value, onchange, attrs = {}) {
     const i = el("input", { type: "text", value: value ?? "", ...attrs });
     i.addEventListener("change", () => onchange(i.value));
@@ -1160,14 +1161,15 @@
     const wrap = el("div", { class: "settings" });
     wrap.append(el("h2", {}, "영상 정보"));
     const g = el("div", { class: "grid2" });
-    g.append(field("제목", inp(m.title, set(m, "title"))), field("부제", inp(m.subtitle, set(m, "subtitle"))),
-      field("목소리", sel(m.voice || "ko-KR-InJoonNeural", [["ko-KR-InJoonNeural", "인준 (남성)"], ["ko-KR-SunHiNeural", "선히 (여성)"], ["ko-KR-HyunsuMultilingualNeural", "현수 (남성, 다국어)"]], set(m, "voice"))),
-      field("말 속도", sel(m.rate || "+0%", [["-20%", "느리게 (-20%)"], ["-10%", "조금 느리게 (-10%)"], ["+0%", "보통"], ["+10%", "조금 빠르게 (+10%)"], ["+20%", "빠르게 (+20%)"]], set(m, "rate"))),
-      field("해상도", sel(m.resolution || "1080p", ["480p", "720p", "1080p", "1440p", "2160p"], set(m, "resolution")), "최종 렌더에만 적용. 미리보기는 항상 480p"),
-      field("fps", inp(m.fps ?? 30, set(m, "fps", num))),
-      field("스타일", sel(m.style || "panel", [["chalkboard", "칠판 (손글씨 판서)"], ["panel", "패널 (보드)"]], set(m, "style"))),
-      field("자막", sel(m.subtitles || "burn", [["burn", "영상에 새김"], ["soft", "별도 파일(srt)"], ["none", "없음"]], set(m, "subtitles"))),
-      field("장면 사이 쉼", inp(m.segment_pad ?? 0.45, set(m, "segment_pad", num)), "초"));
+    g.append(field("제목", inp(m.title, set(m, "title")), null, "meta.title"), field("부제", inp(m.subtitle, set(m, "subtitle")), null, "meta.subtitle"),
+      field("프로젝트 ID", inp(m.id, set(m, "id"), { class: "mono" }), `결과 영상 폴더 이름. 보통 프로젝트 폴더 이름(${state.pid})과 같게 둡니다`, "meta.id"),
+      field("목소리", sel(m.voice || "ko-KR-InJoonNeural", [["ko-KR-InJoonNeural", "인준 (남성)"], ["ko-KR-SunHiNeural", "선히 (여성)"], ["ko-KR-HyunsuMultilingualNeural", "현수 (남성, 다국어)"]], set(m, "voice")), null, "meta.voice"),
+      field("말 속도", sel(m.rate || "+0%", [["-20%", "느리게 (-20%)"], ["-10%", "조금 느리게 (-10%)"], ["+0%", "보통"], ["+10%", "조금 빠르게 (+10%)"], ["+20%", "빠르게 (+20%)"]], set(m, "rate")), null, "meta.rate"),
+      field("해상도", sel(m.resolution || "1080p", ["480p", "720p", "1080p", "1440p", "2160p"], set(m, "resolution")), "최종 렌더에만 적용. 미리보기는 항상 480p", "meta.resolution"),
+      field("fps", inp(m.fps ?? 30, set(m, "fps", num)), null, "meta.fps"),
+      field("스타일", sel(m.style || "panel", [["chalkboard", "칠판 (손글씨 판서)"], ["panel", "패널 (보드)"]], set(m, "style")), null, "meta.style"),
+      field("자막", sel(m.subtitles || "burn", [["burn", "영상에 새김"], ["soft", "별도 파일(srt)"], ["none", "없음"]], set(m, "subtitles")), null, "meta.subtitles"),
+      field("장면 사이 쉼", inp(m.segment_pad ?? 0.45, set(m, "segment_pad", num)), "초", "meta.segment_pad"));
     wrap.append(g);
 
     wrap.append(el("h2", {}, "칠판 배치 (칠판 스타일일 때)"));
@@ -1266,31 +1268,42 @@
     if (!r || (!r.errors?.length && !r.warnings?.length)) { b.classList.add("hidden"); return; }
     b.classList.remove("hidden"); b.className = "badge" + (r.errors.length ? "" : " warn"); b.textContent = String(r.errors.length || r.warnings.length);
   }
-  /** "segments[3:pick].actions[2:write]" → 해당 장면/동작으로 이동. */
-  function jumpTo(where) {
-    const m = /segments\[(\d+)[^\]]*\](?:\.actions\[(\d+)[^\]]*\])?/.exec(where || "");
-    if (!m) return false;
-    selectSegment(Number(m[1]));
-    if (m[2] !== undefined) setTimeout(() => state.focusCard?.(Number(m[2])), 50);
+  /** 문제 항목의 target({seg, act} | {pane, field}) 으로 이동. */
+  function jumpTo(target) {
+    if (!target) return false;
+    if (target.pane === "settings") {
+      showPane("settings");
+      const f = target.field && $(`#settingsEditor [data-field="${target.field}"]`);
+      if (f) { f.scrollIntoView({ behavior: "smooth", block: "center" }); f.classList.add("flash"); setTimeout(() => f.classList.remove("flash"), 1600); f.querySelector("input, select")?.focus(); }
+      return true;
+    }
+    if (target.pane === "yaml") { if (!state.pro) setPro(true); showPane("yaml"); return true; }
+    if (target.seg === undefined) return false;
+    selectSegment(target.seg);
+    if (target.act !== undefined) setTimeout(() => state.focusCard?.(target.act), 50);
     return true;
   }
   function showCheck(r) {
     state.lastCheck = r; showCheckBadge(r);
     const box = $("#checkBox");
     box.innerHTML = "";
-    box.append(el("div", { class: "item" }, r.ok ? "✅ 문제 없음" : `❌ 고칠 곳 ${r.errors.length}개`, r.summary?.segments !== undefined ? ` — 장면 ${r.summary.segments}개, 동작 ${r.summary.actions}개` : ""));
-    const item = (cls, mark, e) => el("div", { class: "item " + cls }, mark, /segments\[/.test(e.where) ? el("span", { class: "where", title: "클릭하면 그 자리로 이동", onclick: () => jumpTo(e.where) }, humanWhere(e.where)) : el("code", {}, e.where), " ", e.msg);
-    for (const e of r.errors || []) box.append(item("err", "✗ ", e));
-    for (const w of r.warnings || []) box.append(item("warn", "△ ", w));
-    if (r.ok && !(r.warnings || []).length) box.append(el("p", { class: "hint" }, "이제 상단의 미리보기/최종 영상 버튼을 눌러 보세요."));
-  }
-  function humanWhere(where) {
-    const m = /segments\[(\d+):?([^\]]*)\](?:\.actions\[(\d+):?([^\]]*)\])?(.*)/.exec(where);
-    if (!m) return where;
-    let s = `${Number(m[1]) + 1}번째 장면${m[2] ? ` ‘${m[2]}’` : ""}`;
-    if (m[3] !== undefined) s += ` › ${Number(m[3]) + 1}번째 동작${m[4] ? ` (${actLabel(m[4])})` : ""}`;
-    if (m[5]) s += m[5];
-    return s;
+    const nE = (r.errors || []).length, nW = (r.warnings || []).length;
+    box.append(el("div", { class: "check-sum " + (nE ? "bad" : nW ? "warn" : "ok") },
+      el("b", {}, nE ? `고칠 곳 ${nE}개` : nW ? "렌더는 할 수 있어요" : "문제 없음 ✓"),
+      el("span", {}, nE ? "아래를 고쳐야 영상을 만들 수 있습니다." + (nW ? ` 확인해 볼 곳도 ${nW}개 있어요.` : "")
+        : nW ? `확인해 볼 곳이 ${nW}개 있습니다.` : "이제 상단의 미리보기 버튼을 눌러 보세요."),
+      r.summary?.segments !== undefined ? el("small", {}, `장면 ${r.summary.segments}개 · 동작 ${r.summary.actions}개 검사`) : null));
+    const issue = (kind, e) => el("div", { class: "issue " + kind },
+      el("div", { class: "top" },
+        el("span", { class: "tag" }, kind === "err" ? "고쳐야 함" : "확인"),
+        el("span", { class: "loc" }, e.label || e.where),
+        el("span", { class: "spacer" }),
+        e.target ? el("button", { class: "mini" + (kind === "err" ? " accent" : ""), onclick: () => jumpTo(e.target) }, "고치러 가기 →") : null),
+      el("div", { class: "msg" }, e.msg),
+      e.hint ? el("div", { class: "fix" }, el("b", {}, "이렇게 고치세요 "), e.hint) : null,
+      el("div", { class: "raw pro-only" }, e.raw || e.where));
+    for (const e of r.errors || []) box.append(issue("err", e));
+    for (const w of r.warnings || []) box.append(issue("warn", w));
   }
 
   // ------------------------------------------------------------------ 렌더 작업 + 진행 상태

@@ -18,9 +18,19 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 Number = Union[int, float]
 
 
+def _num_to_str(v: Any) -> Any:
+    # YAML 은 따옴표 없는 2611_22 · 22 같은 값을 숫자로 읽는다
+    return str(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else v
+
+
 class Meta(BaseModel):
     id: str
     title: str
+
+    @field_validator("id", "title", "subtitle", mode="before")
+    @classmethod
+    def _coerce_text(cls, v: Any) -> Any:
+        return _num_to_str(v)
     subtitle: str = ""
     voice: str = "ko-KR-InJoonNeural"
     rate: str = "+0%"
@@ -111,6 +121,11 @@ class Segment(BaseModel):
     voice: Optional[str] = None
     rate: Optional[str] = None
     subtitle: Optional[str] = None  # 자막을 내레이션과 다르게 표시하고 싶을 때
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def _coerce_id(cls, v: Any) -> Any:
+        return _num_to_str(v)
 
     @field_validator("narration")
     @classmethod

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import datetime as _dt
+import json
 import shutil
 from pathlib import Path
 from typing import Any
@@ -111,8 +112,8 @@ def list_history(project_yaml: Path) -> list[dict[str, Any]]:
 
 NEW_PROJECT_TEMPLATE = """\
 meta:
-  id: {id}
-  title: {title}
+  id: {id_q}
+  title: {title_q}
   subtitle: ""
   voice: ko-KR-InJoonNeural
   resolution: 1080p
@@ -168,4 +169,6 @@ segments:
 
 
 def new_project_text(pid: str, title: str) -> str:
-    return NEW_PROJECT_TEMPLATE.format(id=pid, title=title)
+    # id·제목은 따옴표로: 2611_22 처럼 숫자로 보이는 값이 YAML 에서 정수로 읽히지 않게
+    q = lambda s: json.dumps(s, ensure_ascii=False)  # noqa: E731
+    return NEW_PROJECT_TEMPLATE.format(id_q=q(pid), title_q=q(title), title=title.replace('"', "'"))

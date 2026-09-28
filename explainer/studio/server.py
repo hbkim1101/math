@@ -116,17 +116,30 @@ def create_app(root: str | Path = ".") -> FastAPI:
                 project.source_path = str(source)
         except ValidationError as e:
             for err in e.errors():
-                loc = ".".join(str(x) for x in err["loc"])
-                errors.append({"where": loc or "project", "msg": err["msg"]})
+                errors.append(_friendly_pydantic(err, doc))
         try:
             resolve_params(doc.get("params") or {})
         except Exception as e:  # noqa: BLE001
-            errors.append({"where": "params", "msg": str(e)})
+            errors.append({"where": "params", "msg": f"상수 값을 계산할 수 없습니다: {e}",
+                           "hint": "⚙ 영상 설정 › 상수에서 식의 철자와 순서를 확인하세요."})
 
         style = (doc.get("meta") or {}).get("style", "panel")
         sections = ((doc.get("layout") or {}).get("chalk") or {}).get("sections") or []
         section_ids = {s.get("id") for s in sections if isinstance(s, dict)}
         segments = doc.get("segments") or []
+        # 구조 오류가 있으면 pydantic 은 중복 검사까지 가지 않으므로 여기서 한 번에 알려 준다
+        if not any("장면 이름 중복" in e["msg"] for e in errors):
+            seen: dict[str, int] = {}
+            for si, seg in enumerate(segments):
+                sid = str(seg.get("id")) if isinstance(seg, dict) else None
+                if sid is None:
+                    continue
+                if sid in seen:
+                    errors.append({"where": f"segments[{si}:{sid}].id",
+                                   "msg": f"장면 이름 중복 — ‘{sid}’ 은(는) {seen[sid] + 1}번째 장면과 이름이 같습니다.",
+                                   "hint": "장면마다 다른 이름을 쓰세요 (장면 편집기 맨 위의 이름 칸)."})
+                else:
+                    seen[sid] = si
         for si, seg in enumerate(segments):
             if not isinstance(seg, dict):
                 errors.append({"where": f"segments[{si}]", "msg": "세그먼트는 매핑이어야 합니다"})
@@ -140,31 +153,40 @@ def create_app(root: str | Path = ".") -> FastAPI:
                     continue
                 where = f"segments[{si}:{sid}].actions[{ai}:{act['do']}]"
                 if act["do"] not in REGISTRY:
-                    errors.append({"where": where, "msg": f"알 수 없는 액션 '{act['do']}'"})
+                    errors.append({"where": where, "msg": f"‘{act['do']}’ 라는 동작은 없습니다.",
+                                   "hint": "카드를 열어 ‘종류’ 에서 동작을 다시 고르세요."})
                 at = act.get("at")
                 if isinstance(at, str) and at.startswith("s"):
                     try:
                         k = int(at[1:])
                         if k > max(n_sent, 1):
-                            warnings.append({"where": where, "msg": f"at: {at} 인데 문장은 {n_sent}개"})
+                            warnings.append({"where": where, "msg": f"시작 시점이 {k}번째 문장({at})인데, 대본에는 문장이 {n_sent}개뿐입니다.",
+                                             "hint": "‘시작 시점’ 에서 대본에 있는 문장을 고르거나, 대본에 문장을 더 쓰세요."})
                     except ValueError:
-                        errors.append({"where": where, "msg": f"at 값이 이상합니다: {at!r}"})
+                        errors.append({"where": where, "msg": f"시작 시점 값 ‘{at}’ 을(를) 알아볼 수 없습니다.",
+                                       "hint": "‘시작 시점’ 에서 문장을 고르거나 비워 두세요 (s2 = 2번째 문장, 3.5 = 3.5초)."})
                 if act["do"] == "goto" and style == "chalkboard":
                     sec = act.get("section")
                     if sec and sec not in section_ids:
-                        errors.append({"where": where, "msg": f"없는 섹션 '{sec}' (layout.chalk.sections 에 추가)"})
+                        errors.append({"where": where, "msg": f"‘{sec}’ 라는 칠판 칸이 없습니다.",
+                                       "hint": "⚙ 영상 설정 › 칠판 칸에 이 이름으로 칸을 추가하거나, 카드에서 있는 칸을 고르세요."})
                 if act["do"] in ("derive", "step"):
                     steps = act.get("steps") if act["do"] == "derive" else [act]
                     for k, st in enumerate(steps or []):
                         if isinstance(st, dict) and not (st.get("parts") or st.get("tex")):
-                            errors.append({"where": f"{where}.steps[{k}]", "msg": "parts(조각 목록) 또는 tex 가 필요합니다"})
+                            errors.append({"where": f"{where}.steps[{k}]", "msg": f"식 전개 {k + 1}단계에 식이 비어 있습니다.",
+                                           "hint": "그 단계의 조각 입력란에 식을 쓰거나 단계를 지우세요."})
             if not seg.get("narration") and not acts:
-                warnings.append({"where": f"segments[{si}:{sid}]", "msg": "내레이션과 액션이 모두 비어 있음"})
+                warnings.append({"where": f"segments[{si}:{sid}]", "msg": "대본과 동작이 모두 비어 있는 장면입니다.",
+                                 "hint": "대본을 쓰거나, 필요 없으면 장면을 삭제하세요."})
         if tex and project is not None and not errors:
             from ..lint import lint_tex
             msgs: list[str] = []
             for t in lint_tex(project, media_dir=output_dir / "_cache" / "lint", log=msgs.append):
-                errors.append({"where": "LaTeX", "msg": t})
+                errors.append({"where": "LaTeX", "msg": t,
+                               "hint": "메시지에 나온 수식을 찾아 괄호 짝·명령어 철자(\\frac, \\sqrt …)를 확인하세요. 한글이 섞였다면 ‘한글 포함’ 을 켜세요."})
+        for item in errors + warnings:
+            item.update(_locate(item["where"], doc))
         summary = {
             "segments": len(segments),
             "actions": sum(len(s.get("actions") or []) for s in segments if isinstance(s, dict)),
@@ -230,6 +252,7 @@ def create_app(root: str | Path = ".") -> FastAPI:
             parse_error = None
         except Exception as e:  # noqa: BLE001
             doc, parse_error = None, str(e)
+        autofix = _autofix(doc, pid)
         hooks = []
         hp = p.parent / "hooks.py"
         if hp.exists():
@@ -240,7 +263,7 @@ def create_app(root: str | Path = ".") -> FastAPI:
             for seg in doc.get("segments") or []:
                 if isinstance(seg, dict) and seg.get("id"):
                     sentences[str(seg["id"])] = _sentences_for(doc, seg, output_dir)
-        return {"id": pid, "yaml": text, "doc": doc, "parse_error": parse_error, "hooks": hooks,
+        return {"id": pid, "yaml": text, "doc": doc, "parse_error": parse_error, "hooks": hooks, "autofix": autofix,
                 "sentences": sentences,
                 "outputs": outputs_for(pid), "job": (jobs.running_for(pid) or _NoJob()).to_json()}
 
@@ -262,6 +285,8 @@ def create_app(root: str | Path = ".") -> FastAPI:
             doc, text = doc_from_body(body)
         except Exception as e:  # noqa: BLE001
             raise HTTPException(400, f"YAML 파싱 실패: {e}")
+        if _autofix(doc, pid):
+            text = dump_project(doc)
         result = check_doc(doc, tex=False, source=p)
         snapshot(p)
         p.write_text(text, encoding="utf-8")
@@ -275,7 +300,9 @@ def create_app(root: str | Path = ".") -> FastAPI:
         try:
             doc, _ = doc_from_body(body)
         except Exception as e:  # noqa: BLE001
-            return {"ok": False, "errors": [{"where": "YAML", "msg": str(e)}], "warnings": [], "summary": {}}
+            return {"ok": False, "errors": [{"where": "YAML", "msg": f"YAML 문법 오류: {e}", "hint": "고급 모드의 YAML 원문에서 들여쓰기와 콜론(:)을 확인하세요.",
+                                             **_locate("YAML", {})}], "warnings": [], "summary": {}}
+        _autofix(doc, pid)
         return check_doc(doc, tex=body.tex, source=p)
 
     @app.get("/api/projects/{pid}/timing")
@@ -394,6 +421,135 @@ def create_app(root: str | Path = ".") -> FastAPI:
 class _NoJob:
     def to_json(self):
         return None
+
+
+# ---------------------------------------------------------------------- 검사 결과를 사용자 말로
+_META_KO = {
+    "id": "프로젝트 ID", "title": "제목", "subtitle": "부제", "voice": "목소리", "rate": "말 속도", "pitch": "음높이",
+    "resolution": "해상도", "fps": "fps", "subtitles": "자막", "style": "스타일", "segment_pad": "장면 사이 쉼",
+    "intro_silence": "시작 전 무음", "outro_silence": "끝난 뒤 무음", "background": "배경색", "loudnorm": "음량 맞춤",
+}
+_SEG_KO = {"id": "이름", "narration": "대본", "actions": "동작 목록", "pad": "뒤 여백", "voice": "목소리", "rate": "말 속도", "subtitle": "자막"}
+_ACT_KO = {"do": "종류", "at": "시작 시점", "run_time": "길이"}
+_TYPE_KO = {str: "글자", int: "숫자", float: "숫자", bool: "켬/끔", list: "목록", dict: "묶음", type(None): "빈 값"}
+
+
+def _friendly_pydantic(err: dict[str, Any], doc: dict[str, Any]) -> dict[str, Any]:
+    """pydantic 오류 하나 → {where, msg, hint, raw}. where 는 _locate 가 알아듣는 형식."""
+    loc = [x for x in err.get("loc", ())]
+    typ = err.get("type", "")
+    inp = err.get("input")
+    shown = repr(inp) if not isinstance(inp, (dict, list)) else ("묶음" if isinstance(inp, dict) else "목록")
+    kind = _TYPE_KO.get(type(inp), type(inp).__name__)
+    ctx = err.get("ctx") or {}
+    raw = f"{'.'.join(str(x) for x in loc) or 'project'}: {err.get('msg', '')}"
+
+    # where: segments.3.actions.1.do → segments[3:<id>].actions[1:<do>].do
+    where = ".".join(str(x) for x in loc) or "project"
+    if loc[:1] == ["segments"] and len(loc) >= 2 and isinstance(loc[1], int):
+        segs = doc.get("segments") or []
+        seg = segs[loc[1]] if loc[1] < len(segs) and isinstance(segs[loc[1]], dict) else {}
+        where = f"segments[{loc[1]}:{seg.get('id', '')}]"
+        rest = loc[2:]
+        if rest[:1] == ["actions"] and len(rest) >= 2 and isinstance(rest[1], int):
+            acts = seg.get("actions") or []
+            act = acts[rest[1]] if rest[1] < len(acts) and isinstance(acts[rest[1]], dict) else {}
+            where += f".actions[{rest[1]}:{act.get('do', '')}]"
+            rest = rest[2:]
+        if rest:
+            where += "." + ".".join(str(x) for x in rest)
+
+    hint = ""
+    if typ == "missing":
+        msg = "꼭 있어야 하는 값이 비어 있습니다."
+        hint = "값을 입력하세요."
+    elif typ == "string_type":
+        msg = f"글자여야 하는데 {kind} {shown} 이(가) 들어 있습니다."
+        if isinstance(inp, (int, float)):
+            hint = "YAML 은 따옴표 없는 2611_22 · 22 같은 값을 숫자로 읽습니다. 따옴표로 감싸 \"2611_22\" 처럼 쓰세요."
+    elif typ in ("int_type", "int_parsing", "int_from_float"):
+        msg = f"정수여야 하는데 {shown} 이(가) 들어 있습니다."
+        hint = "소수점·글자 없이 숫자만 쓰세요 (예: 30)."
+    elif typ in ("float_type", "float_parsing"):
+        msg = f"숫자여야 하는데 {shown} 이(가) 들어 있습니다."
+        hint = "숫자만 쓰세요 (예: 0.5)."
+    elif typ in ("bool_type", "bool_parsing"):
+        msg = f"켬/끔(true/false) 이어야 하는데 {shown} 이(가) 들어 있습니다."
+    elif typ == "literal_error":
+        msg = f"쓸 수 없는 값 {shown} 입니다."
+        exp = str(ctx.get("expected") or "").replace(" or ", ", ")
+        hint = f"가능한 값: {exp}" if exp else "목록에서 고르세요."
+    elif typ == "list_type":
+        msg = f"목록이어야 하는데 {kind} 값이 들어 있습니다."
+    elif typ in ("dict_type", "model_type", "model_attributes_type"):
+        msg = f"여러 항목의 묶음이어야 하는데 {kind} 값이 들어 있습니다."
+    elif typ == "value_error":
+        msg = str(err.get("msg", "")).removeprefix("Value error, ")
+        if "segment id 중복" in msg:
+            msg = msg.replace("segment id 중복", "장면 이름 중복 — 같은 이름의 장면이 둘 이상 있습니다")
+            hint = "장면마다 다른 이름을 쓰세요 (장면 편집기 맨 위의 이름 칸)."
+        elif "segments 가 비어" in msg:
+            msg, hint = "장면이 하나도 없습니다.", "왼쪽 ‘＋ 장면’ 으로 장면을 추가하세요."
+    else:
+        msg = str(err.get("msg", ""))
+    if not hint and typ.endswith("_type"):
+        hint = "입력 칸의 값을 확인하세요."
+    return {"where": where, "msg": msg, "hint": hint, "raw": raw}
+
+
+_WHERE_RE = re.compile(r"^segments\[(\d+):?([^\]]*)\](?:\.actions\[(\d+):?([^\]]*)\])?(?:\.(.*))?$")
+
+
+def _locate(where: str, doc: dict[str, Any]) -> dict[str, Any]:
+    """where 문자열 → {label: 사람이 읽는 위치, target: 편집기에서 이동할 곳}."""
+    m = _WHERE_RE.match(where or "")
+    if m:
+        si = int(m.group(1))
+        label = f"{si + 1}번째 장면" + (f" ‘{m.group(2)}’" if m.group(2) else "")
+        target: dict[str, Any] = {"seg": si}
+        rest = m.group(5) or ""
+        if m.group(3) is not None:
+            ai = int(m.group(3))
+            label += f" › {ai + 1}번째 동작"
+            target["act"] = ai
+            key = rest.split(".")[0] if rest else ""
+            if key and not key.startswith("steps["):
+                label += f" › {_ACT_KO.get(key, key)}"
+        elif rest:
+            label += f" › {_SEG_KO.get(rest.split('.')[0], rest)}"
+        return {"label": label, "target": target}
+    parts = (where or "").split(".")
+    if parts[0] == "meta":
+        key = parts[1] if len(parts) > 1 else ""
+        return {"label": f"⚙ 영상 설정 › {_META_KO.get(key, key or '영상 정보')}", "target": {"pane": "settings", "field": f"meta.{key}"}}
+    if parts[0] == "layout":
+        return {"label": "⚙ 영상 설정 › 칠판 배치" + (f" › {parts[-1]}" if len(parts) > 2 else ""), "target": {"pane": "settings"}}
+    if parts[0] == "params":
+        return {"label": "⚙ 영상 설정 › 상수" + (f" › {parts[1]}" if len(parts) > 1 else ""), "target": {"pane": "settings"}}
+    if parts[0] == "segments":
+        return {"label": "장면 목록", "target": None}
+    if where == "LaTeX":
+        return {"label": "수식 (LaTeX)", "target": None}
+    if where == "YAML":
+        return {"label": "YAML 원문", "target": {"pane": "yaml"}}
+    return {"label": "프로젝트 전체", "target": None}
+
+
+def _autofix(doc: Any, pid: str) -> list[str]:
+    """편집기에서 고칠 수단이 없는 형식 문제를 바로잡는다. 고친 내용 설명 목록을 돌려준다."""
+    fixes: list[str] = []
+    if not isinstance(doc, dict):
+        return fixes
+    meta = doc.get("meta")
+    if isinstance(meta, dict) and not isinstance(meta.get("id"), str):
+        old = meta.get("id")
+        meta["id"] = pid
+        fixes.append(f"프로젝트 ID 가 {old!r} (숫자) 로 읽혀서 폴더 이름 ‘{pid}’ 로 고쳤습니다")
+    for seg in doc.get("segments") or []:
+        if isinstance(seg, dict) and isinstance(seg.get("id"), (int, float)) and not isinstance(seg.get("id"), bool):
+            seg["id"] = str(seg["id"])
+            fixes.append(f"장면 이름 {seg['id']} 을(를) 글자로 고쳤습니다")
+    return fixes
 
 
 def _split_sentences(text: str) -> list[str]:

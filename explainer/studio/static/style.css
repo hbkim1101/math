@@ -341,6 +341,23 @@ body.pro .card .params .k small { color: var(--muted); }
 #timelineBox .bar .tick { position: absolute; bottom: 0; height: 12px; border-left: 1px solid var(--accent); font-size: 10px; color: var(--accent); padding-left: 2px; line-height: 12px; }
 #timelineBox .bar .tick:hover { background: rgba(255, 210, 63, .18); }
 #timelineBox .bar.on { border-color: var(--blue); }
+.check-sum { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 8px; margin: 8px 0 10px; border: 1px solid var(--line); background: #0c111c; font-size: 13px; }
+.check-sum b { font-size: 15px; }
+.check-sum small { color: var(--muted); font-size: 11.5px; }
+.check-sum.bad { border-color: var(--bad); } .check-sum.bad b { color: var(--bad); }
+.check-sum.warn { border-color: var(--warn); } .check-sum.warn b { color: var(--warn); }
+.check-sum.ok { border-color: var(--ok); } .check-sum.ok b { color: var(--ok); }
+.issue { border: 1px solid var(--line); border-left: 4px solid var(--bad); border-radius: 8px; padding: 9px 11px; margin-bottom: 8px; background: var(--panel2); }
+.issue.warn { border-left-color: var(--warn); }
+.issue .top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.issue .tag { font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 10px; background: var(--bad); color: #fff; white-space: nowrap; }
+.issue.warn .tag { background: var(--warn); color: #1a1a1a; }
+.issue .loc { font-weight: 600; font-size: 13px; }
+.issue .msg { margin-top: 6px; font-size: 13px; color: var(--text); }
+.issue .fix { margin-top: 6px; font-size: 12.5px; color: #cfd5e3; background: rgba(124,196,255,.07); border: 1px dashed rgba(124,196,255,.35); border-radius: 6px; padding: 6px 8px; }
+.issue .fix b { color: var(--blue); }
+.issue .raw { margin-top: 5px; font: 11px var(--mono); color: var(--muted); }
+.field.flash { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
 #checkBox .err { color: var(--bad); }
 #checkBox .warn { color: var(--warn); }
 #checkBox .item { padding: 5px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }

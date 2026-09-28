@@ -229,7 +229,7 @@ def test_sentences_use_tts_cache_when_available(studio):
     doc = json.loads(json.dumps(d2["doc"]))
     doc["segments"][0]["actions"].append({"do": "caption", "at": "s3", "text": "x"})
     r = client.post("/api/projects/2027_sep_q03/validate", json={"doc": doc}).json()
-    assert any("문장은 2개" in w["msg"] for w in r["warnings"])
+    assert any("문장이 2개" in w["msg"] for w in r["warnings"])
 
     # 편집 중 문서에 대한 조회
     r2 = client.post("/api/projects/2027_sep_q03/sentences", json={"doc": doc}).json()
