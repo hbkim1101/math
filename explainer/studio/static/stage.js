@@ -323,17 +323,17 @@ window.StudioStage = (() => {
       const { num, pts, rest } = splitTitle(it.title);
       const lines = rest ? [rest, ...it.lines] : [...it.lines];
       const body = el("div", { class: "st-pbody" });
-      let k = 0, lineNo = 0;
-      const lineNode = (txt, idx, extra) => el("div", { class: "st-pline" + (it.focus === idx ? " focus" : "") + (it.focus !== null && it.focus !== idx ? " dimmed" : "") }, math(txt), extra || null);
+      let k = 0;
+      const showPts = pts && !lines.join(" ").includes(pts);
+      const lineNode = (idx) => el("div", { class: "st-pline" + (it.focus === idx ? " focus" : "") + (it.focus !== null && it.focus !== idx ? " dimmed" : "") },
+        math(lines[idx]), showPts && idx === lines.length - 1 ? el("b", { class: "st-pts" }, " " + pts) : null);
       while (k < lines.length) {
         if (isCond(lines[k])) {
           const box = el("div", { class: "st-pcond" });
-          while (k < lines.length && isCond(lines[k])) { box.append(lineNode(lines[k], lineNo++)); k++; }
+          while (k < lines.length && isCond(lines[k])) box.append(lineNode(k++));
           body.append(box);
         } else {
-          const last = k === lines.length - 1;
-          body.append(lineNode(lines[k], lineNo++, last && pts && !lines.join(" ").includes(pts) ? el("b", { class: "st-pts" }, " " + pts) : null));
-          k++;
+          body.append(lineNode(k++));
         }
       }
       if (it.choices && !it.docked) {

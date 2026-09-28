@@ -404,11 +404,14 @@ def _choices_row(scene, choices: list[str], width: float, scale: float) -> Mobje
 
 @action("problem_focus")
 def problem_focus(scene, index: int, id: str = "problem", run_time: float | None = None,
-                  dim_opacity: float = 0.32, color: str | None = None, **_):
+                  dim_opacity: float | None = None, color: str | None = None, **_):
     """`problem` 을 lines 로 그렸을 때, 내레이션이 읽고 있는 줄만 밝게 하고 왼쪽에 포인터 바를 둔다."""
     lines = list(getattr(scene, "problem_lines", None) or [])
     if not lines:
         return
+    if dim_opacity is None:
+        # 밝은 종이 위에서 0.32 는 글자가 지워진 듯 보인다
+        dim_opacity = 0.55 if getattr(scene, "problem_paper", False) else 0.32
     rt = _rt(run_time, 0.6)
     index = max(0, min(int(index), len(lines) - 1))
     target = lines[index]

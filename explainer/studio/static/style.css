@@ -161,7 +161,8 @@ body.pro .modeToggle { color: var(--blue); }
 .stage .st-problem.st-paper .st-pbody { flex: 1; min-width: 0; }
 .stage .st-problem.st-paper .st-pline { margin: 0; }
 .stage .st-problem.st-paper .st-pline.focus { background: rgba(255,230,109,.55); border-left: none; margin-left: 0; padding-left: 0; border-radius: 3px; }
-.stage .st-problem.st-paper .st-pline.dimmed { opacity: .35; }
+.stage .st-problem.st-paper .st-pline.dimmed { opacity: .55; }
+.stage .st-problem.st-paper .katex { white-space: nowrap; }
 .stage .st-problem.st-paper .st-pts { font-weight: 700; }
 .stage .st-problem.st-paper .st-pcond { border: 1.6px solid #1c1c1c; padding: 8px 18px; margin: 10px 0 12px; }
 .stage .st-problem.st-paper .st-choices { gap: 34px; margin-top: 14px; }
